@@ -1,0 +1,457 @@
+<!DOCTYPE html>
+<html lang="ch" style="height: 100%;">
+<head>
+    <meta charset="utf-8">
+    <!--meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no"-->
+
+    <!-- Bootstrap CSS -->
+    <link rel="stylesheet" href="/static/css/bootstrap.min.css">
+    <link rel="stylesheet" href="/static/css/dygraph.min.css">
+
+    <title>ArgosController</title>
+
+    <link rel="icon" href="/static/icon.jpg" type="image/x-icon">  <!-- 添加个图标装作很正式的样子~~~ -->
+    <link rel="shortcut icon" href="/static/icon.jpg" type="image/x-icon">
+
+    <style>
+        body {
+            background-color: black;
+        }
+
+        .container {
+            margin-top: 20px;
+            width: inherit;
+            display: grid;
+            grid-template-columns: 60px auto 250px 250px;
+            grid-template-rows: 60px auto;
+            grid-column-gap: 10px;
+            grid-row-gap: 10px;
+            justify-items: stretch;
+            align-items: stretch;
+            grid-template-areas:
+                "icon header header header"
+                "basic main info control";
+        }
+
+        .icon {
+            grid-area: icon;
+            background-image: url("/static/icon.jpg");
+            background-size:cover;
+        }
+
+        .header {
+            grid-area: header;
+            align-self: center;
+            font-size: 300%;
+            font-weight: bolder;
+            color: antiquewhite;
+        }
+
+        .basic {
+            grid-area: basic;
+        }
+
+        .basic-button {
+            width: 100%;
+            height: 60px;
+            margin-bottom: 10px;
+        }
+
+        .card {
+            margin-bottom: 10px;
+        }
+
+        .card-body {
+            font-size: 80%;
+        }
+
+        .modified-warning {
+            color: firebrick;
+            font-size: 80%;
+            font-weight: bold;
+            display: none;
+        }
+
+    </style>
+
+</head>
+<body>
+
+    <div class="container">
+        <div class="icon"></div>
+        <div class="header">Argos Controller <font style="font-size: 50%;">web version v0.1</font></div>
+        <div class="basic">
+            <button type="button" class="btn btn-success basic-button" id="Init" onclick="leftButtonClicked('Init');">Init</button>
+            <button type="button" class="btn btn-danger basic-button" id="Stop" disabled="disabled" onclick="leftButtonClicked('Stop');">Stop</button>
+            <button type="button" class="btn btn-warning basic-button" style="height: 200px;" id="Sing">Sing</button> <!-- 这个按钮用来对main区域显示的图像进行暂停 -->
+            <button type="button" class="btn btn-primary basic-button" id="Calib" disabled="disabled">Calib</button> <!-- 自动校准函数，TODO -->
+            <button type="button" class="btn btn-dark basic-button" id="Test" onclick="leftButtonClicked('Test');">Test</button>
+        </div>
+        <div style="grid-area: main;">
+            <div class="card">
+                <div class="card-header"><button class="btn btn-link" data-toggle="collapse" data-target="#AllInOneGraph" aria-expanded="true" onclick="updateAllInOneGraph();">All-in-one Graph</button></div>
+                <div id="AllInOneGraph" class="collapse show"><div class="card-body">
+                    <div style="height: 200px;" id="AllInOneGraph-0"></div>
+                </div></div>
+            </div>
+            <div class="card">
+                <div class="card-header"><button class="btn btn-link" data-toggle="collapse" data-target="#ManualGraph" aria-expanded="true" onclick="updateManualGraph();">Manual Graph</button></div>
+                <div id="ManualGraph" class="collapse show"><div class="card-body">
+                    <div style="height: 200px;" id="ManualGraph-0"></div>
+                </div></div>
+            </div>
+            <div class="card">
+                <div class="card-header"><button class="btn btn-link" data-toggle="collapse" data-target="#OriginGraph" aria-expanded="true" onclick="updateAllOriginGraph();">Original Graph</button></div>
+                <div id="OriginGraph" class="collapse show"><div class="card-body" id="OriginGraph-body">
+                    
+                </div></div>
+            </div>
+        </div>
+        <div style="grid-area: info;">
+            <div class="card">
+                <div class="card-header"><button class="btn btn-link" data-toggle="collapse" data-target="#SystemBasicInfo" aria-expanded="true">System Basic Information</button></div>
+                <div id="SystemBasicInfo" class="collapse show"><div class="card-body">
+                    <!-- 显示系统基本消息 -->
+                    Connected: <strong id="SystemBasicInfo-Connected" style="color: red;">False</strong><br/>
+                    System version: <strong id="SystemBasicInfo-SystemVersion">UNKNOWN</strong>
+                    Run status: <strong id="SystemBasicInfo-RunStatus">UNKNOWN</strong>
+                </div></div>
+            </div>
+        </div>
+        <div style="grid-area: control;">
+            <div class="card">
+                <div class="card-header"><button class="btn btn-link" data-toggle="collapse" data-target="#BasicSettings" aria-expanded="true">Basic Settings</button></div>
+                <div id="BasicSettings" class="collapse show"><div class="card-body">
+                    <!-- 设置使用的Iris模块编号等等 -->
+                    <strong style="color: red;">* must stop and reinitialize to set</strong><br/><br/>
+                    <font>Iris count: (0 for simulation)</font>
+                    <div class="input-group">
+                        <div class="input-group-prepend"><button type="button" class="btn btn-success" onclick="IrisCountChangeValue(-1);">-</button></div>
+                        <input type="text" class="form-control" placeholder="Iris count" id="BasicSettings-IrisCount" value="0"
+                            onKeyPress="if (event.keyCode == 13) event.srcElement.blur(); if ((event.keyCode<48 || event.keyCode>57)) event.returnValue=false;"
+                            onblur="generalValChanged('BasicSettings-IrisCount');" >
+                        <div class="input-group-append"><button type="button" class="btn btn-success" onclick="IrisCountChangeValue(1);">+</button></div>
+                    </div>
+                    <div class="modified-warning" id="m-BasicSettings-IrisCount">* argument modified but not sync yet.</div>
+                    <br/>
+                    <div id="IrisDevicesBox"></div>
+                </div></div>
+            </div>
+            <div class="card">
+                <div class="card-header"><button class="btn btn-link" data-toggle="collapse" data-target="#GainSettings" aria-expanded="true">Gain Settings</button></div>
+                <div id="GainSettings" class="collapse"><div class="card-body">
+                    <!-- 设置每一个Iris的Gain，各种Gain..... -->
+                </div></div>
+            </div>
+            <button style="width: 100%; margin-bottom: 10px;" class="btn btn-danger" onclick="rejectAllModification();">reject all modification</button>
+            <button style="width: 100%; margin-bottom: 10px;" class="btn btn-success" onclick="syncSettingsToServer();">sync settings <strong>to</strong> server</button>
+            <div class="btn-group btn-group-toggle" data-toggle="buttons" style="width: 100%; margin-bottom: 10px;">
+                <label class="btn btn-secondary active" style="width: 50%;" onclick="changeSetMode('manual');">
+                    <input type="radio" name="options" autocomplete="off" checked> Manual set
+                </label>
+                <label class="btn btn-secondary" style="width: 50%;" onclick="changeSetMode('auto');">
+                    <input type="radio" name="options" autocomplete="off"> Auto set
+                </label>
+            </div>
+            <!--div class="card">
+                <div class="card-header"><button class="btn btn-link" data-toggle="collapse" data-target="#GainSettings" aria-expanded="true">Gain Settings</button></div>
+                <div id="GainSettings" class="collapse" aria-labelledby="headingOne" data-parent="#accordion"><div class="card-body">
+                    其他设置？还没想好，这里留一个模板吧
+                </div></div>
+            </div-->
+        </div>
+    </div>
+
+    <script src="/static/js/jquery.min.js"></script>
+    <script src="/static/js/popper.min.js"></script>
+    <script src="/static/js/bootstrap.min.js"></script>
+    <script src="/static/js/jsrender.min.js"></script>
+    <script src="/static/js/socket.io.min.js"></script>
+    <script src="/static/js/jquery.nicescroll.min.js"></script>
+    <script src="/static/js/qunee-min.js"></script>
+    <script src="/static/js/jcanvas.min.js"></script>
+    <script src="/static/js/dygraph.min.js"></script>
+
+    <script id='IrisSerialInput' type="text/html">
+        <div class="input-group" style="margin-bottom: 5px;">
+            <div class="input-group-prepend"><strong style="font-size: 170%">{{:num}}:&nbsp;</strong></div>
+            <input type="text" class="form-control" placeholder="Iris serial number" id="BasicSettings-IrisDevices-{{:num}}"
+                onKeyPress="if (event.keyCode == 13) event.srcElement.blur();" onblur="generalValChanged('BasicSettings-IrisDevices-{{:num}}');">
+            <div class="modified-warning" id="m-BasicSettings-IrisDevices-{{:num}}">* argument modified but not sync yet.</div>
+        </div>
+    </script>
+
+    <script id='GraphShowTemplate' type="text/html">
+        <div>
+            <font>({{:num}}):</font>&nbsp;
+            <input type="checkbox" onclick="updateManualGraph();" id="OriginGraphCheckI-{{:num}}">I&nbsp;
+            <input type="checkbox" onclick="updateManualGraph();" id="OriginGraphCheckQ-{{:num}}">Q
+            <br/>
+            <div style="height: 150px;" id="OriginGraph-{{:num}}"></div>
+        </div>
+    </script>
+
+    <script>
+        var nowSettings = {};  // 字典记录用户输出操作之前的值，如果用户没有改变输入则不触发发送
+        var settingKeys = ["BasicSettings-IrisCount"];
+        var settingMode = '';
+        var userModified = {};
+        function initNowValue() {
+            for (let key in settingKeys) {
+                nowSettings[settingKeys[key]] = $("#" + settingKeys[key]).val();  // 初始化这些值是为了防止出现太多红色警告，不代表服务器真的是这些参数
+            }
+        }
+        $(initNowValue);  // 当文档准备好后init
+        function IrisCountChangeValue(val) {
+            let tar = parseInt(val) + parseInt($("#BasicSettings-IrisCount").val());
+            if (tar < 0) tar = 0;
+            $("#BasicSettings-IrisCount").val(tar);
+            generalValChanged("BasicSettings-IrisCount");
+        }
+        function updateIrisCount(val) {
+            let box = $("#IrisDevicesBox");
+            let nlen = box.children().length;
+            if (val > nlen) {  // 添加子元素
+                for (let i = nlen; i<val; ++i) {
+                    box.append($.templates("#IrisSerialInput").render({num: i+1}));
+                    let tarid = 'BasicSettings-IrisDevices-' + (i+1);
+                    if (tarid in nowSettings) $('#' + tarid).val(nowSettings[tarid]);  // 如果还没有跟服务器同步，则先减后加应该保留原来序列号
+                    // generalValChanged('BasicSettings-IrisDevices-' + (i+1));  // 不需要更新
+                }
+            } else if (val < nlen) {  // 删除子元素
+                for (let i = nlen; i>val; --i) {
+                    $("#BasicSettings-IrisDevices-" + i).parent().remove();  // 删除父元素
+                }
+            }
+        }
+        function filter(key, val) {  // 为了防止有的值超出范围，这里做一个filter操作，修正用户输入
+            if (key == "BasicSettings-IrisCount") {
+                val = parseInt(val);
+                if (val < 0 || isNaN(val) || val > 200) {
+                    console.error('BasicSettings-IrisCount input error, set to 0');
+                    val = 0;
+                }
+                $("#" + key).val(val);
+                updateIrisCount(val);
+            }
+            return val;
+        }
+        function generalValChanged(key) {
+            let val = $("#" + key).val();
+            val = filter(key, val);  // 为了防止有的值超出范围，这里做一个filter操作，修正用户输入
+            if (key in nowSettings && nowSettings[key] == val) {  // 用户虽然点击了input框，但与服务器端的值相同（或许没有改变输入框，又或许输入的刚好和服务器一样了）
+                $("#m-" + key).hide();
+                if (key in userModified) delete userModified[key];  // 从用户修改列表中删除
+                return;
+            }
+            // console.log("generalValChanged: \"" + key + "\"");
+            // console.log(val);
+            $("#m-" + key).show();  // 显示地告诉用户这个元素没有被同步
+            userModified[key] = val;  // 更新表
+            if (settingMode == 'auto') syncSettingsToServer();
+        }
+        function idInDOM(id) {
+            return ($("#" + id).length > 0)
+        }
+        function updateSettingsNotSyncFlag(ignoreUserSet=false) {  // 对所有在nowSettings中的key做判断
+            for (let key in nowSettings) {
+                if (idInDOM(key)) {  // 不存在的元素不管
+                    if ($('#m-' + key).is(':hidden')) {  // 只有hidden的，才是没有用户修改过的，系统才能够正常去修改他
+                        $('#' + key).val(nowSettings[key]);
+                    } else {
+                        if (ignoreUserSet) $('#' + key).val(nowSettings[key]);
+                        if ($('#' + key).val() == nowSettings[key]) {  // 系统和当前用户设置的一致了，取消用户定义
+                            $("#m-" + key).hide();
+                        }
+                    }
+                }
+            }
+        }
+        function rejectAllModification() {  // 跟本地保存的nowSettings保持一致，忽略用户输入
+            updateIrisCount(parseInt(nowSettings['BasicSettings-IrisCount']));  // TODO: 修改其他结构
+            updateSettingsNotSyncFlag(ignoreUserSet=true);
+        }
+        function settingsUpdateFromServer(settings) {  // 服务器发过来当前的settings
+            $('#SystemBasicInfo-SystemVersion').html(settings.version);
+            $('#SystemBasicInfo-RunStatus').html(settings.state);
+            if (settings.state == "stopped") {  // stopped stop-pending
+                $('#Init').removeAttr("disabled");  $('#Stop').attr("disabled", "disabled"); $("#SystemBasicInfo-RunStatus").css('color', 'red');
+            } else if (settings.state == "running") {  // running run-pending
+                $('#Stop').removeAttr("disabled");  $('#Init').attr("disabled", "disabled"); $("#SystemBasicInfo-RunStatus").css('color', 'green');
+            } else {
+                $('#Init').attr("disabled", "disabled"); $('#Stop').attr("disabled", "disabled"); $("#SystemBasicInfo-RunStatus").css('color', 'magenta');
+            }
+            nowSettings = settings.userSettings;  // 保存在本地，并且更新以下数据结构
+            // 先修复各种数据结构，把该删除的元素删除，该增加的元素增加
+            if ($('#m-BasicSettings-IrisCount').is(':visible') && parseInt(nowSettings['BasicSettings-IrisCount']) != parseInt($('#BasicSettings-IrisCount').val())) {  // 用户修改数量了！
+                // do nothing 鬼知道用户在干什么，万一在改其他数据结构呢
+                console.warn('User is changing IrisCount, so system will not update structure of user settings.');
+            } else {
+                updateIrisCount(parseInt(nowSettings['BasicSettings-IrisCount']));  // TODO: 修改其他结构
+            }
+            updateDrawOriginSize(parseInt(nowSettings['BasicSettings-IrisCount']));
+            updateSettingsNotSyncFlag();
+        }
+        function changeSetMode(mode) {
+            settingMode = mode;
+            if (mode == 'auto') {
+                syncSettingsToServer();
+            }
+        }
+
+
+        // 绘图操作
+        var originData = {}; //{'I1': [1,2,2.5,2,1,0], 'Q1': [0,1,2,2.5,2,1]};
+        var grefers = [];
+        var grefAll = null;
+        var grefManual = null;
+        function updateOrginGraph(i) {
+            let data = [];
+            if ('I' + i in originData && 'Q' + i in originData && originData['I'+i].length == originData['Q'+i].length) {
+                let glen = originData['I'+i].length;
+                for (let j=0; j<glen; ++j) {
+                    data.push([j, originData['I'+i][j], originData['Q'+i][j]]);
+                }
+            }
+            grefers[i].updateOptions( { 'file': data } );
+        }
+        function updateAllInOneGraph() {
+
+        }
+        function updateAllOriginGraph() {
+            let nowLen = $('#OriginGraph-body').children().length;
+            for (let i=0; i<nowLen; ++i) updateOrginGraph(i);
+        }
+        function updateManualGraph() {
+            let nowLen = $('#OriginGraph-body').children().length;
+            let checked = [];
+            for (let i=0; i<nowLen; ++i) {
+                if (document.getElementById('OriginGraphCheckI-' + i).checked) checked.push('I' + i);
+                if (document.getElementById('OriginGraphCheckQ-' + i).checked) checked.push('Q' + i);
+            }
+            console.log(checked)
+            if (checked.length == 0) return;
+            let minlen = -1;
+            for (let i=0; i<checked.length; ++i) {  // 跟最小的长度对齐
+                if (checked[i] in originData) {
+                    if (minlen == -1 || minlen > originData[checked[i]].length) minlen = originData[checked[i]].length;
+                } else {
+                    checked.splice(i, 1);
+                    console.error('cannot found ' + i + ' data, ignored');
+                    --i;
+                }
+            }
+            console.log(minlen);
+            console.log(checked);
+            if (minlen == -1) return;
+            let data = [];
+            for (let i=0; i<minlen; ++i) {
+                let subdat = [i];
+                for (let j=0; j<checked.length; ++j) {
+                    subdat.push(originData[checked[j]][i]);
+                }
+                data.push(subdat);
+            }
+            console.log(data);
+            let labels = ['X'];
+            for (let j=0; j<checked.length; ++j) {
+                labels.push(checked[j])
+            }
+            grefManual.updateOptions({
+                'labels': labels,
+                'file': data
+            })
+        }
+        function updateDrawOriginSize(cnt) {
+            let nowLen = $('#OriginGraph-body').children().length;
+            console.log(cnt);
+            console.log(nowLen);
+            if (cnt > nowLen) {  // 创建更多
+                for (let i=nowLen; i<cnt; ++i) {
+                    $('#OriginGraph-body').append($.templates("#GraphShowTemplate").render({num: i}));
+                    let g = new Dygraph(  // 会导致一些内存浪费，不过这部分不怎么变动，也还好
+                        document.getElementById("OriginGraph-" + i),
+                        [],
+                        {
+                            labels: ['X', 'I', 'Q'],
+                            drawPoints: true,
+                            drawAxesAtZero: true,
+                            strokeWidth: 1
+                        }
+                    );
+                    grefers[i] = g;
+                }
+            } else if (cnt < nowLen) {
+                for (let i=nowLen-1; i>=cnt; --i) {
+                    grefers[i].destroy();
+                    $('#OriginGraph-body').children()[i].remove();
+                }
+            }
+            updateAllOriginGraph();
+            console.log(originData);
+        }
+        $(function() {
+            grefAll = new Dygraph(
+                document.getElementById("AllInOneGraph-0"),
+                [],
+                {
+                    labels: ['X'],
+                    drawPoints: true,
+                    drawAxesAtZero: true,
+                    strokeWidth: 1,
+                    showRangeSelector: true
+                }
+            );
+            grefManual = new Dygraph(
+                document.getElementById("ManualGraph-0"),
+                [],
+                {
+                    labels: ['X'],
+                    drawPoints: true,
+                    drawAxesAtZero: true,
+                    strokeWidth: 1,
+                    showRangeSelector: true
+                }
+            )
+        });
+
+
+
+        
+
+        // 通信部分，逻辑不在以下部分实现
+        var socketio = null;  // 全局变量，websocket client对象
+        var connectTimeout = null;  // 全局变量，当连续3个心跳包丢失时，系统显示“未连接”
+        $(function() {  // 初始化通信部分
+            socketio = io.connect(location.protocol + '//' + document.domain + ':' + location.port + '/');
+            console.log(socketio);
+            socketio.on('connect', function(socket) {
+                console.log('connected to server at ' + Date().toLocaleString());
+                $('#SystemBasicInfo-Connected').html('True');
+                $('#SystemBasicInfo-Connected').css('color', 'green');
+            });
+            socketio.on('disconnect', function(socket) {
+                console.log('disconnect from server at ' + Date().toLocaleString());
+                $('#SystemBasicInfo-Connected').html('False');
+                $('#SystemBasicInfo-Connected').css('color', 'red');
+            });
+            socketio.on('settings', function(settings) {
+                // console.log(settings);
+                settingsUpdateFromServer(settings);  // 交给逻辑层
+            });
+        });
+        function leftButtonClicked(id) {
+            if (id == 'Test') socketio.emit('button', 'test');
+            if (id == 'Init') socketio.emit('button', 'init');
+            if (id == 'Stop') socketio.emit('button', 'stop');
+        }
+        function syncSettingsToServer() {
+            console.log(userModified);
+            socketio.emit('syncSettings', userModified);
+            userModified = {};
+        }
+    </script>
+
+</body>
+</html>
+
