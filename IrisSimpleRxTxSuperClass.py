@@ -10,7 +10,6 @@ clockRate           master clock rate (Hz)
 rxAnt(arg deleted, as always using "TRX")
 txAnt(arg deleted, as always using "TRX")
 num_samps           number of samples
-replay              if set tx in replay mode
 rx_serials_ant      serial number of Iris, an array of strings like "xxx:0", where the last number is channal (in Iris will be 0/1)
 tx_serials_antpython
 all_used_serials    if you want to control the order of output (seial number), then provide the order you want here, otherwise it'll be random
@@ -39,15 +38,15 @@ def main_test():  # you could play with this class here
         txGain=40.0, 
         rxGain=30.0, 
         clockRate=80e6,
-        num_samps=1024, 
-        replay=False, 
-        rx_serials_ant = ['RF3C000045:0'], 
-        tx_serials_ant = ['RF3C000045:1']
+        num_samps=1024,
+        rx_serials_ant = ['0274:0'], 
+        tx_serials_ant = ['0274:1']
     )
-    obj.setTrigger(["RF3C000045"])
+    obj.setTrigger(["0274"])
     print("not triggered objects:", obj.tryTrigger())  # if triggered, this will return a empty list
     print(obj.getExtraInfos())  # get temperature information, note that this is for web controller, so may not friendly enough to read
-    print(obj.doSimpleRxTx(0.8+0.j))  # get samples received
+    ret = obj.doSimpleRxTx(0.8+0.j)  # get samples received
+    print(ret)
 
 class IrisSimpleRxTxSuperClass:
     def __init__(self, 
@@ -57,8 +56,7 @@ class IrisSimpleRxTxSuperClass:
         txGain=40.0, 
         rxGain=30.0, 
         clockRate=80e6, 
-        num_samps=1024, 
-        replay=False, 
+        num_samps=1024,
         rx_serials_ant=[], 
         tx_serials_ant=[],
         all_used_serials=None
@@ -155,7 +153,7 @@ class IrisSimpleRxTxSuperClass:
         tone = np.exp(s_time_vals * 2.j * np.pi * waveFreq).astype(np.complex64) * precode
 
         # create numpy arrays for receiving
-        self.sampsRecv = [np.empty(self.num_samps).astype(np.complex64) for r in range(len(self.rxStreams))]
+        self.sampsRecv = [np.zeros(self.num_samps, np.complex64) for r in range(len(self.rxStreams))]
 
         # clear out socket buffer from old requests
         for r,rxStream in enumerate(self.rxStreams):
@@ -204,7 +202,7 @@ class IrisSimpleRxTxSuperClass:
                 sr = sdr.readStream(rxStream, [self.sampsRecv[r][numRecv:]], len(self.sampsRecv[r])-numRecv, timeoutUs=int(1e6))
                 if sr.ret == -1:
                     print('Error: Bad Read!')
-                    return None
+                    break
                 else: numRecv += sr.ret
 
         # look at any async messages, also deactivate all those stream
