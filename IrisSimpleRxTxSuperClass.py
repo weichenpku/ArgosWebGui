@@ -12,7 +12,7 @@ txAnt(arg deleted, as always using "TRX")
 num_samps           number of samples
 replay              if set tx in replay mode
 rx_serials_ant      serial number of Iris, an array of strings like "xxx:0", where the last number is channal (in Iris will be 0/1)
-tx_serials_ant
+tx_serials_antpython
 all_used_serials    if you want to control the order of output (seial number), then provide the order you want here, otherwise it'll be random
 """
 
@@ -41,10 +41,10 @@ def main_test():  # you could play with this class here
         clockRate=80e6,
         num_samps=1024, 
         replay=False, 
-        rx_serials_ant = ['serial1:0', 'serial2:0', 'serial2:1'], 
-        tx_serials_ant = ['serial1:1']
+        rx_serials_ant = ['RF3C000045:0'], 
+        tx_serials_ant = ['RF3C000045:1']
     )
-    obj.setTrigger(["serial1"])
+    obj.setTrigger(["RF3C000045"])
     print("not triggered objects:", obj.tryTrigger())  # if triggered, this will return a empty list
     print(obj.getExtraInfos())  # get temperature information, note that this is for web controller, so may not friendly enough to read
     print(obj.doSimpleRxTx(0.8+0.j))  # get samples received
