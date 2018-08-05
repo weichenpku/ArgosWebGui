@@ -16,7 +16,7 @@ tx_serials_ant
 all_used_serials    if you want to control the order of output (seial number), then provide the order you want here, otherwise it'll be random
 """
 
-DEBUG_WITH_FAKESOAPYSDR = True
+DEBUG_WITH_FAKESOAPYSDR = False
 UseFakeSoapy = False
 
 try:
