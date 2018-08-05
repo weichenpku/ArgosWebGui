@@ -17,7 +17,20 @@ def nowSettings():  # 用户想获取当前的系统信息，返回一个字典
     }
     assert main.IrisCount == len(main.IrisSerialNums)  # 他们应当长度相同的
     for i in range(main.IrisCount):
-        ret['userSettings']['BasicSettings-IrisDevices-%d' % (i+1)] = main.IrisSerialNums[i]
+        ret['userSettings']['BasicSettings-IrisDevices-%d' % i] = main.IrisSerialNums[i]
+    if main.IrisObj is not None:
+        ret['availableRxGains'] = main.IrisObj.availableRxGains()
+        ret['availableTxGains'] = main.IrisObj.availableTxGains()
+        nowGainRx, nowGainTx = main.IrisObj.nowGains()
+        for i,ele in enumerate(nowGainRx):
+            for gainKey in ele:
+                ret['userSettings']['GainSettings-Rx-%d-%s' % (i, gainKey)] = ele[gainKey]  # 把设置加入进去
+        for i,ele in enumerate(nowGainTx):
+            for gainKey in ele:
+                ret['userSettings']['GainSettings-Tx-%d-%s' % (i, gainKey)] = ele[gainKey]  # 把设置加入进去
+    else:
+        ret['availableRxGains'] = []
+        ret['availableTxGains'] = []
     return ret
 
 def userClickButton(button):  # 用户点击按钮事件
@@ -31,6 +44,8 @@ def userClickButton(button):  # 用户点击按钮事件
     elif button == 'stop':
         if main.state == "running":
             main.state = "stop-pending"
+    elif button == 'trig':
+        main.userTrig = True
 
 def userSyncSettings(settings):
     if 'BasicSettings-IrisCount' in settings:
@@ -44,8 +59,8 @@ def userSyncSettings(settings):
         elif main.state == 'running':
             print('Error: cannot set BasicSettings-IrisCount when running')
     for key in settings:
-        if key[:len("BasicSettings-IrisDevices-")] == "BasicSettings-IrisDevices-":
-            idx = int(key[len("BasicSettings-IrisDevices-"):]) - 1
+        if key[:len("BasicSettings-IrisDevices-")] == "BasicSettings-IrisDevices-" and main.state == 'stopped':
+            idx = int(key[len("BasicSettings-IrisDevices-"):])
             if idx >= 0 and idx < len(main.IrisSerialNums):
                 main.IrisSerialNums[idx] = settings[key]
 
@@ -102,6 +117,11 @@ def timerSendUpdatedStateToUsers():
         if main.changed:
             main.changed = False
             sendSettingsToUser()
+        if main.sampleDataReady:
+            main.sampleDataReady = False
+            socketio.emit('samples', main.sampleData, broadcast=True)
+        if main.extraInfosReady:
+            socketio.emit('extraInfos', main.extraInfos, broadcast=True)
 socketio.start_background_task(timerSendUpdatedStateToUsers)
 if __name__=='__main__':
     socketio.run(app, host='0.0.0.0', port=80)

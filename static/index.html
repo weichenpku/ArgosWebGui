@@ -85,6 +85,7 @@
             <button type="button" class="btn btn-danger basic-button" id="Stop" disabled="disabled" onclick="leftButtonClicked('Stop');">Stop</button>
             <button type="button" class="btn btn-warning basic-button" style="height: 200px;" id="Sing">Sing</button> <!-- 这个按钮用来对main区域显示的图像进行暂停 -->
             <button type="button" class="btn btn-primary basic-button" id="Calib" disabled="disabled">Calib</button> <!-- 自动校准函数，TODO -->
+            <button type="button" class="btn btn-light basic-button" id="Trig" onclick="leftButtonClicked('Trig');">Trig</button>
             <button type="button" class="btn btn-dark basic-button" id="Test" onclick="leftButtonClicked('Test');">Test</button>
         </div>
         <div style="grid-area: main;">
@@ -117,6 +118,12 @@
                     Run status: <strong id="SystemBasicInfo-RunStatus">UNKNOWN</strong>
                 </div></div>
             </div>
+            <div class="card">
+                <div class="card-header"><button class="btn btn-link" data-toggle="collapse" data-target="#SystemExtraInfos" aria-expanded="true">System Extra Information</button></div>
+                <div id="SystemExtraInfos" class="collapse show"><div class="card-body" id="SystemExtraInfos-body">
+                    
+                </div></div>
+            </div>
         </div>
         <div style="grid-area: control;">
             <div class="card">
@@ -141,6 +148,12 @@
                 <div class="card-header"><button class="btn btn-link" data-toggle="collapse" data-target="#GainSettings" aria-expanded="true">Gain Settings</button></div>
                 <div id="GainSettings" class="collapse"><div class="card-body">
                     <!-- 设置每一个Iris的Gain，各种Gain..... -->
+                    <div id="GainSettings-RXDIV">
+                        
+                    </div>
+                    <div id="GainSettings-TXDIV">
+
+                    </div>
                 </div></div>
             </div>
             <button style="width: 100%; margin-bottom: 10px;" class="btn btn-danger" onclick="rejectAllModification();">reject all modification</button>
@@ -173,11 +186,41 @@
     <script src="/static/js/dygraph.min.js"></script>
 
     <script id='IrisSerialInput' type="text/html">
-        <div class="input-group" style="margin-bottom: 5px;">
-            <div class="input-group-prepend"><strong style="font-size: 170%">{{:num}}:&nbsp;</strong></div>
-            <input type="text" class="form-control" placeholder="Iris serial number" id="BasicSettings-IrisDevices-{{:num}}"
-                onKeyPress="if (event.keyCode == 13) event.srcElement.blur();" onblur="generalValChanged('BasicSettings-IrisDevices-{{:num}}');">
-            <div class="modified-warning" id="m-BasicSettings-IrisDevices-{{:num}}">* argument modified but not sync yet.</div>
+        <div>
+            <div class="input-group" style="margin-bottom: 5px;">
+                <div class="input-group-prepend"><strong style="font-size: 170%">{{:num}}&nbsp;</strong></div>
+                <input type="text" class="form-control" placeholder="Iris serial number" id="BasicSettings-IrisDevices-{{:num}}"
+                    onKeyPress="if (event.keyCode == 13) event.srcElement.blur();" onblur="generalValChanged('BasicSettings-IrisDevices-{{:num}}');">
+                <div class="input-group-append"><div class="input-group-text">
+                    <input type="checkbox" id="BasicSettings-IrisDevices-{{:num}}">
+                </div></div>
+                <div class="modified-warning" id="m-BasicSettings-IrisDevices-{{:num}}">* argument modified but not sync yet.</div>
+            </div>
+            <div class="input-group input-group-sm" style="margin-bottom: 5px;">
+                <div class="input-group-prepend">
+                    <button class="btn btn-outline-secondary dropdown-toggle" type="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false"
+                        style="width: 70px;">Ant0</button>
+                    <div class="dropdown-menu">
+                        <a class="dropdown-item" href="#">Action</a>
+                        <a class="dropdown-item" href="#">Another action</a>
+                        <a class="dropdown-item" href="#">Something else here</a>
+                        <div role="separator" class="dropdown-divider"></div>
+                        <a class="dropdown-item" href="#">Separated link</a>
+                    </div>
+                </div>
+                <div class="input-group-append">
+                    <button class="btn btn-outline-secondary dropdown-toggle" type="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false"
+                        style="width: 70px;">Ant1</button>
+                    <div class="dropdown-menu">
+                        <a class="dropdown-item" href="#">Action</a>
+                        <a class="dropdown-item" href="#">Another action</a>
+                        <a class="dropdown-item" href="#">Something else here</a>
+                        <div role="separator" class="dropdown-divider"></div>
+                        <a class="dropdown-item" href="#">Separated link</a>
+                    </div>
+                </div>
+                <div style="margin-left: 8px;">trigger👆</div>
+            </div>
         </div>
     </script>
 
@@ -188,6 +231,38 @@
             <input type="checkbox" onclick="updateManualGraph();" id="OriginGraphCheckQ-{{:num}}">Q
             <br/>
             <div style="height: 150px;" id="OriginGraph-{{:num}}"></div>
+        </div>
+    </script>
+
+    <script id='SystemExtraInfosTemplate' type="text/html">
+        <div id="SystemExtraInfos-DIV-{{:num}}">
+            <strong>Num {{:num}} (<font id="SystemExtraInfos-Serial-{{:num}}">UNKNOWN</font>):</strong>
+            <ul>
+                <li>LMS7 temp.: <strong id="SystemExtraInfos-LMS7-{{:num}}">UNKNOWN</strong></li>
+                <li>Zynq temp.: <strong id="SystemExtraInfos-Zynq-{{:num}}">UNKNOWN</strong></li>
+                <li>Frontend temp.: <strong id="SystemExtraInfos-Frontend-{{:num}}">UNKNOWN</strong></li>
+                <li>PA0 temp.: <strong id="SystemExtraInfos-PA0-{{:num}}">UNKNOWN</strong></li>
+                <li>PA1 temp.: <strong id="SystemExtraInfos-PA1-{{:num}}">UNKNOWN</strong></li>
+            </ul>
+        </div>
+    </script>
+
+    <script id='IrisGainSettingsTemplate' type="text/html">
+        <div id="GainSettings-{{:TorR}}XDIV-0">
+            <strong>{{:TorR}}x (0) "0013":</strong>
+            <!-- add gain settings here (IrisGainSettingsSingleInputTemplate) -->
+        </div>
+    </script>
+
+    <script id='IrisGainSettingsSingleInputTemplate' type="text/html">
+        <div class="form-group row" style="margin-bottom: 2px;">
+            <label class="col-form-label" style="margin-left: 30px;"><strong>· {{:gainKey}}</strong></label>
+            <div class="col-sm-6">
+                <!-- 允许输入特殊字符，因为可能需要设置precode这种复数？不管了，直接字符串发过去好了 -->
+                <input type="text" class="form-control form-control-sm" placeholder="Iris count" id="GainSettings-{{:TorR}}x-{{:TorRnum}}-{{:gainKey}}" value="0"
+                onKeyPress="if (event.keyCode == 13) event.srcElement.blur();"
+                onblur="generalValChanged('GainSettings-{{:TorR}}x-{{:TorRnum}}-{{:gainKey}}');" >
+            </div>
         </div>
     </script>
 
@@ -211,16 +286,19 @@
         function updateIrisCount(val) {
             let box = $("#IrisDevicesBox");
             let nlen = box.children().length;
+            let extra = $('#SystemExtraInfos-body');  // extra部分保证和box部分数量一致，写到一起
             if (val > nlen) {  // 添加子元素
                 for (let i = nlen; i<val; ++i) {
-                    box.append($.templates("#IrisSerialInput").render({num: i+1}));
-                    let tarid = 'BasicSettings-IrisDevices-' + (i+1);
+                    box.append($.templates("#IrisSerialInput").render({num: i}));
+                    extra.append($.templates("#SystemExtraInfosTemplate").render({num: i}));
+                    let tarid = 'BasicSettings-IrisDevices-' + (i);
                     if (tarid in nowSettings) $('#' + tarid).val(nowSettings[tarid]);  // 如果还没有跟服务器同步，则先减后加应该保留原来序列号
                     // generalValChanged('BasicSettings-IrisDevices-' + (i+1));  // 不需要更新
                 }
             } else if (val < nlen) {  // 删除子元素
-                for (let i = nlen; i>val; --i) {
-                    $("#BasicSettings-IrisDevices-" + i).parent().remove();  // 删除父元素
+                for (let i = nlen-1; i>=val; --i) {
+                    $("#BasicSettings-IrisDevices-" + i).parent().parent().remove();  // 删除父元素
+                    $("#SystemExtraInfos-DIV-" + i).remove();
                 }
             }
         }
@@ -265,6 +343,10 @@
                         }
                     }
                 }
+                if (key.startsWith("BasicSettings-IrisDevices-")) {  // 更新extra栏的序列号
+                    let idx = key.slice("BasicSettings-IrisDevices-".length);
+                    $("#SystemExtraInfos-Serial-" + idx).html(nowSettings[key]);
+                }
             }
         }
         function rejectAllModification() {  // 跟本地保存的nowSettings保持一致，忽略用户输入
@@ -298,6 +380,16 @@
                 syncSettingsToServer();
             }
         }
+        function extraInfosFromServer(extraInfos) {
+            let len = $('#SystemExtraInfos-body').children().length;
+            for (let i=0; i<len; ++i) {
+                if ("LMS7-" + i in extraInfos) $("#SystemExtraInfos-LMS7-" + i).html(extraInfos["LMS7-" + i]);
+                if ("Zynq-" + i in extraInfos) $("#SystemExtraInfos-Zynq-" + i).html(extraInfos["Zynq-" + i]);
+                if ("Frontend-" + i in extraInfos) $("#SystemExtraInfos-Frontend-" + i).html(extraInfos["Frontend-" + i]);
+                if ("PA0-" + i in extraInfos) $("#SystemExtraInfos-PA0-" + i).html(extraInfos["PA0-" + i]);
+                if ("PA1-" + i in extraInfos) $("#SystemExtraInfos-PA1-" + i).html(extraInfos["PA1-" + i]);
+            }
+        }
 
 
         // 绘图操作
@@ -315,8 +407,44 @@
             }
             grefers[i].updateOptions( { 'file': data } );
         }
+        function updateMultipleGraph(graphref, checked) {
+            let minlen = -1;
+            for (let i=0; i<checked.length; ++i) {  // 跟最小的长度对齐
+                if (checked[i] in originData) {
+                    if (minlen == -1 || minlen > originData[checked[i]].length) minlen = originData[checked[i]].length;
+                } else {
+                    checked.splice(i, 1);
+                    console.error('cannot found ' + i + ' data, ignored');
+                    --i;
+                }
+            }
+            // if (minlen == -1) return;  // 允许绘制空图
+            let data = [];
+            for (let i=0; i<minlen; ++i) {
+                let subdat = [i];
+                for (let j=0; j<checked.length; ++j) {
+                    subdat.push(originData[checked[j]][i]);
+                }
+                data.push(subdat);
+            }
+            let labels = ['X'];
+            for (let j=0; j<checked.length; ++j) {
+                labels.push(checked[j])
+            }
+            graphref.updateOptions({
+                'labels': labels,
+                'file': data
+            })
+        }
         function updateAllInOneGraph() {
-
+            let nowLen = $('#OriginGraph-body').children().length;
+            let checked = [];
+            for (let i=0; i<nowLen; ++i) {
+                checked.push('I' + i);
+                checked.push('Q' + i);
+            }
+            if (checked.length == 0) return;
+            updateMultipleGraph(grefAll, checked);
         }
         function updateAllOriginGraph() {
             let nowLen = $('#OriginGraph-body').children().length;
@@ -329,38 +457,8 @@
                 if (document.getElementById('OriginGraphCheckI-' + i).checked) checked.push('I' + i);
                 if (document.getElementById('OriginGraphCheckQ-' + i).checked) checked.push('Q' + i);
             }
-            console.log(checked)
-            if (checked.length == 0) return;
-            let minlen = -1;
-            for (let i=0; i<checked.length; ++i) {  // 跟最小的长度对齐
-                if (checked[i] in originData) {
-                    if (minlen == -1 || minlen > originData[checked[i]].length) minlen = originData[checked[i]].length;
-                } else {
-                    checked.splice(i, 1);
-                    console.error('cannot found ' + i + ' data, ignored');
-                    --i;
-                }
-            }
-            console.log(minlen);
-            console.log(checked);
-            if (minlen == -1) return;
-            let data = [];
-            for (let i=0; i<minlen; ++i) {
-                let subdat = [i];
-                for (let j=0; j<checked.length; ++j) {
-                    subdat.push(originData[checked[j]][i]);
-                }
-                data.push(subdat);
-            }
-            console.log(data);
-            let labels = ['X'];
-            for (let j=0; j<checked.length; ++j) {
-                labels.push(checked[j])
-            }
-            grefManual.updateOptions({
-                'labels': labels,
-                'file': data
-            })
+            // if (checked.length == 0) return;  // if 0, just print none of them
+            updateMultipleGraph(grefManual, checked);
         }
         function updateDrawOriginSize(cnt) {
             let nowLen = $('#OriginGraph-body').children().length;
@@ -414,6 +512,12 @@
                 }
             )
         });
+        function samplesFromServer(samples) {
+            originData = samples;
+            updateAllInOneGraph();
+            updateAllOriginGraph();
+            updateManualGraph();
+        }
 
 
 
@@ -439,11 +543,18 @@
                 // console.log(settings);
                 settingsUpdateFromServer(settings);  // 交给逻辑层
             });
+            socketio.on('samples', function(samples) {
+                samplesFromServer(samples);
+            });
+            socketio.on('extraInfos', function(extraInfos) {
+                extraInfosFromServer(extraInfos);
+            });
         });
         function leftButtonClicked(id) {
             if (id == 'Test') socketio.emit('button', 'test');
             if (id == 'Init') socketio.emit('button', 'init');
             if (id == 'Stop') socketio.emit('button', 'stop');
+            if (id == 'Trig') socketio.emit('button', 'trig');
         }
         function syncSettingsToServer() {
             console.log(userModified);
