@@ -120,7 +120,7 @@ class IrisSimpleRxTxSuperClass:
                 'PA2': 0,    # [0|15]
                 'PA3': 30,   # [0|30]
                 'IAMP': 12,  # [0,12]
-                'PAD': -30,  # [-52,0]
+                'PAD': 0,  # [-52,0] ? wy@180805: PAD range is positive to ensure 0 dB is minimum power: Converting PAD value of -30 to 22 dB...
             }
             self.tx_gains.append(default_tx_gains)
             chan = ant
@@ -145,7 +145,7 @@ class IrisSimpleRxTxSuperClass:
             serial, ant = IrisSimpleRxTxSuperClass.splitSerialAnt(serial_ant)
             chan = ant
             sdr = self.sdrs[serial]
-            stream = sdr.setupStream(SOAPY_SDR_TX, SOAPY_SDR_CF32, [chan], {"remote:prot":"tcp", "remote:mtu":"1024", "REPLAY":replay})
+            stream = sdr.setupStream(SOAPY_SDR_TX, SOAPY_SDR_CF32, [chan], {"remote:prot":"tcp", "remote:mtu":"1024"})
             self.txStreams.append(stream) 
             # for sdr in self.tx_sdrs: sdr.activateStream(txStream)  # not activate streams, leave it to child class or trigger function in this class
 
@@ -237,7 +237,7 @@ class IrisSimpleRxTxSuperClass:
             if serial in self.sdrs:
                 self.sdrs[serial].writeSetting('SYNC_DELAYS', "")
         for serial in self.sdrs:
-            self.sdrs[serial].setHardwareTime(0, "TRIG")
+            self.sdrs[serial].setHardwareTime(0, "TRIGGER")
     
     def tryTrigger(self):  # test if all the Iris could be trigger by self.triggerIrisList, return the list of not triggered Iris' serial number
         serial_list = [serial for serial in self.sdrs]  # put in a list to avoid random index of dictionary
