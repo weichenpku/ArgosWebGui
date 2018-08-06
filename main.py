@@ -83,8 +83,8 @@ def loop():
     if state == 'run-pending':
         if IrisCount == 0:
             ifSimulateMode = True
-            IrisCount = 3
-            IrisSerialNums = ["foo", "bar", "lalala"]
+            IrisCount = 2
+            IrisSerialNums = ["foo-0-Tx-1", "bar-0-Rx-0"]
         else:
             from UserTrigOneSendOtherRecv import UserTrigOneSendOtherRecv
             IrisObj = UserTrigOneSendOtherRecv(serials=IrisSerialNums)  # new object

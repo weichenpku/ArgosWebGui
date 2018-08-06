@@ -3,9 +3,7 @@
 written by wy@180802
 """
 
-import time
-
-import main
+import time, main, GUI
 
 def nowSettings():  # 用户想获取当前的系统信息，返回一个字典
     ret = {
@@ -34,10 +32,13 @@ def nowSettings():  # 用户想获取当前的系统信息，返回一个字典
     return ret
 
 def userClickButton(button):  # 用户点击按钮事件
-    if button == 'test':
-        main.IrisCount = 2
-        main.IrisSerialNums = ['hahaha', 'ijijiji']
-        sendSettingsToUser()
+    if button == 'reset':
+        if main.state == "stopped":
+            main.IrisCount = 0
+            main.IrisSerialNums = []
+            sendSettingsToUser()
+        else:
+            GUI.error("cannot reset in no \"stopped\" state")
     elif button == 'init':
         if main.state == "stopped":
             main.state = "run-pending"
@@ -56,13 +57,16 @@ def userSyncSettings(settings):
             elif (IrisCounttar < main.IrisCount):
                 main.IrisSerialNums = main.IrisSerialNums[:IrisCounttar]  # 裁切
             main.IrisCount = IrisCounttar
-        elif main.state == 'running':
-            print('Error: cannot set BasicSettings-IrisCount when running')
+        else:
+            GUI.error('cannot set BasicSettings-IrisCount in no \"stopped\" state')
     for key in settings:
-        if key[:len("BasicSettings-IrisDevices-")] == "BasicSettings-IrisDevices-" and main.state == 'stopped':
-            idx = int(key[len("BasicSettings-IrisDevices-"):])
-            if idx >= 0 and idx < len(main.IrisSerialNums):
-                main.IrisSerialNums[idx] = settings[key]
+        if key[:len("BasicSettings-IrisDevices-")] == "BasicSettings-IrisDevices-":
+            if main.state == 'stopped':
+                idx = int(key[len("BasicSettings-IrisDevices-"):])
+                if idx >= 0 and idx < len(main.IrisSerialNums):
+                    main.IrisSerialNums[idx] = settings[key]
+            else:
+                GUI.error('cannot set BasicSettings in no \"stopped\" state')
 
 
 
@@ -81,9 +85,9 @@ logging.getLogger('werkzeug').setLevel(logging.ERROR)  # 设置不输出GET请�
 
 def maincall():
     global loopDelay
-    print('main function start at: %s' % time.strftime("%Y-%m-%d %H:%M:%S", time.localtime()))
+    GUI.log('main function start at: %s' % time.strftime("%Y-%m-%d %H:%M:%S", time.localtime()))
     main.setup()
-    print('setup finished at: %s' % time.strftime("%Y-%m-%d %H:%M:%S", time.localtime()))
+    GUI.log('setup finished at: %s' % time.strftime("%Y-%m-%d %H:%M:%S", time.localtime()))
     while True:
         main.loop()
         socketio.sleep(main.loopDelay)
@@ -93,14 +97,14 @@ def index():
     return app.send_static_file('index.html')
 @socketio.on('connect')
 def ws_connect():
-    print('socketio %s connect    at: %s' % (request.remote_addr, time.strftime("%Y-%m-%d %H:%M:%S", time.localtime())))
+    GUI.log('socketio %s connect    at: %s' % (request.remote_addr, time.strftime("%Y-%m-%d %H:%M:%S", time.localtime())))
     sendSettingsToUser()
 @socketio.on('disconnect')
 def ws_disconnect():
-    print('socketio %s disconnect at: %s' % (request.remote_addr, time.strftime("%Y-%m-%d %H:%M:%S", time.localtime())))
+    GUI.log('socketio %s disconnect at: %s' % (request.remote_addr, time.strftime("%Y-%m-%d %H:%M:%S", time.localtime())))
 @socketio.on('button')
 def ws_button(button):
-    print('user %s click button: %s' % (request.remote_addr, button))
+    GUI.log('user %s click button: %s' % (request.remote_addr, button))
     userClickButton(button)  # 逻辑层
     sendSettingsToUser()
 @socketio.on('syncSettings')
@@ -124,4 +128,5 @@ def timerSendUpdatedStateToUsers():
             socketio.emit('extraInfos', main.extraInfos, broadcast=True)
 socketio.start_background_task(timerSendUpdatedStateToUsers)
 if __name__=='__main__':
+    GUI.registerSocketIO(socketio)  # enable GUI socketio
     socketio.run(app, host='0.0.0.0', port=80)

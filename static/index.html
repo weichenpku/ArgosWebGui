@@ -86,7 +86,7 @@
             <button type="button" class="btn btn-warning basic-button" style="height: 200px;" id="Sing">Sing</button> <!-- 这个按钮用来对main区域显示的图像进行暂停 -->
             <button type="button" class="btn btn-primary basic-button" id="Calib" disabled="disabled">Calib</button> <!-- 自动校准函数，TODO -->
             <button type="button" class="btn btn-light basic-button" id="Trig" onclick="leftButtonClicked('Trig');">Trig</button>
-            <button type="button" class="btn btn-dark basic-button" id="Test" onclick="leftButtonClicked('Test');">Test</button>
+            <button type="button" class="btn btn-dark basic-button" id="Reset" onclick="leftButtonClicked('Reset');">Reset</button>
         </div>
         <div style="grid-area: main;">
             <div class="card">
@@ -119,9 +119,15 @@
                 </div></div>
             </div>
             <div class="card">
+                <div class="card-header"><button class="btn btn-link" data-toggle="collapse" data-target="#SystemLogs" aria-expanded="true">System Log</button></div>
+                <div id="SystemLogs" class="collapse show"><div class="card-body" id="SystemLogs-body" style="padding-bottom: 0px;">
+                    <!-- 显示log等弹出框 -->
+                </div></div>
+            </div>
+            <div class="card">
                 <div class="card-header"><button class="btn btn-link" data-toggle="collapse" data-target="#SystemExtraInfos" aria-expanded="true">System Extra Information</button></div>
                 <div id="SystemExtraInfos" class="collapse show"><div class="card-body" id="SystemExtraInfos-body">
-                    
+                    <!-- 显示系统运行状态，比如温度等 -->
                 </div></div>
             </div>
         </div>
@@ -140,7 +146,7 @@
                         <div class="input-group-append"><button type="button" class="btn btn-success" onclick="IrisCountChangeValue(1);">+</button></div>
                     </div>
                     <div class="modified-warning" id="m-BasicSettings-IrisCount">* argument modified but not sync yet.</div>
-                    <br/>
+                    <div style="margin-left: 80px; margin-right: -20px;">channel👇<font style="margin-left: 27px;">trigger👇</font></div>
                     <div id="IrisDevicesBox"></div>
                 </div></div>
             </div>
@@ -186,41 +192,32 @@
     <script src="/static/js/dygraph.min.js"></script>
 
     <script id='IrisSerialInput' type="text/html">
-        <div>
-            <div class="input-group" style="margin-bottom: 5px;">
-                <div class="input-group-prepend"><strong style="font-size: 170%">{{:num}}&nbsp;</strong></div>
-                <input type="text" class="form-control" placeholder="Iris serial number" id="BasicSettings-IrisDevices-{{:num}}"
-                    onKeyPress="if (event.keyCode == 13) event.srcElement.blur();" onblur="generalValChanged('BasicSettings-IrisDevices-{{:num}}');">
-                <div class="input-group-append"><div class="input-group-text">
-                    <input type="checkbox" id="BasicSettings-IrisDevices-{{:num}}">
-                </div></div>
-                <div class="modified-warning" id="m-BasicSettings-IrisDevices-{{:num}}">* argument modified but not sync yet.</div>
-            </div>
-            <div class="input-group input-group-sm" style="margin-bottom: 5px;">
-                <div class="input-group-prepend">
-                    <button class="btn btn-outline-secondary dropdown-toggle" type="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false"
-                        style="width: 70px;">Ant0</button>
-                    <div class="dropdown-menu">
-                        <a class="dropdown-item" href="#">Action</a>
-                        <a class="dropdown-item" href="#">Another action</a>
-                        <a class="dropdown-item" href="#">Something else here</a>
-                        <div role="separator" class="dropdown-divider"></div>
-                        <a class="dropdown-item" href="#">Separated link</a>
-                    </div>
+        <div class="input-group" style="margin-bottom: 5px;" id="BasicSettings-IrisDevices-Box-{{:num}}">
+            <div class="input-group-prepend" style="margin-left: -15px;"><strong style="font-size: 170%">{{:num}}&nbsp;</strong></div>
+            <input type="text" class="form-control" placeholder="serial num" id="BasicSettings-IrisDevices-Serial-{{:num}}"
+                onKeyPress="if (event.keyCode == 13) event.srcElement.blur();" onblur="generalValChanged('BasicSettings-IrisDevices-{{:num}}');">
+            <div class="input-group-prepend">
+                <button class="btn btn-outline-secondary dropdown-toggle" type="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false"
+                    style="width: 40px;" id="BasicSettings-IrisDevices-Channel-{{:num}}">0</button>
+                <div class="dropdown-menu">
+                    <a class="dropdown-item" href="#" onclick="$('#BasicSettings-IrisDevices-Channel-{{:num}}').html('0'); generalValChanged('BasicSettings-IrisDevices-{{:num}}');">0</a>
+                    <a class="dropdown-item" href="#" onclick="$('#BasicSettings-IrisDevices-Channel-{{:num}}').html('1'); generalValChanged('BasicSettings-IrisDevices-{{:num}}');">1</a>
                 </div>
-                <div class="input-group-append">
-                    <button class="btn btn-outline-secondary dropdown-toggle" type="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false"
-                        style="width: 70px;">Ant1</button>
-                    <div class="dropdown-menu">
-                        <a class="dropdown-item" href="#">Action</a>
-                        <a class="dropdown-item" href="#">Another action</a>
-                        <a class="dropdown-item" href="#">Something else here</a>
-                        <div role="separator" class="dropdown-divider"></div>
-                        <a class="dropdown-item" href="#">Separated link</a>
-                    </div>
-                </div>
-                <div style="margin-left: 8px;">trigger👆</div>
             </div>
+            <div class="input-group-append">
+                <button class="btn btn-outline-secondary dropdown-toggle" type="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false"
+                    style="width: 47px;" id="BasicSettings-IrisDevices-Direction-{{:num}}">Rx</button>
+                <div class="dropdown-menu">
+                    <a class="dropdown-item" href="#" onclick="$('#BasicSettings-IrisDevices-Direction-{{:num}}').html('Rx'); generalValChanged('BasicSettings-IrisDevices-{{:num}}');">Rx</a>
+                    <a class="dropdown-item" href="#" onclick="$('#BasicSettings-IrisDevices-Direction-{{:num}}').html('Tx'); generalValChanged('BasicSettings-IrisDevices-{{:num}}');">Tx</a>
+                </div>
+            </div>
+            <div class="input-group-append" style="width: 10px;">
+                <div class="input-group-text" style="width: 10px;">
+                    <input type="checkbox" id="BasicSettings-IrisDevices-Trigger-{{:num}}" style="margin-left: -5px;" onclick="generalValChanged('BasicSettings-IrisDevices-{{:num}}');">
+                </div>
+            </div>
+            <div class="modified-warning" id="m-BasicSettings-IrisDevices-{{:num}}">* argument modified but not sync yet.</div>
         </div>
     </script>
 
@@ -266,6 +263,15 @@
         </div>
     </script>
 
+    <script id="DynamicAlertTemplate" type="text/html">
+        <div class="alert alert-{{:alertType}} alert-dismissible fade show" role="alert">
+            {{:msg}}
+            <button type="button" class="close" data-dismiss="alert" aria-label="Close">
+              <span aria-hidden="true">&times;</span>
+            </button>
+        </div>
+    </script>
+
     <script>
         var nowSettings = {};  // 字典记录用户输出操作之前的值，如果用户没有改变输入则不触发发送
         var settingKeys = ["BasicSettings-IrisCount"];
@@ -286,19 +292,16 @@
         function updateIrisCount(val) {
             let box = $("#IrisDevicesBox");
             let nlen = box.children().length;
-            let extra = $('#SystemExtraInfos-body');  // extra部分保证和box部分数量一致，写到一起
             if (val > nlen) {  // 添加子元素
                 for (let i = nlen; i<val; ++i) {
                     box.append($.templates("#IrisSerialInput").render({num: i}));
-                    extra.append($.templates("#SystemExtraInfosTemplate").render({num: i}));
                     let tarid = 'BasicSettings-IrisDevices-' + (i);
-                    if (tarid in nowSettings) $('#' + tarid).val(nowSettings[tarid]);  // 如果还没有跟服务器同步，则先减后加应该保留原来序列号
+                    if (tarid in nowSettings) setFullIrisDeviceString(tarid, nowSettings[tarid]); // 如果还没有跟服务器同步，则先减后加应该保留原来序列号
                     // generalValChanged('BasicSettings-IrisDevices-' + (i+1));  // 不需要更新
                 }
             } else if (val < nlen) {  // 删除子元素
                 for (let i = nlen-1; i>=val; --i) {
-                    $("#BasicSettings-IrisDevices-" + i).parent().parent().remove();  // 删除父元素
-                    $("#SystemExtraInfos-DIV-" + i).remove();
+                    $("#BasicSettings-IrisDevices-Box-" + i).remove();  // 删除父元素
                 }
             }
         }
@@ -314,8 +317,36 @@
             }
             return val;
         }
+        function getFullIrisDeviceString(key) {
+            let prefix = "BasicSettings-IrisDevices-";
+            let num = key.slice(prefix.length);
+            let serial = $("#" + prefix + "Serial-" + num).val();
+            let channel = $("#" + prefix + "Channel-" + num).html();
+            let direction = $("#" + prefix + "Direction-" + num).html();
+            let trigger = document.getElementById(prefix + "Trigger-" + num).checked;  // if use as trigger source
+            return "" + serial + "-" + channel + "-" + direction + "-" + (trigger?1:0);
+        }
+        function setFullIrisDeviceString(key, val) {
+            let prefix = "BasicSettings-IrisDevices-";
+            let num = key.slice(prefix.length);
+            let serial=null, channel=null, direction=null, trigger=null;
+            let a = val.lastIndexOf('-'); if (a != -1) trigger = (val.slice(a+1) == "1");
+            let b = val.slice(0, a).lastIndexOf('-'); if (b != -1) direction = val.slice(b+1, a);
+            let c = val.slice(0, b).lastIndexOf('-'); if (c != -1) channel = val.slice(c+1, b);
+            serial = c == -1 ? "" : val.slice(0, c);
+            if (channel && direction && (trigger != null)) {
+                $("#" + prefix + "Serial-" + num).val(serial);
+                $("#" + prefix + "Channel-" + num).html(channel);
+                $("#" + prefix + "Direction-" + num).html(direction);
+                document.getElementById(prefix + "Trigger-" + num).checked = trigger;
+            } else console.error("Iris device string format error: " + val);
+
+        }
         function generalValChanged(key) {
             let val = $("#" + key).val();
+            if (key.startsWith("BasicSettings-IrisDevices-")) {  // special handle this
+                val = getFullIrisDeviceString(key);
+            }
             val = filter(key, val);  // 为了防止有的值超出范围，这里做一个filter操作，修正用户输入
             if (key in nowSettings && nowSettings[key] == val) {  // 用户虽然点击了input框，但与服务器端的值相同（或许没有改变输入框，又或许输入的刚好和服务器一样了）
                 $("#m-" + key).hide();
@@ -333,19 +364,17 @@
         }
         function updateSettingsNotSyncFlag(ignoreUserSet=false) {  // 对所有在nowSettings中的key做判断
             for (let key in nowSettings) {
-                if (idInDOM(key)) {  // 不存在的元素不管
+                if (idInDOM(key) || (key.startsWith("BasicSettings-IrisDevices-") && idInDOM("m-" + key))) {  // 不存在的元素不管
                     if ($('#m-' + key).is(':hidden')) {  // 只有hidden的，才是没有用户修改过的，系统才能够正常去修改他
                         $('#' + key).val(nowSettings[key]);
                     } else {
-                        if (ignoreUserSet) $('#' + key).val(nowSettings[key]);
-                        if ($('#' + key).val() == nowSettings[key]) {  // 系统和当前用户设置的一致了，取消用户定义
-                            $("#m-" + key).hide();
+                        if (ignoreUserSet) {
+                            if (key.startsWith("BasicSettings-IrisDevices-")) setFullIrisDeviceString(key, nowSettings[key]);  // special case: multiple html component for one value
+                            else $('#' + key).val(nowSettings[key]);
                         }
+                        // 若系统和当前用户设置的一致了，取消用户定义
+                        if ((key.startsWith("BasicSettings-IrisDevices-") && getFullIrisDeviceString(key) == nowSettings[key]) || $('#' + key).val() == nowSettings[key]) $("#m-" + key).hide();
                     }
-                }
-                if (key.startsWith("BasicSettings-IrisDevices-")) {  // 更新extra栏的序列号
-                    let idx = key.slice("BasicSettings-IrisDevices-".length);
-                    $("#SystemExtraInfos-Serial-" + idx).html(nowSettings[key]);
                 }
             }
         }
@@ -462,8 +491,6 @@
         }
         function updateDrawOriginSize(cnt) {
             let nowLen = $('#OriginGraph-body').children().length;
-            console.log(cnt);
-            console.log(nowLen);
             if (cnt > nowLen) {  // 创建更多
                 for (let i=nowLen; i<cnt; ++i) {
                     $('#OriginGraph-body').append($.templates("#GraphShowTemplate").render({num: i}));
@@ -549,9 +576,19 @@
             socketio.on('extraInfos', function(extraInfos) {
                 extraInfosFromServer(extraInfos);
             });
+            socketio.on('log', function(msg) {
+                console.log(msg);
+            });
+            socketio.on('alert', function(msg) {
+                $("#SystemLogs-body").append($.templates("#DynamicAlertTemplate").render({alertType: "warning", msg: msg}));
+            });
+            socketio.on('error', function(msg) {
+                console.error(msg);
+                $("#SystemLogs-body").append($.templates("#DynamicAlertTemplate").render({alertType: "danger", msg: msg}));
+            });
         });
         function leftButtonClicked(id) {
-            if (id == 'Test') socketio.emit('button', 'test');
+            if (id == 'Reset') socketio.emit('button', 'reset');
             if (id == 'Init') socketio.emit('button', 'init');
             if (id == 'Stop') socketio.emit('button', 'stop');
             if (id == 'Trig') socketio.emit('button', 'trig');
