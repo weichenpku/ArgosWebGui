@@ -72,7 +72,7 @@ class Device:
         print("%s write setting \"%s\" to \"%s\"" % (self.serial, key, val))
     
     def readSensor(self, *arg):
-        print("%s try read sensor %s" % (self.serial, str(arg)))
+        # print("%s try read sensor %s" % (self.serial, str(arg)))
         return 233.0
         
     def setupStream(self, RXTX, coding, chanlst, attr):
@@ -96,10 +96,8 @@ class Device:
 
     def writeStream(self, stream, npLst:list, length, flags):
         print("%s's stream %s write stream of lenth %d, flags are %s" % (self.serial, stream, length, str(flags)))
-        print(stream)
         for npidx in range(len(npLst)):
             for chan in (0,1):
-                print("______----___", self.streams[chan].name)
                 if self.streams[chan].name == stream:
                     self.streams[chan].data = npLst[npidx]  # just save it
         return FakeRetClass(length)

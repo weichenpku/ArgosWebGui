@@ -17,18 +17,16 @@ def nowSettings():  # 用户想获取当前的系统信息，返回一个字典
     for i in range(main.IrisCount):
         ret['userSettings']['BasicSettings-IrisDevices-%d' % i] = main.IrisSerialNums[i]
     if main.IrisObj is not None:
-        ret['availableRxGains'] = main.IrisObj.availableRxGains()
-        ret['availableTxGains'] = main.IrisObj.availableTxGains()
-        nowGainRx, nowGainTx = main.IrisObj.nowGains()
-        for i,ele in enumerate(nowGainRx):
-            for gainKey in ele:
-                ret['userSettings']['GainSettings-Rx-%d-%s' % (i, gainKey)] = ele[gainKey]  # 把设置加入进去
-        for i,ele in enumerate(nowGainTx):
-            for gainKey in ele:
-                ret['userSettings']['GainSettings-Tx-%d-%s' % (i, gainKey)] = ele[gainKey]  # 把设置加入进去
+        gains = main.IrisObj.nowGains()
+        ret["gainStructure"] = gains["list"]
+        nowGain = main.IrisObj.nowGains()
+        data = gains["data"]
+        for gainKey in data:
+            ret['userSettings']['GainSettings-%s' % gainKey] = data[gainKey]  # 把设置加入进去
     else:
-        ret['availableRxGains'] = []
-        ret['availableTxGains'] = []
+        ret["gainStructure"] = []
+    ret['userSettings']['BasicSettings-RunMode'] = main.mode
+    ret['availableModes'] = main.availableModes  # tell user about this
     return ret
 
 def userClickButton(button):  # 用户点击按钮事件
@@ -53,7 +51,7 @@ def userSyncSettings(settings):
         if main.state == 'stopped':
             IrisCounttar = int(settings['BasicSettings-IrisCount'])
             if (IrisCounttar > main.IrisCount):
-                for i in range(IrisCounttar - main.IrisCount): main.IrisSerialNums.append('')
+                for i in range(IrisCounttar - main.IrisCount): main.IrisSerialNums.append('SERIAL-0-Rx-0')
             elif (IrisCounttar < main.IrisCount):
                 main.IrisSerialNums = main.IrisSerialNums[:IrisCounttar]  # 裁切
             main.IrisCount = IrisCounttar
@@ -67,17 +65,20 @@ def userSyncSettings(settings):
                     main.IrisSerialNums[idx] = settings[key]
             else:
                 GUI.error('cannot set BasicSettings in no \"stopped\" state')
-
-
-
-
+        elif key == "BasicSettings-RunMode":
+            if main.state == 'stopped':
+                main.mode = settings[key]
+            else:
+                GUI.error('cannot set RunMode in no \"stopped\" state')
+        elif key[:len("GainSettings-")] == "GainSettings-":
+            main.gainModified.enqueue(key[len("GainSettings-"):], settings[key])  # just enqueue, but not set gain directly, for safety!
 
 
 
 # flask服务器框架，本部分只包含通信，不包含任何逻辑
 from flask import Flask, render_template, jsonify, request, session, redirect, url_for
 from flask_socketio import SocketIO, emit, join_room, leave_room
-import logging
+import logging, json
 app = Flask(__name__)
 socketio = SocketIO()
 socketio.init_app(app=app)
@@ -95,6 +96,21 @@ def maincall():
 @app.route("/")
 def index():
     return app.send_static_file('index.html')
+@app.route('/save.json')
+def save():
+    return jsonify(nowSettings()["userSettings"])
+@app.route('/load', methods=['POST'])
+def load():
+    f = request.files['file']
+    try:
+        js = json.load(f)
+        main.gainModified.clear()  # first clear the queue, in case user load file for twice or more!
+        userSyncSettings(js)
+        sendSettingsToUser()
+        GUI.alert('config "%s" has been loaded' % f.filename)
+    except json.decoder.JSONDecodeError:
+        GUI.error('json file format error')
+    return 'haha'
 @socketio.on('connect')
 def ws_connect():
     GUI.log('socketio %s connect    at: %s' % (request.remote_addr, time.strftime("%Y-%m-%d %H:%M:%S", time.localtime())))
@@ -125,6 +141,7 @@ def timerSendUpdatedStateToUsers():
             main.sampleDataReady = False
             socketio.emit('samples', main.sampleData, broadcast=True)
         if main.extraInfosReady:
+            main.extraInfosReady = False
             socketio.emit('extraInfos', main.extraInfos, broadcast=True)
 socketio.start_background_task(timerSendUpdatedStateToUsers)
 if __name__=='__main__':

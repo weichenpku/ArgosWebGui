@@ -6,9 +6,7 @@ Web controller for Argos system, providing flexible and dynamic control to the s
 
 ## TODO
 
-1. change serial number input format to <serial - 0/1 - Tx/Rx - trigger
-2. change temperature showing to fully showing of host information
-3. add gain setting buttons
+1. mode settings
 
 ## Feature
 

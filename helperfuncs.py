@@ -1,4 +1,29 @@
-import time 
+import time, threading
+
+
+class ModifyQueue:
+    def __init__(self):
+        self.mutex = threading.Lock()
+        self.queue = []
+
+    def enqueue(self, key, value):
+        self.mutex.acquire()
+        self.queue.append((key, value))
+        self.mutex.release()
+    
+    def empty(self):
+        return len(self.queue) == 0
+    
+    def clear(self):
+        self.mutex.acquire()
+        self.queue.clear()
+        self.mutex.release()
+    
+    def dequeue(self):
+        self.mutex.acquire()
+        ret = self.queue.pop(0)
+        self.mutex.release()
+        return ret
 
 class LoopTimer:
     def __init__(self, func, timeMs, Always=False, running=True):
@@ -22,3 +47,17 @@ class LoopTimer:
     
     def stop(self):
         self.running = False
+
+def FormatFromSerialAntTRtrigger(ele):
+    print(ele)
+    a = ele.rfind('-')
+    if a == -1: return None
+    b = ele[:a].rfind('-')
+    if b == -1: return None
+    c = ele[:b].rfind('-')
+    if c == -1: return None
+    serial = ele[:c]
+    ant = ele[c+1:b]
+    TorR = ele[b+1:a]
+    trigger = (ele[a+1:] == '1')
+    return (serial, ant, TorR, trigger)

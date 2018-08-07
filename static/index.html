@@ -76,7 +76,9 @@
 
 </head>
 <body>
-
+    <form style="display: none;" method="POST" action="/load" id="loadFileInputForm">
+        <input type="file" id="loadFileInput" name="file" accept="application/json" onchange="$('#loadFileInputForm').submit();"> <!-- for loading json file -->
+    </form>
     <div class="container">
         <div class="icon"></div>
         <div class="header">Argos Controller <font style="font-size: 50%;">web version v0.1</font></div>
@@ -87,6 +89,8 @@
             <button type="button" class="btn btn-primary basic-button" id="Calib" disabled="disabled">Calib</button> <!-- 自动校准函数，TODO -->
             <button type="button" class="btn btn-light basic-button" id="Trig" onclick="leftButtonClicked('Trig');">Trig</button>
             <button type="button" class="btn btn-dark basic-button" id="Reset" onclick="leftButtonClicked('Reset');">Reset</button>
+            <button type="button" class="btn btn-success basic-button" onclick="window.open('/save.json')">Save</button>
+            <button type="button" class="btn btn-primary basic-button" onclick="$('#loadFileInput').click();">Load</button>
         </div>
         <div style="grid-area: main;">
             <div class="card">
@@ -137,7 +141,7 @@
                 <div id="BasicSettings" class="collapse show"><div class="card-body">
                     <!-- 设置使用的Iris模块编号等等 -->
                     <strong style="color: red;">* must stop and reinitialize to set</strong><br/><br/>
-                    <font>Iris count: (0 for simulation)</font>
+                    <font>Iris count:</font>
                     <div class="input-group">
                         <div class="input-group-prepend"><button type="button" class="btn btn-success" onclick="IrisCountChangeValue(-1);">-</button></div>
                         <input type="text" class="form-control" placeholder="Iris count" id="BasicSettings-IrisCount" value="0"
@@ -148,18 +152,21 @@
                     <div class="modified-warning" id="m-BasicSettings-IrisCount">* argument modified but not sync yet.</div>
                     <div style="margin-left: 80px; margin-right: -20px;">channel👇<font style="margin-left: 27px;">trigger👇</font></div>
                     <div id="IrisDevicesBox"></div>
+                    <div style="margin-top: 10px;">
+                        <button class="btn btn-outline-primary dropdown-toggle" type="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false" style="width: 100%;"
+                            id="BasicSettings-RunMode" value="choose a mode">choose a mode</button>
+                        <div class="dropdown-menu" id="BasicSettings-RunModeBox">
+                            <a class="dropdown-item" href="#" modename="choose a mode"
+                                onclick="$('#BasicSettings-RunMode').html('choose a mode'); $('#BasicSettings-RunMode').val('choose a mode'); generalValChanged('BasicSettings-RunMode');">choose a mode</a>
+                        </div>
+                    </div>
+                    <div class="modified-warning" id="m-BasicSettings-RunMode">* argument modified but not sync yet.</div>
                 </div></div>
             </div>
             <div class="card">
                 <div class="card-header"><button class="btn btn-link" data-toggle="collapse" data-target="#GainSettings" aria-expanded="true">Gain Settings</button></div>
-                <div id="GainSettings" class="collapse"><div class="card-body">
+                <div id="GainSettings" class="collapse"><div class="card-body" id="GainSettingsBox" style="padding-bottom: 10px; padding-top: 10px;">
                     <!-- 设置每一个Iris的Gain，各种Gain..... -->
-                    <div id="GainSettings-RXDIV">
-                        
-                    </div>
-                    <div id="GainSettings-TXDIV">
-
-                    </div>
                 </div></div>
             </div>
             <button style="width: 100%; margin-bottom: 10px;" class="btn btn-danger" onclick="rejectAllModification();">reject all modification</button>
@@ -190,6 +197,7 @@
     <script src="/static/js/qunee-min.js"></script>
     <script src="/static/js/jcanvas.min.js"></script>
     <script src="/static/js/dygraph.min.js"></script>
+    <script src="/static/js/jquery.form.js"></script>
 
     <script id='IrisSerialInput' type="text/html">
         <div class="input-group" style="margin-bottom: 5px;" id="BasicSettings-IrisDevices-Box-{{:num}}">
@@ -222,45 +230,25 @@
     </script>
 
     <script id='GraphShowTemplate' type="text/html">
-        <div>
-            <font>({{:num}}):</font>&nbsp;
-            <input type="checkbox" onclick="updateManualGraph();" id="OriginGraphCheckI-{{:num}}">I&nbsp;
-            <input type="checkbox" onclick="updateManualGraph();" id="OriginGraphCheckQ-{{:num}}">Q
+        <div id="OriginGraphDiv-{{:name}}">
+            <font>({{:name}}):</font>&nbsp;
+            <input type="checkbox" onclick="updateManualGraph();" id="OriginGraphCheckI-{{:name}}">I&nbsp;
+            <input type="checkbox" onclick="updateManualGraph();" id="OriginGraphCheckQ-{{:name}}">Q
             <br/>
-            <div style="height: 150px;" id="OriginGraph-{{:num}}"></div>
+            <div style="height: 150px;" id="OriginGraph-{{:name}}"></div>
         </div>
     </script>
 
     <script id='SystemExtraInfosTemplate' type="text/html">
-        <div id="SystemExtraInfos-DIV-{{:num}}">
-            <strong>Num {{:num}} (<font id="SystemExtraInfos-Serial-{{:num}}">UNKNOWN</font>):</strong>
-            <ul>
-                <li>LMS7 temp.: <strong id="SystemExtraInfos-LMS7-{{:num}}">UNKNOWN</strong></li>
-                <li>Zynq temp.: <strong id="SystemExtraInfos-Zynq-{{:num}}">UNKNOWN</strong></li>
-                <li>Frontend temp.: <strong id="SystemExtraInfos-Frontend-{{:num}}">UNKNOWN</strong></li>
-                <li>PA0 temp.: <strong id="SystemExtraInfos-PA0-{{:num}}">UNKNOWN</strong></li>
-                <li>PA1 temp.: <strong id="SystemExtraInfos-PA1-{{:num}}">UNKNOWN</strong></li>
+        <div>
+            <strong>{{:serial}}:</strong>
+            <ul id="SystemExtraInfos-ULBOX-{{:serial}}">
             </ul>
         </div>
     </script>
 
-    <script id='IrisGainSettingsTemplate' type="text/html">
-        <div id="GainSettings-{{:TorR}}XDIV-0">
-            <strong>{{:TorR}}x (0) "0013":</strong>
-            <!-- add gain settings here (IrisGainSettingsSingleInputTemplate) -->
-        </div>
-    </script>
-
-    <script id='IrisGainSettingsSingleInputTemplate' type="text/html">
-        <div class="form-group row" style="margin-bottom: 2px;">
-            <label class="col-form-label" style="margin-left: 30px;"><strong>· {{:gainKey}}</strong></label>
-            <div class="col-sm-6">
-                <!-- 允许输入特殊字符，因为可能需要设置precode这种复数？不管了，直接字符串发过去好了 -->
-                <input type="text" class="form-control form-control-sm" placeholder="Iris count" id="GainSettings-{{:TorR}}x-{{:TorRnum}}-{{:gainKey}}" value="0"
-                onKeyPress="if (event.keyCode == 13) event.srcElement.blur();"
-                onblur="generalValChanged('GainSettings-{{:TorR}}x-{{:TorRnum}}-{{:gainKey}}');" >
-            </div>
-        </div>
+    <script id='SystemExtraInfosElementTemplate' type="text/html">
+        <li keyName="{{:name}}">{{:name}}: <strong>UNKNOWN</strong></li>
     </script>
 
     <script id="DynamicAlertTemplate" type="text/html">
@@ -271,6 +259,30 @@
             </button>
         </div>
     </script>
+
+    <script id="RunModeElementTemplate" type="text/html">
+        <a class="dropdown-item" href="#" onclick="$('#BasicSettings-RunMode').html('{{:name}}'); $('#BasicSettings-RunMode').val('{{:name}}'); generalValChanged('BasicSettings-RunMode');" modename="{{:name}}">{{:name}}</a>
+    </script>
+
+    <script id="GainSettingBlockTemplate" type="text/html">
+        <div id="GainSettings-{{:name}}">
+            <strong style="font-size: 150%">{{:name}}</strong>
+        </div>
+    </script>
+
+    <script id="GainSettingTemplate" type="text/html">
+        <div class="input-group input-group-sm" style="margin-bottom: 5px;">
+            <div class="input-group-prepend">
+                <span class="input-group-text" id="inputGroup-sizing-sm">{{:gainkey}}</span>
+            </div>
+            <!-- 允许输入特殊字符，因为可能需要设置precode这种复数？不管了，直接字符串发过去好了 -->
+            <input type="text" class="form-control" aria-label="Small" aria-describedby="inputGroup-sizing-sm" id="GainSettings-{{:name}}-{{:gainkey}}"
+                onKeyPress="if (event.keyCode == 13) event.srcElement.blur();"
+                onblur="generalValChanged('GainSettings-{{:name}}-{{:gainkey}}');">
+            <div class="modified-warning" id="m-GainSettings-{{:name}}-{{:gainkey}}">* argument modified but not sync yet.</div>
+        </div>
+    </script>
+
 
     <script>
         var nowSettings = {};  // 字典记录用户输出操作之前的值，如果用户没有改变输入则不触发发送
@@ -346,13 +358,16 @@
             let val = $("#" + key).val();
             if (key.startsWith("BasicSettings-IrisDevices-")) {  // special handle this
                 val = getFullIrisDeviceString(key);
-            }
+            } /*else if (key == "BasicSettings-RunMode") { // special handle this
+                val = $("#BasicSettings-RunMode option:selected").attr("modeName");
+            }*/
             val = filter(key, val);  // 为了防止有的值超出范围，这里做一个filter操作，修正用户输入
             if (key in nowSettings && nowSettings[key] == val) {  // 用户虽然点击了input框，但与服务器端的值相同（或许没有改变输入框，又或许输入的刚好和服务器一样了）
                 $("#m-" + key).hide();
                 if (key in userModified) delete userModified[key];  // 从用户修改列表中删除
                 return;
             }
+            
             // console.log("generalValChanged: \"" + key + "\"");
             // console.log(val);
             $("#m-" + key).show();  // 显示地告诉用户这个元素没有被同步
@@ -362,18 +377,24 @@
         function idInDOM(id) {
             return ($("#" + id).length > 0)
         }
+        function updateSettingsSubfunc(key, val) {
+            if (key.startsWith("BasicSettings-IrisDevices-")) setFullIrisDeviceString(key, val);  // special case: multiple html component for one value
+            else if (key == "BasicSettings-RunMode") { $('#' + key).html(nowSettings[key]); $('#' + key).attr('value', val); }
+            else $('#' + key).val(nowSettings[key]);
+        }
         function updateSettingsNotSyncFlag(ignoreUserSet=false) {  // 对所有在nowSettings中的key做判断
             for (let key in nowSettings) {
                 if (idInDOM(key) || (key.startsWith("BasicSettings-IrisDevices-") && idInDOM("m-" + key))) {  // 不存在的元素不管
                     if ($('#m-' + key).is(':hidden')) {  // 只有hidden的，才是没有用户修改过的，系统才能够正常去修改他
-                        $('#' + key).val(nowSettings[key]);
+                        updateSettingsSubfunc(key, nowSettings[key]);
                     } else {
                         if (ignoreUserSet) {
-                            if (key.startsWith("BasicSettings-IrisDevices-")) setFullIrisDeviceString(key, nowSettings[key]);  // special case: multiple html component for one value
-                            else $('#' + key).val(nowSettings[key]);
+                            updateSettingsSubfunc(key, nowSettings[key]);
                         }
                         // 若系统和当前用户设置的一致了，取消用户定义
-                        if ((key.startsWith("BasicSettings-IrisDevices-") && getFullIrisDeviceString(key) == nowSettings[key]) || $('#' + key).val() == nowSettings[key]) $("#m-" + key).hide();
+                        if ((key.startsWith("BasicSettings-IrisDevices-") && getFullIrisDeviceString(key) == nowSettings[key]) 
+                            //|| (key.startsWith("BasicSettings-RunMode") && $("#BasicSettings-RunMode").html() == nowSettings[key])
+                            || $('#' + key).val() == nowSettings[key]) $("#m-" + key).hide();
                     }
                 }
             }
@@ -385,6 +406,40 @@
         function settingsUpdateFromServer(settings) {  // 服务器发过来当前的settings
             $('#SystemBasicInfo-SystemVersion').html(settings.version);
             $('#SystemBasicInfo-RunStatus').html(settings.state);
+            if ("availableModes" in settings) {
+                let runmodebox = $("#BasicSettings-RunModeBox");
+                runmodebox.find("[modename!='choose a mode']").attr("toDelete", "yes");
+                for (let i in settings.availableModes) {
+                    let found = runmodebox.find("[modename='" + settings.availableModes[i] + "']");
+                    if (runmodebox.find("[modename='" + settings.availableModes[i] + "']").length == 0) {
+                        runmodebox.append($.templates('#RunModeElementTemplate').render({name: settings.availableModes[i]}));
+                    } else {
+                        found.removeAttr("toDelete")
+                    }
+                }
+                runmodebox.find("[toDelete='yes']").remove();
+            }
+            if ("gainStructure" in settings) {
+                let santarr = settings["gainStructure"];
+                let gainbox = $("#GainSettingsBox");
+                gainbox.children().attr("toDelete", "yes");
+                for (let i in santarr) {
+                    let name = santarr[i][0];
+                    let keys = santarr[i][1];
+                    if (!idInDOM("GainSettings-" + name)) {
+                        gainbox.append($.templates("#GainSettingBlockTemplate").render({name: name}));
+                        let ele = $("#GainSettings-" + name);
+                        for (let j in keys) {
+                            let key = keys[j];
+                            ele.append($.templates("#GainSettingTemplate").render({name: name, gainkey: key}));
+                        }
+                        
+                    } else {
+                        $("#GainSettings-" + name).removeAttr("toDelete");
+                    }
+                }
+                gainbox.find("[toDelete='yes']").remove();
+            }
             if (settings.state == "stopped") {  // stopped stop-pending
                 $('#Init').removeAttr("disabled");  $('#Stop').attr("disabled", "disabled"); $("#SystemBasicInfo-RunStatus").css('color', 'red');
             } else if (settings.state == "running") {  // running run-pending
@@ -400,7 +455,6 @@
             } else {
                 updateIrisCount(parseInt(nowSettings['BasicSettings-IrisCount']));  // TODO: 修改其他结构
             }
-            updateDrawOriginSize(parseInt(nowSettings['BasicSettings-IrisCount']));
             updateSettingsNotSyncFlag();
         }
         function changeSetMode(mode) {
@@ -410,31 +464,54 @@
             }
         }
         function extraInfosFromServer(extraInfos) {
-            let len = $('#SystemExtraInfos-body').children().length;
-            for (let i=0; i<len; ++i) {
-                if ("LMS7-" + i in extraInfos) $("#SystemExtraInfos-LMS7-" + i).html(extraInfos["LMS7-" + i]);
-                if ("Zynq-" + i in extraInfos) $("#SystemExtraInfos-Zynq-" + i).html(extraInfos["Zynq-" + i]);
-                if ("Frontend-" + i in extraInfos) $("#SystemExtraInfos-Frontend-" + i).html(extraInfos["Frontend-" + i]);
-                if ("PA0-" + i in extraInfos) $("#SystemExtraInfos-PA0-" + i).html(extraInfos["PA0-" + i]);
-                if ("PA1-" + i in extraInfos) $("#SystemExtraInfos-PA1-" + i).html(extraInfos["PA1-" + i]);
+            $('#SystemExtraInfos-body').children().attr("toDelete", "yes");
+            if ('list' in extraInfos && 'data' in extraInfos) {
+                let lst = extraInfos['list'];
+                let dat = extraInfos['data'];
+                for (let i in lst) {
+                    let serial = lst[i];
+                    let localdata = dat[serial];
+                    if ($("#SystemExtraInfos-ULBOX-" + serial).length == 0) {
+                        $("#SystemExtraInfos-body").append($.templates("#SystemExtraInfosTemplate").render({serial: serial}));
+                    }
+                    let ulbox = $("#SystemExtraInfos-ULBOX-" + serial);
+                    ulbox.parent().removeAttr("toDelete");
+                    for (let j in localdata) {
+                        let key = localdata[j][0];
+                        let val = localdata[j][1];
+                        if (ulbox.find("[keyName='" + key + "']").length == 0) {
+                            ulbox.append($.templates("#SystemExtraInfosElementTemplate").render({name: key}))
+                        }
+                        ulbox.find("[keyName='" + key + "']").find("strong").html(val);
+                    }
+                }
+            } else {
+                console.error("extraInfos doesn't have list or data, do not kown how to display");
+                $('#SystemExtraInfos-body').children().remove();  // delete all its children
             }
+            $('#SystemExtraInfos-body').find("[toDelete='yes']").remove();
         }
+
+
+
+
 
 
         // 绘图操作
         var originData = {}; //{'I1': [1,2,2.5,2,1,0], 'Q1': [0,1,2,2.5,2,1]};
-        var grefers = [];
+        var originStruct = [];
+        var grefers = {};
         var grefAll = null;
         var grefManual = null;
-        function updateOrginGraph(i) {
+        function updateOrginGraph(name) {
             let data = [];
-            if ('I' + i in originData && 'Q' + i in originData && originData['I'+i].length == originData['Q'+i].length) {
-                let glen = originData['I'+i].length;
+            if ('I-' + name in originData && 'Q-' + name in originData && originData['I-'+name].length == originData['Q-'+name].length) {
+                let glen = originData['I-'+name].length;
                 for (let j=0; j<glen; ++j) {
-                    data.push([j, originData['I'+i][j], originData['Q'+i][j]]);
+                    data.push([j, originData['I-'+name][j], originData['Q-'+name][j]]);
                 }
             }
-            grefers[i].updateOptions( { 'file': data } );
+            grefers[name].updateOptions( { 'file': data } );
         }
         function updateMultipleGraph(graphref, checked) {
             let minlen = -1;
@@ -468,34 +545,41 @@
         function updateAllInOneGraph() {
             let nowLen = $('#OriginGraph-body').children().length;
             let checked = [];
-            for (let i=0; i<nowLen; ++i) {
-                checked.push('I' + i);
-                checked.push('Q' + i);
+            for (let i in originStruct) {
+                let name = originStruct[i];
+                checked.push('I-' + name);
+                checked.push('Q-' + name);
             }
             if (checked.length == 0) return;
             updateMultipleGraph(grefAll, checked);
         }
         function updateAllOriginGraph() {
-            let nowLen = $('#OriginGraph-body').children().length;
-            for (let i=0; i<nowLen; ++i) updateOrginGraph(i);
+            for (let i in originStruct) {
+                updateOrginGraph(originStruct[i]);
+            }
         }
         function updateManualGraph() {
             let nowLen = $('#OriginGraph-body').children().length;
             let checked = [];
-            for (let i=0; i<nowLen; ++i) {
-                if (document.getElementById('OriginGraphCheckI-' + i).checked) checked.push('I' + i);
-                if (document.getElementById('OriginGraphCheckQ-' + i).checked) checked.push('Q' + i);
+            for (let i in originStruct) {
+                let name = originStruct[i];
+                if (document.getElementById('OriginGraphCheckI-' + name).checked) checked.push('I-' + name);
+                if (document.getElementById('OriginGraphCheckQ-' + name).checked) checked.push('Q-' + name);
             }
             // if (checked.length == 0) return;  // if 0, just print none of them
             updateMultipleGraph(grefManual, checked);
         }
-        function updateDrawOriginSize(cnt) {
-            let nowLen = $('#OriginGraph-body').children().length;
-            if (cnt > nowLen) {  // 创建更多
-                for (let i=nowLen; i<cnt; ++i) {
-                    $('#OriginGraph-body').append($.templates("#GraphShowTemplate").render({num: i}));
+        function updateDrawWindows() {
+            settingstruct = originStruct;
+            let originbody = $('#OriginGraph-body');
+            originbody.children().attr("toDelete", "yes");
+            for (let i in settingstruct) {
+                let name = settingstruct[i];
+                let found = $("#OriginGraph-" + name);
+                if (found.length == 0) {
+                    originbody.append($.templates("#GraphShowTemplate").render({name: name}));
                     let g = new Dygraph(  // 会导致一些内存浪费，不过这部分不怎么变动，也还好
-                        document.getElementById("OriginGraph-" + i),
+                        document.getElementById("OriginGraph-" + name),
                         [],
                         {
                             labels: ['X', 'I', 'Q'],
@@ -504,16 +588,17 @@
                             strokeWidth: 1
                         }
                     );
-                    grefers[i] = g;
-                }
-            } else if (cnt < nowLen) {
-                for (let i=nowLen-1; i>=cnt; --i) {
-                    grefers[i].destroy();
-                    $('#OriginGraph-body').children()[i].remove();
-                }
+                    grefers[name] = g;
+                } else found.parent().removeAttr("toDelete");
             }
+            originbody.find("[toDelete='yes']").each(function() {
+                let id = $(this).attr("id");
+                let name = id.slice("OriginGraphDiv-".length);
+                grefers[name].destroy();
+                grefers.remove(name);  // delete from map
+            })
+            originbody.find("[toDelete='yes']").remove();
             updateAllOriginGraph();
-            console.log(originData);
         }
         $(function() {
             grefAll = new Dygraph(
@@ -540,14 +625,23 @@
             )
         });
         function samplesFromServer(samples) {
-            originData = samples;
-            updateAllInOneGraph();
+            console.log(samples);
+            originData = samples['data'];
+            originStruct = samples['struct'];
+            updateDrawWindows();
             updateAllOriginGraph();
+            updateAllInOneGraph();
             updateManualGraph();
         }
 
 
-
+        // 上传文件
+        $(function() {
+            $('#loadFileInputForm').ajaxForm(function() {
+                console.log("file has been uploaded");
+                $('#loadFileInput').val('');
+            })
+        })
         
 
         // 通信部分，逻辑不在以下部分实现

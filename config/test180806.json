@@ -1,0 +1,6 @@
+{
+  "BasicSettings-IrisCount": 2, 
+  "BasicSettings-IrisDevices-0": "0274-0-Tx-1", 
+  "BasicSettings-IrisDevices-1": "0274-1-Rx-0", 
+  "BasicSettings-RunMode": "sinosuid transceive"
+}

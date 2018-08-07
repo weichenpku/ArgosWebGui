@@ -1,0 +1,18 @@
+{
+  "BasicSettings-IrisCount": 2, 
+  "BasicSettings-IrisDevices-0": "0274-0-Tx-1", 
+  "BasicSettings-IrisDevices-1": "0274-1-Rx-0", 
+  "BasicSettings-RunMode": "sinosuid transceive", 
+  "GainSettings-0274-0-tx-ATTN": 0, 
+  "GainSettings-0274-0-tx-IAMP": 12, 
+  "GainSettings-0274-0-tx-PA1": 15, 
+  "GainSettings-0274-0-tx-PA2": 0, 
+  "GainSettings-0274-0-tx-PA3": 30, 
+  "GainSettings-0274-0-tx-PAD": 0, 
+  "GainSettings-0274-1-rx-ATTN": 0, 
+  "GainSettings-0274-1-rx-LNA": 25, 
+  "GainSettings-0274-1-rx-LNA1": 20, 
+  "GainSettings-0274-1-rx-LNA2": 13, 
+  "GainSettings-0274-1-rx-PGA": 14, 
+  "GainSettings-0274-1-rx-TIA": 0
+}

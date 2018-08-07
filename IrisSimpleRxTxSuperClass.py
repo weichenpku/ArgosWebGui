@@ -47,6 +47,17 @@ def main_test():  # you could play with this class here
     print(obj.getExtraInfos())  # get temperature information, note that this is for web controller, so may not friendly enough to read
     ret = obj.doSimpleRxTx(0.8+0.j)  # get samples received
     print(ret)
+    print(obj.nowGains())
+    from helperfuncs import ModifyQueue
+    queue = ModifyQueue()
+    queue.enqueue("0274-0-rx-LNA2", "10")
+    queue.enqueue("0274-1-tx-ATTN", "5")
+    dic = {}
+    while not queue.empty():
+        a = queue.dequeue()
+        dic[a[0]] = a[1]
+    obj.setGains(dic)
+
 
 class IrisSimpleRxTxSuperClass:
     def __init__(self, 
@@ -55,11 +66,10 @@ class IrisSimpleRxTxSuperClass:
         bw=None, 
         txGain=40.0, 
         rxGain=30.0, 
-        clockRate=80e6, 
+        clockRate=80e6,
         num_samps=1024,
         rx_serials_ant=[], 
-        tx_serials_ant=[],
-        all_used_serials=None
+        tx_serials_ant=[]
     ):
         self.sdrs = {}
         self.rx_gains = []
@@ -72,7 +82,6 @@ class IrisSimpleRxTxSuperClass:
         self.txStreams = []
         self.triggerIrisList = []
         self.all_used_serials = []
-        if all_used_serials is not None: elf.all_used_serials = [ele for ele in all_used_serials]
         self.rate = rate  # rate of sampling
         self.released = False
 
@@ -86,7 +95,7 @@ class IrisSimpleRxTxSuperClass:
             sdr = SoapySDR.Device(dict(driver="iris", serial=serial))
             self.sdrs[serial] = sdr
             if clockRate is not None: sdr.setMasterClockRate(clockRate)  # set master clock
-        self.all_used_serials = [serial for serial in self.all_used_serials if serial in self.sdrs]  # to avoid user input strange serial numbers :)
+        # self.all_used_serials = [serial for serial in self.all_used_serials if serial in self.sdrs]  # to avoid user input strange serial numbers :)
 
         # create basic gain settings for tx/rx (surely you can add new "gain" settings or even delete some of them in child class, it's up to you!)
         for serial_ant in self.rx_serials_ant:
@@ -219,13 +228,38 @@ class IrisSimpleRxTxSuperClass:
             sdr = self.sdrs[serial]
             sdr.deactivateStream(rxStream)
 
-        return self.sampsRecv
+        sampsTrans = [tone for serial_ant in self.tx_serials_ant]
+        return ((self.tx_serials_ant, sampsTrans), (self.rx_serials_ant, self.sampsRecv))  # together with transmit arrays
 
     @staticmethod
     def splitSerialAnt(serial_ant):
         idx = serial_ant.rfind(':')
         if idx == -1: return None
         return (serial_ant[:idx], int(serial_ant[idx+1:]))
+
+    def splitGainKey(self, gainKey):
+        a = gainKey.rfind('-')
+        if a == -1: return None
+        b = gainKey[:a].rfind('-')
+        if b == -1: return None
+        c = gainKey[:b].rfind('-')
+        if c == -1: return None
+        serial = gainKey[:c]
+        ant = gainKey[c+1:b]
+        txrx = gainKey[b+1:a]
+        key = gainKey[a+1:]
+        if ant != "1" and ant != "0": return None  # only for Iris, two antenna/channel
+        if txrx != "rx" and txrx != "tx": return None
+        serial_ant = serial + ':' + ant
+        index = -1
+        if txrx == "rx": index = self.rx_serials_ant.index(serial_ant)  # this step consume linear time! but always antenna is under 20 elements I guessssssss......
+        else: index = self.tx_serials_ant.index(serial_ant)
+        if index == -1: return None
+        gk = key
+        if txrx == "rx":
+            if not (gk=="LNA2" or gk=="LNA1" or gk=="ATTN" or gk=="LNA" or gk=="TIA" or gk=="PGA"): return None
+        elif not (gk=="ATTN" or gk=="PA1" or gk=="PA2" or gk=="PA3" or gk=="IAMP" or gk=="PAD"): return None
+        return serial_ant, index, txrx, key
     
     def setTrigger(self, triggerIrisList: list):  # the serial number of trigger Iris, I suppose there could be multiple trigger
         # note that in wy@180804 version, the simpleTriggerTxRx function just trigger them one-by-one, not consider the time difference
@@ -271,6 +305,7 @@ class IrisSimpleRxTxSuperClass:
         gk = gainKey
         serial, ant = IrisSimpleRxTxSuperClass.splitSerialAnt(serial_ant)
         chan = ant
+        sdr = self.sdrs[serial]
         if serial_ant in self.rx_serials_ant:
             if gk=="LNA2" or gk=="LNA1" or gk=="ATTN" or gk=="LNA" or gk=="TIA" or gk=="PGA":
                 try:
@@ -289,54 +324,60 @@ class IrisSimpleRxTxSuperClass:
                 return True
         return None
 
-    def updateGains(self, newGain):  # newGain is dict e.t. {"SERIAL:ANT-ATTN": 13} where SERIAL and ANT is defined before
-        for key in newGain:
-            idx = key.rfind('-')
-            if idx == -1:
-                print("Error: gain update key is not formatted as 'SERIAL:ANT-ATTN'")
-                continue
-            serial_ant = key[:idx]
-            gainKey = key[idx+1:]
-            gainObj = None
-            if serial_ant in self.rx_serials_ant: gainObj = self.rx_gains[self.rx_serials_ant.index(serial_ant)]
-            if serial_ant in self.tx_serials_ant: gainObj = self.tx_gains[self.tx_serials_ant.index(serial_ant)]
-            if gainObj is None:
-                print("Error: serial_ant %s is not in rx or tx list" % serial_ant)
-                continue
-            if self.changeGain(serial_ant, gainObj, gainKey, newGain(key)) is None:
-                print("Error: gainKey %s may not supported" % gainKey)
-
     def getExtraInfos(self):
         info = {}
-        for r,serial in enumerate(self.all_used_serials):  # to keep order, that's necessary for using web controller wy@180804
-            info["LMS7-%d" % r] = float(self.sdrs[serial].readSensor("LMS7_TEMP"))
-            info["Zynq-%d" % r] = float(self.sdrs[serial].readSensor("ZYNQ_TEMP"))
-            info["Frontend-%d" % r] = float(self.sdrs[serial].readSensor("FE_TEMP"))
-            info["PA0-%d" % r] = float(self.sdrs[serial].readSensor(SOAPY_SDR_TX, 0, 'TEMP'))
-            info["PA1-%d" % r] = float(self.sdrs[serial].readSensor(SOAPY_SDR_TX, 1, 'TEMP'))
+        info["list"] = [ele for ele in self.all_used_serials]
+        info["data"] = {}
+        for serial in self.all_used_serials:  # to keep order, that's necessary for using web controller wy@180804
+            localinfo = []
+            localinfo.append(["LMS7", float(self.sdrs[serial].readSensor("LMS7_TEMP"))])
+            localinfo.append(["Zynq", float(self.sdrs[serial].readSensor("ZYNQ_TEMP"))])
+            localinfo.append(["Frontend", float(self.sdrs[serial].readSensor("FE_TEMP"))])
+            localinfo.append(["PA0", float(self.sdrs[serial].readSensor(SOAPY_SDR_TX, 0, 'TEMP'))])
+            localinfo.append(["PA1", float(self.sdrs[serial].readSensor(SOAPY_SDR_TX, 1, 'TEMP'))])
+            info["data"][serial] = localinfo
         return info
     
-    def availableRxGains(self):  # tell user what gains could be adjusted
-        ret = []
-        for r,ele in self.rx_gains:
+    def nowGains(self):  # tell user what gains could be adjusted, as well as now values
+        ret = {}
+        rxlst = []
+        txlst = []
+        for serial_ant in self.rx_serials_ant:
+            serial, ant = IrisSimpleRxTxSuperClass.splitSerialAnt(serial_ant)
+            rxlst.append(serial + '-%d-rx' % ant)
+        for serial_ant in self.tx_serials_ant:
+            serial, ant = IrisSimpleRxTxSuperClass.splitSerialAnt(serial_ant)
+            txlst.append(serial + '-%d-tx' % ant)
+        data = {}
+        retlist = []
+        for r,name in enumerate(rxlst):
+            gains = self.rx_gains[r]
             a = []
-            for gainElementKey in ele:
-                a.append[(self.rx_serials_ant[r], gainElementKey)]
-            ret.append(a)
-        return ret
-
-    def availableTxGains(self):
-        ret = []
-        for r,ele in self.tx_gains:
+            for gainElementKey in gains:
+                a.append(gainElementKey)
+                data[name + '-' + gainElementKey] = gains[gainElementKey]
+            retlist.append([name, a])
+        for r,name in enumerate(txlst):
+            gains = self.tx_gains[r]
             a = []
-            for gainElementKey in ele:
-                a.append[(self.tx_serials_ant[r], gainElementKey)]
-            ret.append(a)
+            for gainElementKey in gains:
+                a.append(gainElementKey)
+                data[name + '-' + gainElementKey] = gains[gainElementKey]
+            retlist.append([name, a])
+        ret["list"] = retlist
+        ret["data"] = data
         return ret
-
-    def nowGains(self):
-        return self.rx_gains, self.tx_gains
-
+    
+    # WARNING: this function is NOT thread safe! call only in the same thread or use lock!
+    def setGains(self, gains):  # newGain is dict e.t. {"SERIAL-ANT-rx-gainKey": "13"} where SERIAL and ANT is defined before
+        for gainKey in gains:
+            ret = self.splitGainKey(gainKey)
+            if ret is None: continue
+            serial_ant, index, txrx, key = ret
+            gainObj = None
+            if txrx == 'rx': gainObj = self.rx_gains[index]
+            else: gainObj = self.tx_gains[index]
+            self.changeGain(serial_ant, gainObj, key, gains[gainKey])
 
 if __name__=='__main__':
     main_test()
