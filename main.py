@@ -44,7 +44,7 @@ extraInfosReady = False
 IrisObj = None
 gainModified = ModifyQueue()
 
-availableModes = ["sinosuid transceive", "foo", "bar"]
+availableModes = ["sinosuid transceive"]
 mode = availableModes[0]
 
 changed = False
@@ -95,8 +95,8 @@ def loop():
             state = "stop-pending"
         else:
             if mode == "sinosuid transceive":
-                from UserTrigOneSendOtherRecv import UserTrigOneSendOtherRecv
-                IrisObj = UserTrigOneSendOtherRecv(serials=IrisSerialNums)  # new object
+                from SinosuidTransceiveWithPrecode import SinosuidTransceiveWithPrecode
+                IrisObj = SinosuidTransceiveWithPrecode(serials=IrisSerialNums)  # new object
             state = 'running'
         changedF()
     elif state == 'stop-pending':
@@ -119,9 +119,9 @@ def loop():
             if userTrig:
                 userTrig = False
                 ret = IrisObj.doSimpleRxTx(0.8+0.j)
-                tx_serial_ant = ret[0][0]
+                tx_serial_ant = [ele.replace(':', '-') for ele in ret[0][0]]  # browser cannot handle id with ':' character
                 tx_complex_data = ret[0][1]
-                rx_serial_ant = ret[1][0]
+                rx_serial_ant = [ele.replace(':', '-') for ele in ret[1][0]]
                 rx_complex_data = ret[1][1]
                 struct = tx_serial_ant + rx_serial_ant
                 data = {}

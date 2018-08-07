@@ -674,11 +674,11 @@
                 console.log(msg);
             });
             socketio.on('alert', function(msg) {
-                $("#SystemLogs-body").append($.templates("#DynamicAlertTemplate").render({alertType: "warning", msg: msg}));
+                $("#SystemLogs-body").prepend($.templates("#DynamicAlertTemplate").render({alertType: "warning", msg: msg}));
             });
             socketio.on('error', function(msg) {
                 console.error(msg);
-                $("#SystemLogs-body").append($.templates("#DynamicAlertTemplate").render({alertType: "danger", msg: msg}));
+                $("#SystemLogs-body").prepend($.templates("#DynamicAlertTemplate").render({alertType: "danger", msg: msg}));
             });
         });
         function leftButtonClicked(id) {

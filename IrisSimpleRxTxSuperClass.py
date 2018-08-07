@@ -155,11 +155,20 @@ class IrisSimpleRxTxSuperClass:
             stream = sdr.setupStream(SOAPY_SDR_TX, SOAPY_SDR_CF32, [chan], {"remote:prot":"tcp", "remote:mtu":"1024"})
             self.txStreams.append(stream) 
             # for sdr in self.tx_sdrs: sdr.activateStream(txStream)  # not activate streams, leave it to child class or trigger function in this class
-
-    def doSimpleRxTx(self, precode=0.8+0.j):  # this is just a demo: send sinosuid to all tx, precode is to change the phase of carrier
+    
+    def buildTxTones(self):
         waveFreq = self.rate / 100  # every period has 100 points
         s_time_vals = np.array(np.arange(0, self.num_samps)).transpose() * 1 / self.rate  # time of each point
-        tone = np.exp(s_time_vals * 2.j * np.pi * waveFreq).astype(np.complex64) * precode
+        tone = np.exp(s_time_vals * 2.j * np.pi * waveFreq).astype(np.complex64)
+        return [tone for i in range(len(self.txStreams))]  # send all sinosuid wave
+    
+    def postProcessRxSamples(self):
+        for r,rxStream in enumerate(self.rxStreams):
+            sampsRecv = self.sampsRecv[r]  # received samples
+            # do nothing here, if you want to modify received stream (for example, to practice the process of recognize pilot and )
+
+    def doSimpleRxTx(self, precode=0.8+0.j):  # this is just a demo: send sinosuid to all tx, precode is to change the phase of carrier
+        tones = self.buildTxTones()  # build tx samples
 
         # create numpy arrays for receiving
         self.sampsRecv = [np.zeros(self.num_samps, np.complex64) for r in range(len(self.rxStreams))]
@@ -182,6 +191,7 @@ class IrisSimpleRxTxSuperClass:
             sdr.activateStream(txStream)  # activate it!
             # then send data, make sure that all data is written
             numSent = 0
+            tone = tones[r]
             while numSent < len(tone):
                 sr = sdr.writeStream(txStream, [tone[numSent:]], len(tone)-numSent, flags)
                 if sr.ret == -1: print("Error: Bad Write!")
@@ -228,14 +238,25 @@ class IrisSimpleRxTxSuperClass:
             sdr = self.sdrs[serial]
             sdr.deactivateStream(rxStream)
 
-        sampsTrans = [tone for serial_ant in self.tx_serials_ant]
-        return ((self.tx_serials_ant, sampsTrans), (self.rx_serials_ant, self.sampsRecv))  # together with transmit arrays
+        self.postProcessRxSamples()  # post-handle received data
+
+        return ((self.tx_serials_ant, tones), (self.rx_serials_ant, self.sampsRecv))  # together with transmit arrays
 
     @staticmethod
     def splitSerialAnt(serial_ant):
         idx = serial_ant.rfind(':')
         if idx == -1: return None
         return (serial_ant[:idx], int(serial_ant[idx+1:]))
+    
+    def rxGainKeyException(self, gainKey, newValue=None, gainObj=None):  # for DIY gain key
+        # do other setting works here
+        # return True if you update the new 'gain' successfully
+        return None
+    
+    def txGainKeyException(self, gainKey, newValue=None, gainObj=None):  # for DIY gain key
+        # do other setting works here
+        # return True if you update the new 'gain' successfully
+        return None
 
     def splitGainKey(self, gainKey):
         a = gainKey.rfind('-')
@@ -257,9 +278,36 @@ class IrisSimpleRxTxSuperClass:
         if index == -1: return None
         gk = key
         if txrx == "rx":
-            if not (gk=="LNA2" or gk=="LNA1" or gk=="ATTN" or gk=="LNA" or gk=="TIA" or gk=="PGA"): return None
-        elif not (gk=="ATTN" or gk=="PA1" or gk=="PA2" or gk=="PA3" or gk=="IAMP" or gk=="PAD"): return None
+            if gk not in self.rx_gains[index]: return None
+        elif gk not in self.tx_gains[index]: return None
         return serial_ant, index, txrx, key
+    
+    # return anything if cannot change the gain or unknown gainKey, otherwise just return None (or simply do not return)
+    def changeGain(self, serial_ant, gainObj, gainKey, gainNewValue):  # note that when using web controller, gainNewValue will always be string!
+        # you can overwrite this, but note that you can call IrisSimpleRxTxSuperClass.changeGain(self, xxx) to support basic gain settings without repeat code
+        gk = gainKey
+        serial, ant = IrisSimpleRxTxSuperClass.splitSerialAnt(serial_ant)
+        chan = ant
+        sdr = self.sdrs[serial]
+        if serial_ant in self.rx_serials_ant:
+            if gk=="LNA2" or gk=="LNA1" or gk=="ATTN" or gk=="LNA" or gk=="TIA" or gk=="PGA":
+                try:
+                    gainObj[gainKey] = int(gainNewValue)
+                    sdr.setGain(SOAPY_SDR_RX, chan, gainKey, gainObj[gainKey])
+                except:
+                    return None
+                return True
+            return self.rxGainKeyException(gainKey, newValue=gainNewValue, gainObj=gainObj)
+        elif serial_ant in self.tx_serials_ant:
+            if gk=="ATTN" or gk=="PA1" or gk=="PA2" or gk=="PA3" or gk=="IAMP" or gk=="PAD":
+                try:
+                    gainObj[gainKey] = int(gainNewValue)
+                    sdr.setGain(SOAPY_SDR_TX, chan, gainKey, gainObj[gainKey])
+                except:
+                    return None
+                return True
+            return self.txGainKeyException(gainKey, newValue=gainNewValue, gainObj=gainObj)
+        return None
     
     def setTrigger(self, triggerIrisList: list):  # the serial number of trigger Iris, I suppose there could be multiple trigger
         # note that in wy@180804 version, the simpleTriggerTxRx function just trigger them one-by-one, not consider the time difference
@@ -284,6 +332,13 @@ class IrisSimpleRxTxSuperClass:
         return notTriggered
     
     def __del__(self):
+        print('Iris destruction called')
+        for serial in self.sdrs:
+            sdr = self.sdrs[serial]
+            print('deleting serial:', serial)
+            if UseFakeSoapy: sdr.deleteref()  # this is simulation, if you want to delete all references, call it explicitly 
+            del sdr  # release sdr device
+        self.sdrs = None
         if not self.released:
             self.close()
     
@@ -298,31 +353,6 @@ class IrisSimpleRxTxSuperClass:
             serial, ant = IrisSimpleRxTxSuperClass.splitSerialAnt(serial_ant)
             self.sdrs[serial].closeStream(stream)
         self.released = True
-
-    # return anything if cannot change the gain or unknown gainKey, otherwise just return None (or simply do not return)
-    def changeGain(self, serial_ant, gainObj, gainKey, gainNewValue):  # note that when using web controller, gainNewValue will always be string!
-        # you can overwrite this, but note that you can call IrisSimpleRxTxSuperClass.changeGain(self, xxx) to support basic gain settings without repeat code
-        gk = gainKey
-        serial, ant = IrisSimpleRxTxSuperClass.splitSerialAnt(serial_ant)
-        chan = ant
-        sdr = self.sdrs[serial]
-        if serial_ant in self.rx_serials_ant:
-            if gk=="LNA2" or gk=="LNA1" or gk=="ATTN" or gk=="LNA" or gk=="TIA" or gk=="PGA":
-                try:
-                    gainObj[gainKey] = int(gainNewValue)
-                except:
-                    return None
-                sdr.setGain(SOAPY_SDR_RX, chan, gainKey, gainObj[gainKey])
-                return True
-        elif serial_ant in self.tx_serials_ant:
-            if gk=="ATTN" or gk=="PA1" or gk=="PA2" or gk=="PA3" or gk=="IAMP" or gk=="PAD":
-                try:
-                    gainObj[gainKey] = int(gainNewValue)
-                except:
-                    return None
-                sdr.setGain(SOAPY_SDR_TX, chan, gainKey, gainObj[gainKey])
-                return True
-        return None
 
     def getExtraInfos(self):
         info = {}
@@ -355,14 +385,14 @@ class IrisSimpleRxTxSuperClass:
             a = []
             for gainElementKey in gains:
                 a.append(gainElementKey)
-                data[name + '-' + gainElementKey] = gains[gainElementKey]
+                data[name + '-' + gainElementKey] = str(gains[gainElementKey])
             retlist.append([name, a])
         for r,name in enumerate(txlst):
             gains = self.tx_gains[r]
             a = []
             for gainElementKey in gains:
                 a.append(gainElementKey)
-                data[name + '-' + gainElementKey] = gains[gainElementKey]
+                data[name + '-' + gainElementKey] = str(gains[gainElementKey])
             retlist.append([name, a])
         ret["list"] = retlist
         ret["data"] = data

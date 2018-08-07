@@ -33,15 +33,19 @@ class FakeStream:
 
 class Device:
     def __init__(self, attr):
+        print("Device construction called")
         self.serial = attr["serial"]
         global fakeDeviceInstants  # to model wireless channel
         fakeDeviceInstants[self.serial] = self
         print(fakeDeviceInstants)
         self.streams = [FakeStream(self.serial), FakeStream(self.serial)]
     
-    def __del__(self):
+    def deleteref(self):
         global fakeDeviceInstants
         if self.serial in fakeDeviceInstants: fakeDeviceInstants.pop(self.serial)
+
+    def __del__(self):
+        print("Device destruction called")
     
     def setMasterClockRate(self, clockRate):
         print("%s set clockRate to %d" % (self.serial, clockRate))

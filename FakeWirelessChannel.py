@@ -11,6 +11,7 @@ Direction_TX = 1
 
 # you can simulate channel in here, with all tx/rx streams known, you can build any channel here!
 def rxStreamFromAllChannel(stream, devices, npobj, length):
+    print(stream, devices, npobj, length)
     # return rxStreamFromConstantReceive_wy180805(stream, devices, npobj, length)
     return rxStreamFromSimpleTxAndOtherReceive_wy180805(stream, devices, npobj, length)
 
