@@ -90,7 +90,7 @@ def maincall():
     main.setup()
     GUI.log('setup finished at: %s' % time.strftime("%Y-%m-%d %H:%M:%S", time.localtime()))
     while True:
-        main.loop()
+        main.loop(socketio.sleep)
         socketio.sleep(main.loopDelay)
 
 @app.route("/")

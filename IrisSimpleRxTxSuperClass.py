@@ -32,14 +32,14 @@ import time
 
 def main_test():  # you could play with this class here
     obj = IrisSimpleRxTxSuperClass(
-        rate=10e6, 
-        freq=3.6e9, 
-        bw=None, 
-        txGain=40.0, 
-        rxGain=30.0, 
+        rate=10e6,
+        freq=3.6e9,
+        bw=None,
+        txGain=40.0,
+        rxGain=30.0,
         clockRate=80e6,
         num_samps=1024,
-        rx_serials_ant = ['0274:0'], 
+        rx_serials_ant = ['0274:0'],
         tx_serials_ant = ['0274:1']
     )
     obj.setTrigger(["0274"])

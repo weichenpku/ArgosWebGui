@@ -44,7 +44,7 @@ extraInfosReady = False
 IrisObj = None
 gainModified = ModifyQueue()
 
-availableModes = ["sinosuid transceive"]
+availableModes = ["sinosuid transceive", "hdf5 analysis"]
 mode = availableModes[0]
 
 changed = False
@@ -65,18 +65,17 @@ def extraInfosQueryTimerdo(timer):
     if IrisObj is not None:
         extraInfos = IrisObj.getExtraInfos()  # get information from Iris board
         extraInfosReady = True
-    else:  # 模拟状态，随便传过去些东西
-        ret = {"list": ["ele1", "ele2"], "data": {}}
-        for ele in ret["list"]:
-            localdata = []
-            localdata.append(["Temperature 1", time.time() % 10])
-            localdata.append(["Temperature 2", 2.2])
-            ret["data"][ele] = localdata
-        extraInfos = ret
+    else:  # error, inform user
+        extraInfos = {
+            "list": ["error"], 
+            "data": {
+                "error": [["Iris object", "None"], ["Please", "ask developer"]]
+            }
+        }
         extraInfosReady = True
 extraInfosQueryTimer = LoopTimer(extraInfosQueryTimerdo, 2000, Always=True)
 
-def loop():
+def loop(sleepFunc=None):
     global state
     global IrisCount
     global IrisSerialNums
@@ -87,17 +86,25 @@ def loop():
     global sampleDataReady
     global IrisObj
     if state == 'run-pending':
+        print(mode)
         if mode == "choose a mode":
             GUI.error("select a mode to run")
-            state = "stop-pending"
-        elif IrisCount == 0:
-            GUI.error("at least one Iris is required to run")
-            state = "stop-pending"
+            state = "stop-pending"            
         else:
-            if mode == "sinosuid transceive":
+            if mode == "hdf5 analysis":
+                print("ahhhahhahaha")
+                from Hdf5OfflineAnalysis import Hdf5OfflineAnalysis
+                IrisObj = Hdf5OfflineAnalysis(sleepFunc=sleepFunc)  # new object
+                IrisCount = 0
+                IrisSerialNums = []
+                state = 'running'
+            elif IrisCount == 0:  # the mode below requires IrisCount > 0
+                GUI.error("at least one Iris is required to run")
+                state = "stop-pending"
+            elif mode == "sinosuid transceive":
                 from SinosuidTransceiveWithPrecode import SinosuidTransceiveWithPrecode
                 IrisObj = SinosuidTransceiveWithPrecode(serials=IrisSerialNums)  # new object
-            state = 'running'
+                state = 'running'
         changedF()
     elif state == 'stop-pending':
         # deinitialize operations
@@ -135,5 +142,12 @@ def loop():
                     data["Q-" + serial_ant] = [float(e.imag) for e in cdat]
                 sampleData = {"struct": struct, "data": data}
                 sampleDataReady = True
-
-
+        if mode == "hdf5 analysis":
+            if userTrig:
+                userTrig = False
+                ret = IrisObj.givemesamples()
+                if ret is not None:
+                    sampleData = ret
+                    sampleDataReady = True
+                else:
+                    GUI.error("trigger failed, the hdf5 file may have error")

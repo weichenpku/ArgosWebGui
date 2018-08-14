@@ -409,7 +409,7 @@
             if ("availableModes" in settings) {
                 let runmodebox = $("#BasicSettings-RunModeBox");
                 runmodebox.find("[modename!='choose a mode']").attr("toDelete", "yes");
-                for (let i in settings.availableModes) {
+                for (let i=0; i < settings.availableModes.length; ++i) {
                     let found = runmodebox.find("[modename='" + settings.availableModes[i] + "']");
                     if (runmodebox.find("[modename='" + settings.availableModes[i] + "']").length == 0) {
                         runmodebox.append($.templates('#RunModeElementTemplate').render({name: settings.availableModes[i]}));
@@ -423,13 +423,13 @@
                 let santarr = settings["gainStructure"];
                 let gainbox = $("#GainSettingsBox");
                 gainbox.children().attr("toDelete", "yes");
-                for (let i in santarr) {
+                for (let i=0; i < santarr.length; ++i) {
                     let name = santarr[i][0];
                     let keys = santarr[i][1];
                     if (!idInDOM("GainSettings-" + name)) {
                         gainbox.append($.templates("#GainSettingBlockTemplate").render({name: name}));
                         let ele = $("#GainSettings-" + name);
-                        for (let j in keys) {
+                        for (let j=0; j < keys.length; ++j) {
                             let key = keys[j];
                             ele.append($.templates("#GainSettingTemplate").render({name: name, gainkey: key}));
                         }
@@ -468,7 +468,7 @@
             if ('list' in extraInfos && 'data' in extraInfos) {
                 let lst = extraInfos['list'];
                 let dat = extraInfos['data'];
-                for (let i in lst) {
+                for (let i=0; i < lst.length; ++i) {
                     let serial = lst[i];
                     let localdata = dat[serial];
                     if ($("#SystemExtraInfos-ULBOX-" + serial).length == 0) {
@@ -476,7 +476,7 @@
                     }
                     let ulbox = $("#SystemExtraInfos-ULBOX-" + serial);
                     ulbox.parent().removeAttr("toDelete");
-                    for (let j in localdata) {
+                    for (let j=0; j < localdata.length; ++j) {
                         let key = localdata[j][0];
                         let val = localdata[j][1];
                         if (ulbox.find("[keyName='" + key + "']").length == 0) {
@@ -554,14 +554,14 @@
             updateMultipleGraph(grefAll, checked);
         }
         function updateAllOriginGraph() {
-            for (let i in originStruct) {
+            for (let i=0; i < originStruct.length; ++i) {
                 updateOrginGraph(originStruct[i]);
             }
         }
         function updateManualGraph() {
             let nowLen = $('#OriginGraph-body').children().length;
             let checked = [];
-            for (let i in originStruct) {
+            for (let i=0; i < originStruct.length; ++i) {
                 let name = originStruct[i];
                 if (document.getElementById('OriginGraphCheckI-' + name).checked) checked.push('I-' + name);
                 if (document.getElementById('OriginGraphCheckQ-' + name).checked) checked.push('Q-' + name);
@@ -573,7 +573,7 @@
             settingstruct = originStruct;
             let originbody = $('#OriginGraph-body');
             originbody.children().attr("toDelete", "yes");
-            for (let i in settingstruct) {
+            for (let i=0; i < settingstruct.length; ++i) {
                 let name = settingstruct[i];
                 let found = $("#OriginGraph-" + name);
                 if (found.length == 0) {
@@ -595,7 +595,8 @@
                 let id = $(this).attr("id");
                 let name = id.slice("OriginGraphDiv-".length);
                 grefers[name].destroy();
-                grefers.remove(name);  // delete from map
+                delete grefers[name];  // delete from map
+                // grefers.remove(name);  
             })
             originbody.find("[toDelete='yes']").remove();
             updateAllOriginGraph();
@@ -672,6 +673,7 @@
             });
             socketio.on('log', function(msg) {
                 console.log(msg);
+                $("#SystemLogs-body").prepend($.templates("#DynamicAlertTemplate").render({alertType: "success", msg: msg}));
             });
             socketio.on('alert', function(msg) {
                 $("#SystemLogs-body").prepend($.templates("#DynamicAlertTemplate").render({alertType: "warning", msg: msg}));
