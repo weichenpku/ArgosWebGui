@@ -31,7 +31,7 @@ import time, random, GUI
 from helperfuncs import LoopTimer
 from helperfuncs import ModifyQueue
 
-version = "ArgosWebGui v0.1"
+version = "ArgosWebGui v0.2"
 state = "stopped"
 IrisCount = 0  # when it's 0, it could be used to test the web page functionality
 IrisSerialNums = []

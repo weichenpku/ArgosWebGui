@@ -53,9 +53,9 @@ class Hdf5OfflineAnalysis:
         self.info = {}
         GUI.log("hdf5 analysis file change to: " + newfile)
         filename = "NOFILE"
-        if os.path.exists(newfile):
+        if newfile != "" and os.path.exists(newfile):
             filename = newfile
-        elif os.path.exists(os.path.join('data', newfile)):
+        elif newfile != "" and os.path.exists(os.path.join('data', newfile)):
             filename = os.path.join('data', newfile)
         else:
             GUI.error("file doesn't exist")
