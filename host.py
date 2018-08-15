@@ -102,8 +102,9 @@ def save():
 @app.route('/load', methods=['POST'])
 def load():
     f = request.files['file']
+    st = str(f.read(), encoding="utf-8")
     try:
-        js = json.load(f)
+        js = json.loads(st)
         main.gainModified.clear()  # first clear the queue, in case user load file for twice or more!
         userSyncSettings(js)
         sendSettingsToUser()

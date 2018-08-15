@@ -135,7 +135,7 @@ class IrisSimpleRxTxSuperClass:
             if bw is not None: sdr.setBandwidth(SOAPY_SDR_TX, chan, bw)
             if freq is not None: sdr.setFrequency(SOAPY_SDR_TX, chan, "RF", freq)
             sdr.setAntenna(SOAPY_SDR_TX, chan, "TRX")
-            sdr.setFrequency(SOAPY_SDR_TX, chan, "BB", 0) #don't use cordic
+            sdr.setFrequency(SOAPY_SDR_TX, chan, "BB", 0)  # don't use cordic
             if rate is not None: sdr.setSampleRate(SOAPY_SDR_TX, chan, rate)
             for key in default_tx_gains:
                 sdr.setGain(SOAPY_SDR_TX, chan, key, default_tx_gains[key])

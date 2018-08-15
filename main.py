@@ -92,7 +92,6 @@ def loop(sleepFunc=None):
             state = "stop-pending"            
         else:
             if mode == "hdf5 analysis":
-                print("ahhhahhahaha")
                 from Hdf5OfflineAnalysis import Hdf5OfflineAnalysis
                 IrisObj = Hdf5OfflineAnalysis(sleepFunc=sleepFunc)  # new object
                 IrisCount = 0

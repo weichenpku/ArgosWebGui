@@ -3,13 +3,14 @@ parameters:
 
 """
 
-import GUI, h5py, time, os, lts
+import GUI, h5py, time, os, lts, pickle
 import numpy as np
 
 def main_test():  # you could play with this class here
     obj = Hdf5OfflineAnalysis()
-    obj.changeFile("ArgosCSI-96x2-2016-03-31-15-59-02_Jian_right_to_left.hdf5")
-    print(obj.givemesamples())
+    # obj.changeFile("ArgosCSI-96x2-2016-03-31-15-59-02_Jian_right_to_left.hdf5")
+    obj.changeFile("ArgosCSI-96x2-2016-03-31-15-53-27_Jian_left_to_right.hdf5")
+    # print(obj.givemesamples())
 
 class Hdf5OfflineAnalysis:
     def __init__(self, sleepFunc = None):  # provide sleep function to print log information during long time computation
@@ -88,7 +89,7 @@ class Hdf5OfflineAnalysis:
         csi[chunk_num*1000:] = np.mean(samps2csi(Pilot_Samples[chunk_num*1000:csi.shape[0],:,:,:], self.info["num_mob_ant"]+1, samps_per_user=self.info["samples_per_user"]),2)
         GUI.log("all chunk has finished")
 
-        self.info["timestep"] = float(self.info["frame_length"] / 20e6)	 # wy: a frame is 2ms, then 7664 frame is about 15s
+        self.info["timestep"] = float(self.info["frame_length"] / 20e6)	 # wy: 40000.0  a frame is 2ms, then 7664 frame is about 15s
         self.info["total_time"] = float(self.info["timestep"] * Pilot_Samples.shape[0])
         self.info["antenna count"] = int(Pilot_Samples.shape[1])
         self.info["frame count"] = int(Pilot_Samples.shape[0])
@@ -103,6 +104,13 @@ class Hdf5OfflineAnalysis:
         self.channel = 0
 
         f.close()  # cannot close when still using Pilot_Samples var
+
+        with open(os.path.join(os.path.dirname(__file__), 'data', 'temp.myinfo'), 'wb') as pf:
+            pickle.dump(self.info, pf, 0)
+            pickle.dump({
+                "time": time.strftime("%b %d %Y %H:%M:%S", time.localtime()),
+                "filename": self.filename
+            }, pf, 0)
         
         # csi axis are (7664: here are 1000 or under 1000, 3:'num_mob_ant'+1, 96:base station antenna, 64: fft_size, shifted)
 
@@ -147,7 +155,7 @@ class Hdf5OfflineAnalysis:
                                 if b > self.info["frame count"]: raise Exception()
                                 self.showrange = (a, b)  # update
                             except:
-                                GUI.error("new range from %d to %d is invalid" % (a, b))
+                                GUI.error("new range %s is invalid" % splts)
                         else:
                             GUI.error("cannot format range: \"%s\" like \"num-num\"" % gains[gainKey])
                     elif key == "OFDM_channel":
@@ -177,7 +185,22 @@ def samps2csi(samps, num_users,samps_per_user=224, fft_size=64):
     chunkstart = time.time()
 
     # number of frames, number of antennas, number of samples in each frame, number of users, IQ
-    usersamps = np.reshape(samps, (samps.shape[0],samps.shape[1],num_users,samps_per_user, 2) )	
+    usersamps = np.reshape(samps, (samps.shape[0],samps.shape[1],num_users, samps_per_user, 2) )	
+    samplerawiq = np.empty((samps.shape[1], samps_per_user),dtype='complex64')  # using frame No.1
+    tmpbests = np.empty(samps.shape[1], dtype='int32')
+    offsets = np.empty((samps.shape[0], num_users), dtype="int32")
+    for frame in range(samps.shape[0]):
+        for user in range(num_users - 1):  # offset only for user, but not noise
+            samplerawiq[:,:] = usersamps[frame, :, user, :, 0] + usersamps[frame, :, user, :, 1] * 1j
+            for ant in range(samps.shape[1]):
+                best, actual_ltss, peaks = lts.findLTS(samplerawiq[ant])
+                tmpbests[ant] = best[0]
+            offsets[frame,user] = int(np.median(tmpbests))
+            print(offsets[frame,user], [tmpbests[i] for i in range(10)])
+            time.sleep(0.001)
+    exit(0)
+
+
     iq = np.empty((samps.shape[0],samps.shape[1],num_users,2,fft_size),dtype='complex64')
     for i in range(2): #2 seperate estimates
         iq[:,:,:,i,:]=(usersamps[:,:,:,offset+i*fft_size:offset+(i+1)*fft_size,0] + usersamps[:,:,:,offset+i*fft_size:offset+(i+1)*fft_size,1]*1j) * 2**-15
