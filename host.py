@@ -43,7 +43,7 @@ def userClickButton(button):  # 用户点击按钮事件
     elif button == 'stop':
         if main.state == "running":
             main.state = "stop-pending"
-    elif button == 'trig':
+    elif button == 'trig' or button == 'AutoTrig':
         main.userTrig = True
 
 def userSyncSettings(settings):
@@ -121,7 +121,8 @@ def ws_disconnect():
     GUI.log('socketio %s disconnect at: %s' % (request.remote_addr, time.strftime("%Y-%m-%d %H:%M:%S", time.localtime())))
 @socketio.on('button')
 def ws_button(button):
-    GUI.log('user %s click button: %s' % (request.remote_addr, button))
+    if button != "AutoTrig":  # to avoid lots of output log!
+        GUI.log('user %s click button: %s' % (request.remote_addr, button))
     userClickButton(button)  # 逻辑层
     sendSettingsToUser()
 @socketio.on('syncSettings')

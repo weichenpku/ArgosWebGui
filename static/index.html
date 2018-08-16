@@ -179,6 +179,15 @@
                     <input type="radio" name="options" autocomplete="off"> Auto set
                 </label>
             </div>
+            <strong style="color: orchid; font-size: 15px;">* if auto, trigger once receive data</strong><br/>
+            <div class="btn-group btn-group-toggle" data-toggle="buttons" style="width: 100%; margin-bottom: 10px;">
+                <label class="btn btn-warning active" style="width: 50%;" onclick="changeTriggerMode(false);">
+                    <input type="radio" name="options" autocomplete="off" checked> One trigger
+                </label>
+                <label class="btn btn-warning" style="width: 50%;" onclick="changeTriggerMode(true);">
+                    <input type="radio" name="options" autocomplete="off"> Auto trigger
+                </label>
+            </div>
             <!--div class="card">
                 <div class="card-header"><button class="btn btn-link" data-toggle="collapse" data-target="#GainSettings" aria-expanded="true">Gain Settings</button></div>
                 <div id="GainSettings" class="collapse" aria-labelledby="headingOne" data-parent="#accordion"><div class="card-body">
@@ -288,6 +297,7 @@
         var nowSettings = {};  // 字典记录用户输出操作之前的值，如果用户没有改变输入则不触发发送
         var settingKeys = ["BasicSettings-IrisCount"];
         var settingMode = '';
+        var triggerMode = false;  // true means auto trig
         var userModified = {};
         function initNowValue() {
             for (let key in settingKeys) {
@@ -463,6 +473,15 @@
                 syncSettingsToServer();
             }
         }
+        function changeTriggerMode(mode) {
+            triggerMode = mode;
+            if (triggerMode) {
+                leftButtonClicked("startAutoTrig");
+                leftButtonClicked('AutoTrig');
+            } else {
+                leftButtonClicked("endAutoTrig");
+            }
+        }
         function extraInfosFromServer(extraInfos) {
             $('#SystemExtraInfos-body').children().attr("toDelete", "yes");
             if ('list' in extraInfos && 'data' in extraInfos) {
@@ -633,6 +652,9 @@
             updateAllOriginGraph();
             updateAllInOneGraph();
             updateManualGraph();
+            if (triggerMode) {  // auto trig function
+                leftButtonClicked('AutoTrig');
+            }
         }
 
 
@@ -688,6 +710,9 @@
             if (id == 'Init') socketio.emit('button', 'init');
             if (id == 'Stop') socketio.emit('button', 'stop');
             if (id == 'Trig') socketio.emit('button', 'trig');
+            if (id == 'startAutoTrig') socketio.emit('button', 'startAutoTrig');
+            if (id == 'endAutoTrig') socketio.emit('button', 'endAutoTrig');
+            if (id == 'AutoTrig') socketio.emit('button', 'AutoTrig');
         }
         function syncSettingsToServer() {
             console.log(userModified);
