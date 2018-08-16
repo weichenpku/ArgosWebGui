@@ -39,24 +39,27 @@ def main_test():  # you could play with this class here
         rxGain=30.0,
         clockRate=80e6,
         num_samps=1024,
-        rx_serials_ant = ['0274:0'],
-        tx_serials_ant = ['0274:1']
+        rx_serials_ant = ['RF3C000034:0'],
+        tx_serials_ant = []
     )
-    obj.setTrigger(["0274"])
+    obj.setTrigger(["RF3C000034"])
     print("not triggered objects:", obj.tryTrigger())  # if triggered, this will return a empty list
-    print(obj.getExtraInfos())  # get temperature information, note that this is for web controller, so may not friendly enough to read
-    ret = obj.doSimpleRxTx(0.8+0.j)  # get samples received
-    print(ret)
-    print(obj.nowGains())
-    from helperfuncs import ModifyQueue
-    queue = ModifyQueue()
-    queue.enqueue("0274-0-rx-LNA2", "10")
-    queue.enqueue("0274-1-tx-ATTN", "5")
-    dic = {}
-    while not queue.empty():
-        a = queue.dequeue()
-        dic[a[0]] = a[1]
-    obj.setGains(dic)
+    # print("not triggered objects:", obj.tryTrigger())  # if triggered, this will return a empty list
+    # print("not triggered objects:", obj.tryTrigger())  # if triggered, this will return a empty list
+    # print(obj.getExtraInfos())  # get temperature information, note that this is for web controller, so may not friendly enough to read
+    # ret = obj.doSimpleRxTx(0.8+0.j)  # get samples received
+    # print(ret)
+    # print(obj.nowGains())
+    # from helperfuncs import ModifyQueue
+    # queue = ModifyQueue()
+    # queue.enqueue("0274-0-rx-LNA2", "10")
+    # queue.enqueue("0274-1-tx-ATTN", "5")
+    # dic = {}
+    # while not queue.empty():
+    #     a = queue.dequeue()
+    #     dic[a[0]] = a[1]
+    # obj.setGains(dic)
+    obj.close()
 
 
 class IrisSimpleRxTxSuperClass:
@@ -316,16 +319,21 @@ class IrisSimpleRxTxSuperClass:
         for serial in self.triggerIrisList:
             if serial in self.sdrs:
                 self.sdrs[serial].writeSetting('SYNC_DELAYS', "")
-        for serial in self.sdrs:
-            self.sdrs[serial].setHardwareTime(0, "TRIGGER")
     
     def tryTrigger(self):  # test if all the Iris could be trigger by self.triggerIrisList, return the list of not triggered Iris' serial number
+        for serial in self.sdrs:
+            self.sdrs[serial].setHardwareTime(0, "TRIGGER")
         serial_list = [serial for serial in self.sdrs]  # put in a list to avoid random index of dictionary
-        timeLastTriggered0 = [self.sdrs[serial].getHardwareTime("TRIGGER") for serial in serial_list]
         for serial in self.triggerIrisList:  # just simple trigger all
             self.sdrs[serial].writeSetting("TRIGGER_GEN", "")
+        timeLastTriggered0 = [self.sdrs[serial].getHardwareTime("TRIGGER") for serial in serial_list]
         time.sleep(0.1)  # wait for all trigger work
+        for serial in self.triggerIrisList:  # just simple trigger all
+            self.sdrs[serial].writeSetting("TRIGGER_GEN", "")
+        time.sleep(0.1)
         timeLastTriggered1 = [self.sdrs[serial].getHardwareTime("TRIGGER") for serial in serial_list]
+        print(timeLastTriggered0)
+        print(timeLastTriggered1)
         notTriggered = []
         for i in range(len(timeLastTriggered0)):  # if trigger time not changed, it means it's not triggered
             if timeLastTriggered0[i] == timeLastTriggered1[i]: notTriggered.append(serial_list[i])
