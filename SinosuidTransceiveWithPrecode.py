@@ -35,6 +35,10 @@ class SinosuidTransceiveWithPrecode(IrisSimpleRxTxSuperClass):  # provding preco
             rx_serials_ant=rx_serials_ant, 
             tx_serials_ant=tx_serials_ant
         )
+        self.setTrigger(triggerIrisList)
+        triggerret = self.tryTrigger()
+        if len(triggerret) != 0:
+            GUI.alert("not triggered Iris: %s" % str(triggerret))
         for ele in self.tx_gains:  # add precode 'gain' :)
             ele["precode"] = 1.+0.j  
         for ele in self.rx_gains: 

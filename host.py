@@ -147,4 +147,4 @@ def timerSendUpdatedStateToUsers():
 socketio.start_background_task(timerSendUpdatedStateToUsers)
 if __name__=='__main__':
     GUI.registerSocketIO(socketio)  # enable GUI socketio
-    socketio.run(app, host='0.0.0.0', port=80)
+    socketio.run(app, host='0.0.0.0', port=8080)
