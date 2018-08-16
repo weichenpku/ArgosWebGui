@@ -28,8 +28,6 @@ class SinosuidTransceiveWithPrecode(IrisSimpleRxTxSuperClass):  # provding preco
             rate=10e6, 
             freq=3.6e9, 
             bw=None, 
-            txGain=40.0, 
-            rxGain=30.0, 
             clockRate=80e6, 
             num_samps=1024,
             rx_serials_ant=rx_serials_ant, 
