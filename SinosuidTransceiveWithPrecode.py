@@ -41,6 +41,7 @@ class SinosuidTransceiveWithPrecode(IrisSimpleRxTxSuperClass):  # provding preco
             ele["precode"] = 1.+0.j  
         for ele in self.rx_gains: 
             ele["postcode"] = 1.+0.j  # I don't known how to name it >.< see "postProcessRxSamples" below
+        self.maxSamples = 8192  # init max samples
     
     # override parent function!
     def buildTxTones(self):
@@ -79,4 +80,36 @@ class SinosuidTransceiveWithPrecode(IrisSimpleRxTxSuperClass):  # provding preco
                 return None
             return True
         return None
+
+    # add some parameter due to Xieyan Xu's advice, e.g. the "max sample" which is sent to the browser, to test the performance meanwhile limit overhead on browser
+    def nowGains(self):
+        ret = super(SinosuidTransceiveWithPrecode, self).nowGains()
+        ret["list"].insert(0, ["parameters", ["maxSamples"]])
+        ret["data"]["parameters-maxSamples"] = str(self.maxSamples)
+        return ret
     
+    def setGains(self, gains):
+        for gainKey in gains:
+            if gainKey == "parameters-maxSamples":
+                try:
+                    self.maxSamples = int(gains[gainKey])
+                except:
+                    GUI.error("set maxSamples error")
+        super(SinosuidTransceiveWithPrecode, self).setGains(gains)
+    
+    def doSimpleRxTx(self):
+        ret = super(SinosuidTransceiveWithPrecode, self).doSimpleRxTx()
+        ((_, tones), (_, sampsRecv)) = ret
+        exceeded = False  # flag to indicate whether there is sequence longer than self.maxSamples
+        for i in range(len(tones)):
+            if (len(tones[i]) > self.maxSamples):
+                tones[i] = tones[i][:self.maxSamples]
+                exceeded = True
+        for i in range(len(sampsRecv)):
+            if (len(sampsRecv[i]) > self.maxSamples):
+                sampsRecv[i] = sampsRecv[i][:self.maxSamples]
+                exceeded = True
+        if exceeded:
+            print("data has been sliced to %d due to maxSamples" % self.maxSamples)
+        return ret
+

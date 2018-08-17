@@ -45,7 +45,7 @@ def main_test():  # you could play with this class here
     # print("not triggered objects:", obj.tryTrigger())  # if triggered, this will return a empty list
     # print("not triggered objects:", obj.tryTrigger())  # if triggered, this will return a empty list
     # print(obj.getExtraInfos())  # get temperature information, note that this is for web controller, so may not friendly enough to read
-    # ret = obj.doSimpleRxTx(0.8+0.j)  # get samples received
+    # ret = obj.doSimpleRxTx()  # get samples received
     # print(ret)
     # print(obj.nowGains())
     # from helperfuncs import ModifyQueue
@@ -166,7 +166,7 @@ class IrisSimpleRxTxSuperClass:
             sampsRecv = self.sampsRecv[r]  # received samples
             # do nothing here, if you want to modify received stream (for example, to practice the process of recognize pilot and )
 
-    def doSimpleRxTx(self, precode=0.8+0.j):  # this is just a demo: send sinosuid to all tx, precode is to change the phase of carrier
+    def doSimpleRxTx(self):  # this is just a demo: send sinosuid to all tx
         tones = self.buildTxTones()  # build tx samples
 
         # create numpy arrays for receiving
@@ -406,7 +406,9 @@ class IrisSimpleRxTxSuperClass:
     def setGains(self, gains):  # newGain is dict e.t. {"SERIAL-ANT-rx-gainKey": "13"} where SERIAL and ANT is defined before
         for gainKey in gains:
             ret = self.splitGainKey(gainKey)
-            if ret is None: continue
+            if ret is None: 
+                print("unknown key: " + gainKey)
+                continue
             serial_ant, index, txrx, key = ret
             gainObj = None
             if txrx == 'rx': gainObj = self.rx_gains[index]

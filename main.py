@@ -131,7 +131,7 @@ def loop(sleepFunc=None):
         if mode == "sinosuid transceive":  # one send, the other receive
             if userTrig:
                 userTrig = False
-                ret = IrisObj.doSimpleRxTx(0.8+0.j)
+                ret = IrisObj.doSimpleRxTx()
                 tx_serial_ant = [ele.replace(':', '-') for ele in ret[0][0]]  # browser cannot handle id with ':' character
                 tx_complex_data = ret[0][1]
                 rx_serial_ant = [ele.replace(':', '-') for ele in ret[1][0]]
