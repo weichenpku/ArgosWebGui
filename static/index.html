@@ -7,6 +7,7 @@
     <!-- Bootstrap CSS -->
     <link rel="stylesheet" href="/static/css/bootstrap.min.css">
     <link rel="stylesheet" href="/static/css/dygraph.min.css">
+    <link rel="stylesheet" href="/static/css/bootstrap-switch.min.css">
 
     <title>ArgosController</title>
 
@@ -164,6 +165,13 @@
                 </div></div>
             </div>
             <div class="card">
+                <div class="card-header"><button class="btn btn-link" data-toggle="collapse" data-target="#OtherSettings" aria-expanded="true">Other Settings</button></div>
+                <div id="OtherSettings" class="collapse show"><div class="card-body">
+                    <strong style="margin-right:10px;">QueryExtra</strong><input type="checkbox" id="OtherSettings-QueryExtra" checked>
+                    <div class="modified-warning" id="m-OtherSettings-QueryExtra">* argument modified but not sync yet.</div>
+                </div></div>
+            </div>
+            <div class="card">
                 <div class="card-header"><button class="btn btn-link" data-toggle="collapse" data-target="#GainSettings" aria-expanded="true">Gain Settings</button></div>
                 <div id="GainSettings" class="collapse"><div class="card-body" id="GainSettingsBox" style="padding-bottom: 10px; padding-top: 10px;">
                     <!-- 设置每一个Iris的Gain，各种Gain..... -->
@@ -207,6 +215,7 @@
     <script src="/static/js/jcanvas.min.js"></script>
     <script src="/static/js/dygraph.min.js"></script>
     <script src="/static/js/jquery.form.js"></script>
+    <script src="/static/js/bootstrap-switch.min.js"></script>
 
     <script id='IrisSerialInput' type="text/html">
         <div class="input-group" style="margin-bottom: 5px;" id="BasicSettings-IrisDevices-Box-{{:num}}">
@@ -303,6 +312,25 @@
             for (let key in settingKeys) {
                 nowSettings[settingKeys[key]] = $("#" + settingKeys[key]).val();  // 初始化这些值是为了防止出现太多红色警告，不代表服务器真的是这些参数
             }
+            $('#OtherSettings-QueryExtra').bootstrapSwitch({
+                onText:"On",
+                offText:"Off",
+                onColor:"success",
+                offColor:"danger",
+                size:"small",
+                onSwitchChange:function(event,state){
+                    key = "OtherSettings-QueryExtra";
+                    val = (state ? "true" : "false");
+                    if (nowSettings[key] == val) {  // 用户虽然点击了input框，但与服务器端的值相同（或许没有改变输入框，又或许输入的刚好和服务器一样了）
+                        $("#m-" + key).hide();
+                        if (key in userModified) delete userModified[key];  // 从用户修改列表中删除
+                        return;
+                    }
+                    $("#m-" + key).show();  // 显示地告诉用户这个元素没有被同步
+                    userModified[key] = val;  // 更新表
+                    if (settingMode == 'auto') syncSettingsToServer();
+                }
+            });
         }
         $(initNowValue);  // 当文档准备好后init
         function IrisCountChangeValue(val) {
@@ -390,6 +418,7 @@
         function updateSettingsSubfunc(key, val) {
             if (key.startsWith("BasicSettings-IrisDevices-")) setFullIrisDeviceString(key, val);  // special case: multiple html component for one value
             else if (key == "BasicSettings-RunMode") { $('#' + key).html(nowSettings[key]); $('#' + key).attr('value', val); }
+            else if (key == "OtherSettings-QueryExtra") { $('#OtherSettings-QueryExtra').bootstrapSwitch('state', nowSettings[key]=='true' ? true : false); }
             else $('#' + key).val(nowSettings[key]);
         }
         function updateSettingsNotSyncFlag(ignoreUserSet=false) {  // 对所有在nowSettings中的key做判断
@@ -404,7 +433,8 @@
                         // 若系统和当前用户设置的一致了，取消用户定义
                         if ((key.startsWith("BasicSettings-IrisDevices-") && getFullIrisDeviceString(key) == nowSettings[key]) 
                             //|| (key.startsWith("BasicSettings-RunMode") && $("#BasicSettings-RunMode").html() == nowSettings[key])
-                            || $('#' + key).val() == nowSettings[key]) $("#m-" + key).hide();
+                            || $('#' + key).val() == nowSettings[key]
+                            || $('#OtherSettings-QueryExtra').bootstrapSwitch('state') == (nowSettings[key]=="true"?true:false)) $("#m-" + key).hide();
                     }
                 }
             }
@@ -414,6 +444,7 @@
             updateSettingsNotSyncFlag(ignoreUserSet=true);
         }
         function settingsUpdateFromServer(settings) {  // 服务器发过来当前的settings
+            console.log(settings)
             $('#SystemBasicInfo-SystemVersion').html(settings.version);
             $('#SystemBasicInfo-RunStatus').html(settings.state);
             if ("availableModes" in settings) {
@@ -443,7 +474,6 @@
                             let key = keys[j];
                             ele.append($.templates("#GainSettingTemplate").render({name: name, gainkey: key}));
                         }
-                        
                     } else {
                         $("#GainSettings-" + name).removeAttr("toDelete");
                     }

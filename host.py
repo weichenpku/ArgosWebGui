@@ -25,6 +25,8 @@ def nowSettings():  # 用户想获取当前的系统信息，返回一个字典
             ret['userSettings']['GainSettings-%s' % gainKey] = data[gainKey]  # 把设置加入进去
     else:
         ret["gainStructure"] = []
+    for key in main.otherSystemSettings:
+        ret['userSettings']["OtherSettings-" + key] = main.otherSystemSettings[key]
     ret['userSettings']['BasicSettings-RunMode'] = main.mode
     ret['availableModes'] = main.availableModes  # tell user about this
     return ret
@@ -72,6 +74,12 @@ def userSyncSettings(settings):
                 GUI.error('cannot set RunMode in no \"stopped\" state')
         elif key[:len("GainSettings-")] == "GainSettings-":
             main.gainModified.enqueue(key[len("GainSettings-"):], settings[key])  # just enqueue, but not set gain directly, for safety!
+        elif key[:len("OtherSettings-")] == "OtherSettings-":
+            if (key[len("OtherSettings-"):] in main.otherSystemSettings):
+                main.otherSystemSettings[key[len("OtherSettings-"):]] = settings[key]
+            else:
+                GUI.error("set unknown otherSettings, for developers, please first add the key into \"main.otherSystemSettings\"")
+            print(main.otherSystemSettings)
 
 
 

@@ -21,10 +21,12 @@ export variables:
     availableModes      # a list of mode strings which you could handle it in "loop" function, user could NOT change this during no "stopped" state
 
     gainModified        # ModifyQueue object, record gain modification and keep thread safety
+    
+    otherSystemSettings # other user settings which is structed as map
 
 export functions:
-    setup()              # running all the time you wish to, it could be a loop to check
-    loop()               # running all the time, you could check stream input/output, with delay 
+    setup()             # running all the time you wish to, it could be a loop to check
+    loop()              # running all the time, you could check stream input/output, with delay 
 """
 
 import time, random, GUI
@@ -43,6 +45,9 @@ extraInfos = {}
 extraInfosReady = False
 IrisObj = None
 gainModified = ModifyQueue()
+otherSystemSettings = {
+    'QueryExtra': 'true'
+}
 
 availableModes = ["sinosuid transceive", "hdf5 analysis"]
 mode = availableModes[0]
@@ -85,6 +90,7 @@ def loop(sleepFunc=None):
     global userTrig
     global sampleDataReady
     global IrisObj
+    global otherSystemSettings
     if state == 'run-pending':
         print(mode)
         if mode == "choose a mode":
@@ -113,7 +119,8 @@ def loop(sleepFunc=None):
         state = 'stopped'
         changedF()
     elif state == 'running':
-        extraInfosQueryTimer.loop()
+        if otherSystemSettings['QueryExtra'] == "true":
+            extraInfosQueryTimer.loop()
         if IrisObj is not None and  not gainModified.empty():  # set new gains during run-time (but not when using the stream, so it's safe)
             dic = {}
             while not gainModified.empty():
