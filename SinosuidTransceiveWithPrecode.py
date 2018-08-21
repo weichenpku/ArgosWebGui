@@ -29,18 +29,18 @@ class SinosuidTransceiveWithPrecode(IrisSimpleRxTxSuperClass):  # provding preco
             freq=3.6e9, 
             bw=None, 
             clockRate=80e6, 
-            num_samps=1024,
+            num_samps=128,
             rx_serials_ant=rx_serials_ant, 
             tx_serials_ant=tx_serials_ant
         )
-        self.setTrigger(triggerIrisList)
-        triggerret = self.tryTrigger()
-        if len(triggerret) != 0:
-            GUI.alert("not triggered Iris: %s" % str(triggerret))
-        for ele in self.tx_gains:  # add precode 'gain' :)
-            ele["precode"] = 1.+0.j  
-        for ele in self.rx_gains: 
-            ele["postcode"] = 1.+0.j  # I don't known how to name it >.< see "postProcessRxSamples" below
+        #self.setTrigger(triggerIrisList)
+        #triggerret = self.tryTrigger()
+        #if len(triggerret) != 0:
+        #    GUI.alert("not triggered Iris: %s" % str(triggerret))
+        #for ele in self.tx_gains:  # add precode 'gain' :)
+        #    ele["precode"] = 1.+0.j  
+        #for ele in self.rx_gains: 
+        #   ele["postcode"] = 1.+0.j  # I don't known how to name it >.< see "postProcessRxSamples" below
         self.maxSamples = 8192  # init max samples
     
     # override parent function!
@@ -56,6 +56,7 @@ class SinosuidTransceiveWithPrecode(IrisSimpleRxTxSuperClass):  # provding preco
     
     # override parent function!
     def postProcessRxSamples(self):
+        return
         for r,rxStream in enumerate(self.rxStreams):
             self.sampsRecv[r] *= complex(self.rx_gains[r]["postcode"])   # received samples
     
