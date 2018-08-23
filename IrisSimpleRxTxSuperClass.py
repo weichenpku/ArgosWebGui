@@ -36,7 +36,6 @@ def main_test():  # you could play with this class here
         freq=3.6e9,
         bw=None,
         clockRate=80e6,
-        num_samps=1024,
         rx_serials_ant = ['RF3C000034:0'],
         tx_serials_ant = []
     )
@@ -45,7 +44,7 @@ def main_test():  # you could play with this class here
     # print("not triggered objects:", obj.tryTrigger())  # if triggered, this will return a empty list
     # print("not triggered objects:", obj.tryTrigger())  # if triggered, this will return a empty list
     # print(obj.getExtraInfos())  # get temperature information, note that this is for web controller, so may not friendly enough to read
-    # ret = obj.doSimpleRxTx()  # get samples received
+    # ret = obj.doSimpleRxTx(1024)  # get samples received
     # print(ret)
     # print(obj.nowGains())
     # from helperfuncs import ModifyQueue
@@ -66,14 +65,12 @@ class IrisSimpleRxTxSuperClass:
         freq=3.6e9, 
         bw=None, 
         clockRate=80e6,
-        num_samps=1024,
         rx_serials_ant=[], 
         tx_serials_ant=[]
     ):
         self.sdrs = {}
         self.rx_gains = []
         self.tx_gains = []
-        self.num_samps = num_samps
         # deep copy of rx_serials_ant and tx_serials_ant, this is python necessary :)
         self.rx_serials_ant = [ele for ele in rx_serials_ant]
         self.tx_serials_ant = [ele for ele in tx_serials_ant]
@@ -155,9 +152,9 @@ class IrisSimpleRxTxSuperClass:
             self.txStreams.append(stream) 
             # for sdr in self.tx_sdrs: sdr.activateStream(txStream)  # not activate streams, leave it to child class or trigger function in this class
     
-    def buildTxTones(self):
+    def buildTxTones(self, num_samps):
         waveFreq = self.rate / 100  # every period has 100 points
-        s_time_vals = np.array(np.arange(0, self.num_samps)).transpose() * 1 / self.rate  # time of each point
+        s_time_vals = np.array(np.arange(0, num_samps)).transpose() * 1 / self.rate  # time of each point
         tone = np.exp(s_time_vals * 2.j * np.pi * waveFreq).astype(np.complex64)
         return [tone for i in range(len(self.txStreams))]  # send all sinosuid wave
     
@@ -166,11 +163,11 @@ class IrisSimpleRxTxSuperClass:
             sampsRecv = self.sampsRecv[r]  # received samples
             # do nothing here, if you want to modify received stream (for example, to practice the process of recognize pilot and )
 
-    def doSimpleRxTx(self):  # this is just a demo: send sinosuid to all tx
-        tones = self.buildTxTones()  # build tx samples
+    def doSimpleRxTx(self, num_samps):  # this is just a demo: send sinosuid to all tx
+        tones = self.buildTxTones(num_samps)  # build tx samples
 
         # create numpy arrays for receiving
-        self.sampsRecv = [np.zeros(self.num_samps, np.complex64) for r in range(len(self.rxStreams))]
+        self.sampsRecv = [np.zeros(num_samps, np.complex64) for r in range(len(self.rxStreams))]
 
         # clear out socket buffer from old requests
         for r,rxStream in enumerate(self.rxStreams):

@@ -108,8 +108,13 @@ def loop(sleepFunc=None):
                 state = "stop-pending"
             elif mode == "sinosuid transceive":
                 from SinosuidTransceiveWithPrecode import SinosuidTransceiveWithPrecode
-                IrisObj = SinosuidTransceiveWithPrecode(serials=IrisSerialNums)  # new object
-                state = 'running'
+                try:
+                    IrisObj = SinosuidTransceiveWithPrecode(serials=IrisSerialNums)  # new object
+                    state = 'running'
+                except RuntimeError as e:
+                    IrisObj = None
+                    GUI.error("RuntimeError: %s" % str(e))
+                    state = 'stop-pending'
         changedF()
     elif state == 'stop-pending':
         # deinitialize operations
