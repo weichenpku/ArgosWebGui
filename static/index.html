@@ -171,12 +171,6 @@
                     <div class="modified-warning" id="m-OtherSettings-QueryExtra">* argument modified but not sync yet.</div>
                 </div></div>
             </div>
-            <div class="card">
-                <div class="card-header"><button class="btn btn-link" data-toggle="collapse" data-target="#GainSettings" aria-expanded="true">Gain Settings</button></div>
-                <div id="GainSettings" class="collapse"><div class="card-body" id="GainSettingsBox" style="padding-bottom: 10px; padding-top: 10px;">
-                    <!-- 设置每一个Iris的Gain，各种Gain..... -->
-                </div></div>
-            </div>
             <button style="width: 100%; margin-bottom: 10px;" class="btn btn-danger" onclick="rejectAllModification();">reject all modification</button>
             <button style="width: 100%; margin-bottom: 10px;" class="btn btn-success" onclick="syncSettingsToServer();">sync settings <strong>to</strong> server</button>
             <div class="btn-group btn-group-toggle" data-toggle="buttons" style="width: 100%; margin-bottom: 10px;">
@@ -195,6 +189,12 @@
                 <label class="btn btn-warning" style="width: 50%;" onclick="changeTriggerMode(true);">
                     <input type="radio" name="options" autocomplete="off"> Auto trigger
                 </label>
+            </div>
+            <div class="card">
+                <div class="card-header"><button class="btn btn-link" data-toggle="collapse" data-target="#GainSettings" aria-expanded="true">Gain Settings</button></div>
+                <div id="GainSettings" class="collapse show"><div class="card-body" id="GainSettingsBox" style="padding-bottom: 10px; padding-top: 10px;">
+                    <!-- 设置每一个Iris的Gain，各种Gain..... -->
+                </div></div>
             </div>
             <!--div class="card">
                 <div class="card-header"><button class="btn btn-link" data-toggle="collapse" data-target="#GainSettings" aria-expanded="true">Gain Settings</button></div>
