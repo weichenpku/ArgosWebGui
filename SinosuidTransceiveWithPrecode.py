@@ -29,10 +29,10 @@ class SinosuidTransceiveWithPrecode(IrisSimpleRxTxSuperClass):  # provding preco
             freq=3.6e9, 
             bw=None, 
             clockRate=80e6, 
-            num_samps=128,
             rx_serials_ant=rx_serials_ant, 
             tx_serials_ant=tx_serials_ant
         )
+        self.numSamples = 1024  # could be changed during runtime
         #self.setTrigger(triggerIrisList)
         #triggerret = self.tryTrigger()
         #if len(triggerret) != 0:
@@ -41,12 +41,12 @@ class SinosuidTransceiveWithPrecode(IrisSimpleRxTxSuperClass):  # provding preco
         #    ele["precode"] = 1.+0.j  
         #for ele in self.rx_gains: 
         #   ele["postcode"] = 1.+0.j  # I don't known how to name it >.< see "postProcessRxSamples" below
-        self.maxSamples = 8192  # init max samples
+        self.showSamples = 8192  # init max samples
     
     # override parent function!
-    def buildTxTones(self):
+    def buildTxTones(self, numSamples):
         waveFreq = self.rate / 100  # every period has 100 points
-        s_time_vals = np.array(np.arange(0, self.num_samps)).transpose() * 1 / self.rate  # time of each point
+        s_time_vals = np.array(np.arange(0, numSamples)).transpose() * 1 / self.rate  # time of each point
         tone = np.exp(s_time_vals * 2.j * np.pi * waveFreq).astype(np.complex64)
         ret = []
         for i in range(len(self.txStreams)):
@@ -85,32 +85,38 @@ class SinosuidTransceiveWithPrecode(IrisSimpleRxTxSuperClass):  # provding preco
     # add some parameter due to Xieyan Xu's advice, e.g. the "max sample" which is sent to the browser, to test the performance meanwhile limit overhead on browser
     def nowGains(self):
         ret = super(SinosuidTransceiveWithPrecode, self).nowGains()
-        ret["list"].insert(0, ["parameters", ["maxSamples"]])
-        ret["data"]["parameters-maxSamples"] = str(self.maxSamples)
+        ret["list"].insert(0, ["parameters", ["numSamples", "showSamples"]])
+        ret["data"]["parameters-numSamples"] = str(self.numSamples)
+        ret["data"]["parameters-showSamples"] = str(self.showSamples)
         return ret
     
     def setGains(self, gains):
         for gainKey in gains:
-            if gainKey == "parameters-maxSamples":
+            if gainKey == "parameters-showSamples":
                 try:
-                    self.maxSamples = int(gains[gainKey])
+                    self.showSamples = int(gains[gainKey])
                 except:
-                    GUI.error("set maxSamples error")
+                    GUI.error("set showSamples error")
+            elif gainKey == "parameters-numSamples":
+                try:
+                    self.numSamples = int(gains[gainKey])
+                except:
+                    GUI.error("set numSamples error")
         super(SinosuidTransceiveWithPrecode, self).setGains(gains)
     
     def doSimpleRxTx(self):
-        ret = super(SinosuidTransceiveWithPrecode, self).doSimpleRxTx()
+        ret = super(SinosuidTransceiveWithPrecode, self).doSimpleRxTx(self.numSamples)
         ((_, tones), (_, sampsRecv)) = ret
-        exceeded = False  # flag to indicate whether there is sequence longer than self.maxSamples
+        exceeded = False  # flag to indicate whether there is sequence longer than self.showSamples
         for i in range(len(tones)):
-            if (len(tones[i]) > self.maxSamples):
-                tones[i] = tones[i][:self.maxSamples]
+            if (len(tones[i]) > self.showSamples):
+                tones[i] = tones[i][:self.showSamples]
                 exceeded = True
         for i in range(len(sampsRecv)):
-            if (len(sampsRecv[i]) > self.maxSamples):
-                sampsRecv[i] = sampsRecv[i][:self.maxSamples]
+            if (len(sampsRecv[i]) > self.showSamples):
+                sampsRecv[i] = sampsRecv[i][:self.showSamples]
                 exceeded = True
         if exceeded:
-            print("data has been sliced to %d due to maxSamples" % self.maxSamples)
+            print("data has been sliced to %d due to showSamples" % self.showSamples)
         return ret
 
