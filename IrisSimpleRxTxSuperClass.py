@@ -66,7 +66,8 @@ class IrisSimpleRxTxSuperClass:
         bw=None, 
         clockRate=80e6,
         rx_serials_ant=[], 
-        tx_serials_ant=[]
+        tx_serials_ant=[],
+        dcoffset = True
     ):
         self.sdrs = {}
         self.rx_gains = []
@@ -123,7 +124,7 @@ class IrisSimpleRxTxSuperClass:
             if freq is not None: sdr.setFrequency(SOAPY_SDR_RX, chan, "RF", freq)
             sdr.setAntenna(SOAPY_SDR_RX, chan, "TRX")  # TODO: I assume that in base station given, it only has two TRX antenna but no RX antenna wy@180804
             sdr.setFrequency(SOAPY_SDR_RX, chan, "BB", 0) # don't use cordic
-            sdr.setDCOffsetMode(SOAPY_SDR_RX, chan, False) # dc removal on rx  # we'll remove this in post-processing
+            sdr.setDCOffsetMode(SOAPY_SDR_RX, chan, dcoffset) # dc removal on rx
             for key in self.default_rx_gains:
                 if key == "rxGain":  # this is a special gain value for Iris, just one parameter
                     sdr.setGain(SOAPY_SDR_RX, chan, self.default_rx_gains[key])

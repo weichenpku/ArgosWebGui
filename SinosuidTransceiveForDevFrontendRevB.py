@@ -1,6 +1,16 @@
-from IrisSimpleRxTxSuperClass import IrisSimpleRxTxSuperClass
-from SoapySDR import *  # SOAPY_SDR_ constants
-import SoapySDR
+from IrisSimpleRxTxSuperClass import IrisSimpleRxTxSuperClass, DEBUG_WITH_FAKESOAPYSDR
+
+UseFakeSoapy = False
+
+try:
+    if DEBUG_WITH_FAKESOAPYSDR: raise Exception("debug")
+    import SoapySDR
+    from SoapySDR import * #SOAPY_SDR_ constants
+except:
+    import FakeSoapySDR as SoapySDR  # for me to debug without SoapySDR :)
+    from FakeSoapySDR import *
+    UseFakeSoapy = True
+    print("*** Warning ***: system will work with FakeSoapySDR")
 import GUI, helperfuncs, time
 import numpy as np
 
@@ -48,7 +58,8 @@ class SinosuidTransceiveForDevFrontendRevB(IrisSimpleRxTxSuperClass):  # provdin
             bw=30e6, 
             clockRate=80e6, 
             rx_serials_ant=rx_serials_ant, 
-            tx_serials_ant=tx_serials_ant
+            tx_serials_ant=tx_serials_ant,
+            dcoffset=False # we'll remove this in post-processing
         )
         # Synchronize Triggers and Clocks
         if len(self.triggerIrisList) > 0:
