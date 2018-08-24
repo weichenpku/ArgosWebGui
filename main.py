@@ -49,7 +49,7 @@ otherSystemSettings = {
     'QueryExtra': 'true'
 }
 
-availableModes = ["sinosuid transceive", "hdf5 analysis"]
+availableModes = ["sinosuid transceive", "hdf5 analysis", "sinosuid dev-front"]
 mode = availableModes[0]
 
 changed = False
@@ -78,7 +78,7 @@ def extraInfosQueryTimerdo(timer):
             }
         }
         extraInfosReady = True
-extraInfosQueryTimer = LoopTimer(extraInfosQueryTimerdo, 2000, Always=True)
+extraInfosQueryTimer = LoopTimer(extraInfosQueryTimerdo, 2000, Always=True, running=False)
 
 def loop(sleepFunc=None):
     global state
@@ -103,6 +103,7 @@ def loop(sleepFunc=None):
                 IrisCount = 0
                 IrisSerialNums = []
                 state = 'running'
+                # extraInfosQueryTimer.restart()
             elif IrisCount == 0:  # the mode below requires IrisCount > 0
                 GUI.error("at least one Iris is required to run")
                 state = "stop-pending"
@@ -111,6 +112,17 @@ def loop(sleepFunc=None):
                 try:
                     IrisObj = SinosuidTransceiveWithPrecode(serials=IrisSerialNums)  # new object
                     state = 'running'
+                    extraInfosQueryTimer.restart()
+                except RuntimeError as e:
+                    IrisObj = None
+                    GUI.error("RuntimeError: %s" % str(e))
+                    state = 'stop-pending'
+            elif mode == "sinosuid dev-front":
+                from SinosuidTransceiveForDevFrontendRevB import SinosuidTransceiveForDevFrontendRevB
+                try:
+                    IrisObj = SinosuidTransceiveForDevFrontendRevB(serials=IrisSerialNums)  # new object
+                    state = 'running'
+                    extraInfosQueryTimer.restart()
                 except RuntimeError as e:
                     IrisObj = None
                     GUI.error("RuntimeError: %s" % str(e))
@@ -118,6 +130,7 @@ def loop(sleepFunc=None):
         changedF()
     elif state == 'stop-pending':
         # deinitialize operations
+        extraInfosQueryTimer.stop()
         if IrisObj is not None:
             IrisObj.close()
             IrisObj = None
@@ -133,7 +146,7 @@ def loop(sleepFunc=None):
                 dic[a[0]] = a[1]
             IrisObj.setGains(dic)
             changedF()  # notify user
-        if mode == "sinosuid transceive":  # one send, the other receive
+        if mode == "sinosuid transceive" or mode == "sinosuid dev-front":  # some send, others receive
             if userTrig:
                 userTrig = False
                 ret = IrisObj.doSimpleRxTx()
