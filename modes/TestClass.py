@@ -3,6 +3,8 @@ try:  # called from host.py, main dir is ../
 except Exception as e:
     import IrisUtil
 
+IrisUtil.GUI.log("hello")
+
 def test():
     print("haha")
 

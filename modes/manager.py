@@ -2,7 +2,7 @@
 this file is to manage all modes automatically, and import utilities for these modes
 """
 
-import os, sys
+import os, sys, importlib
 
 def main():
     print("If you run this file, it will list all available mode")
@@ -11,29 +11,32 @@ def main():
     print("import files are: [%d]" % len(modefiles))
     for f in modefiles:
         print(f, "(shown mode as: \"%s\")" % modefiles[f][0])
+    loadModeFiles()
+    loadModeFiles()
 
-modefiles = None
+modefiles = {}
 def loadModeFiles(prefix=''):
     global modefiles
+    for key in modefiles:
+        importlib.reload(modefiles[key][2])
     modefiles = {}  # clear the older one
-    print(os.path.dirname(__file__))
-    for f in os.listdir(os.path.dirname(__file__)):  # get all files in this folder
-        print(f)
+    for f in os.listdir(os.path.dirname(os.path.abspath(__file__))):  # get all files in this folder
         if f[-3:] == '.py' and f != "manager.py":
             Name = f[:-3]
-            if Name[-4:] == 'Util': continue # it's util files
+            # if Name[-4:] == 'Util': continue # it's util files
+            # if oldone is not None and Name in oldone:
+            #     ModeFile = importlib.reload(oldone[Name][2])
+            # else:
+            #     ModeFile = importlib.reload(__import__(prefix + Name))
             ModeFile = __import__(prefix + Name)
+            print(ModeFile)
             if prefix != '':  # I don't know why it's like this... otherwise this will be <module 'modes' (namespace)>
                 ModeFile = getattr(ModeFile, Name)
-            if not hasattr(ModeFile, Name): continue
-            Mode = getattr(ModeFile, Name)
-            print(ModeFile)
-            print(Mode)
-            print(dir(Mode))
-            if not hasattr(Mode, 'Title'): continue
-            Title = getattr(Mode, 'Title')
-            print("title: ", Title)
-            modefiles[Name] = (Title, Mode)
+            if not hasattr(ModeFile, Name): Mode = None  # for utilization file, this could be None
+            else: Mode = getattr(ModeFile, Name)
+            if Mode is None or not hasattr(Mode, 'Title'): Title = None
+            else: Title = getattr(Mode, 'Title')
+            modefiles[Name] = (Title, Mode, ModeFile)
 
 def getModeByName(name):
     return modefiles[name][1]

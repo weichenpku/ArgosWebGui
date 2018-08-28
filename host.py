@@ -47,6 +47,12 @@ def userClickButton(button):  # 用户点击按钮事件
             main.state = "stop-pending"
     elif button == 'trig' or button == 'AutoTrig':
         main.userTrig = True
+    elif button == 'reload':
+        if main.state == "stopped":
+            print("reload called")
+            main.reload()
+        else:
+            GUI.error("cannot reload in no \"stopped\" state")
 
 def userSyncSettings(settings):
     if 'BasicSettings-IrisCount' in settings:

@@ -27,6 +27,7 @@ export variables:
 export functions:
     setup()             # running all the time you wish to, it could be a loop to check
     loop()              # running all the time, you could check stream input/output, with delay 
+    reload()            # reload mode functions by file
 """
 
 import time, random, GUI
@@ -34,10 +35,11 @@ from helperfuncs import LoopTimer
 from helperfuncs import ModifyQueue
 from IrisSimpleRxTxSuperClass import IrisSimpleRxTxSuperClass
 import modes.manager as modesm
-modesm.import2main()
-print(modesm.modefiles)
+modesm.import2main()  # support reload by call this twice
+def reload():
+    modesm.import2main()
 
-version = "ArgosWebGui v0.2"
+version = "ArgosWebGui v0.3"
 state = "stopped"
 IrisCount = 0  # when it's 0, it could be used to test the web page functionality
 IrisSerialNums = []

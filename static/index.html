@@ -87,7 +87,7 @@
             <button type="button" class="btn btn-success basic-button" id="Init" onclick="leftButtonClicked('Init');">Init</button>
             <button type="button" class="btn btn-danger basic-button" id="Stop" disabled="disabled" onclick="leftButtonClicked('Stop');">Stop</button>
             <button type="button" class="btn btn-warning basic-button" style="height: 200px;" id="Sing">Sing</button> <!-- 这个按钮用来对main区域显示的图像进行暂停 -->
-            <button type="button" class="btn btn-primary basic-button" id="Calib" disabled="disabled">Calib</button> <!-- 自动校准函数，TODO -->
+            <button type="button" class="btn btn-danger basic-button" id="Hot" onclick="leftButtonClicked('Hot');">Hot</button> <!-- reload all modes function, best for developer -->
             <button type="button" class="btn btn-light basic-button" id="Trig" onclick="leftButtonClicked('Trig');">Trig</button>
             <button type="button" class="btn btn-dark basic-button" id="Reset" onclick="leftButtonClicked('Reset');">Reset</button>
             <button type="button" class="btn btn-success basic-button" onclick="window.open('/save.json')">Save</button>
@@ -748,6 +748,7 @@
             if (id == 'Init') socketio.emit('button', 'init');
             if (id == 'Stop') socketio.emit('button', 'stop');
             if (id == 'Trig') socketio.emit('button', 'trig');
+            if (id == 'Hot') socketio.emit('button', 'hot');
             if (id == 'startAutoTrig') socketio.emit('button', 'startAutoTrig');
             if (id == 'endAutoTrig') socketio.emit('button', 'endAutoTrig');
             if (id == 'AutoTrig') socketio.emit('button', 'AutoTrig');

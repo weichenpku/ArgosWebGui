@@ -7,9 +7,16 @@ the function should like this:
         pass
 this make sure that all classes can use these functions, just like their own class function
 """
-import sys
-sys.path.append(".")  # make parent folder import enabled
-from modes import *
+
+# import parent folder's file
+try:
+    import GUI
+except Exception as e:
+    import sys, os
+    sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+    import GUI
+
+GUI.log('IrisUtil is loaded')
 
 def EVENT_trigger_do_nothing(self):
     print('haha')
