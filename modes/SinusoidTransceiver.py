@@ -6,16 +6,12 @@ except Exception as e:
 def test():
     print("haha")
 
-class TestClass:
-
+class SinusoidTransceiver:
     def __init__(self, main):
-        print(main)
-        print("__init__ called")
-
+        self.main = main
+    
     def loop(self):
-        print("hello world")
-        raise Exception('haha')
-
+        pass
 
 if __name__ == "__main__":
     test()

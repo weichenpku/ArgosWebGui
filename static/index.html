@@ -86,7 +86,7 @@
         <div class="basic">
             <button type="button" class="btn btn-success basic-button" id="Init" onclick="leftButtonClicked('Init');">Init</button>
             <button type="button" class="btn btn-danger basic-button" id="Stop" disabled="disabled" onclick="leftButtonClicked('Stop');">Stop</button>
-            <button type="button" class="btn btn-warning basic-button" style="height: 200px;" id="Sing">Sing</button> <!-- 这个按钮用来对main区域显示的图像进行暂停 -->
+            <button type="button" class="btn btn-warning basic-button progress-bar-striped progress-bar-animated" style="height: 200px;" id="Sing" onclick="leftButtonClicked('Sing');">Sing</button> <!-- get a single pic of now wave form, generally used in record mode -->
             <button type="button" class="btn btn-danger basic-button" id="Hot" onclick="leftButtonClicked('Hot');">Hot</button> <!-- reload all modes function, best for developer -->
             <button type="button" class="btn btn-light basic-button" id="Trig" onclick="leftButtonClicked('Trig');">Trig</button>
             <button type="button" class="btn btn-dark basic-button" id="Reset" onclick="leftButtonClicked('Reset');">Reset</button>
@@ -124,7 +124,10 @@
                 </div></div>
             </div>
             <div class="card">
-                <div class="card-header"><button class="btn btn-link" data-toggle="collapse" data-target="#SystemLogs" aria-expanded="true">System Log</button></div>
+                <div class="card-header">
+                    <button class="btn btn-link" data-toggle="collapse" data-target="#SystemLogs" aria-expanded="true">System Log</button>
+                    <button class="btn btn-primary" onclick="$('#SystemLogs-body').children().remove();">clear</button>
+                </div>
                 <div id="SystemLogs" class="collapse show"><div class="card-body" id="SystemLogs-body" style="padding-bottom: 0px;">
                     <!-- 显示log等弹出框 -->
                 </div></div>
@@ -156,7 +159,7 @@
                     <div style="margin-top: 10px;">
                         <button class="btn btn-outline-primary dropdown-toggle" type="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false" style="width: 100%;"
                             id="BasicSettings-RunMode" value="choose a mode">choose a mode</button>
-                        <div class="dropdown-menu" id="BasicSettings-RunModeBox">
+                        <div class="dropdown-menu" id="BasicSettings-RunModeBox" style="min-width: 400px;">
                             <a class="dropdown-item" href="#" modename="choose a mode"
                                 onclick="$('#BasicSettings-RunMode').html('choose a mode'); $('#BasicSettings-RunMode').val('choose a mode'); generalValChanged('BasicSettings-RunMode');">choose a mode</a>
                         </div>
@@ -488,6 +491,22 @@
                 }
                 gainbox.children("[toDelete='yes']").remove();
             }
+            if ("buttonStatus" in settings) {
+                let buttonStatus = settings.buttonStatus;
+                let classes = ['progress-bar-striped', 'progress-bar-animated']
+                if (buttonStatus["trig"]) {
+                    for (let i in classes) $('#Trig').addClass(classes[i]);
+                    $('#Trig').addClass('bg-info');
+                } else {
+                    for (let i in classes) $('#Trig').removeClass(classes[i]);
+                    $('#Trig').removeClass('bg-info');
+                }
+                if (buttonStatus["sing"]) {
+                    for (let i in classes) $('#Sing').addClass(classes[i]);
+                } else {
+                    for (let i in classes) $('#Sing').removeClass(classes[i]);
+                }
+            }
             if (settings.state == "stopped") {  // stopped stop-pending
                 $('#Init').removeAttr("disabled");  $('#Stop').attr("disabled", "disabled"); $("#SystemBasicInfo-RunStatus").css('color', 'red');
             } else if (settings.state == "running") {  // running run-pending
@@ -747,7 +766,14 @@
             if (id == 'Reset') socketio.emit('button', 'reset');
             if (id == 'Init') socketio.emit('button', 'init');
             if (id == 'Stop') socketio.emit('button', 'stop');
-            if (id == 'Trig') socketio.emit('button', 'trig');
+            if (id == 'Sing') {
+                if ($("#Sing").hasClass('progress-bar-striped')) socketio.emit('button', 'cancel single');
+                else socketio.emit('button', 'single');
+            }
+            if (id == 'Trig') {
+                if ($("#Trig").hasClass('progress-bar-striped')) socketio.emit('button', 'cancel trigger');
+                else socketio.emit('button', 'trigger');
+            }
             if (id == 'Hot') socketio.emit('button', 'hot');
             if (id == 'startAutoTrig') socketio.emit('button', 'startAutoTrig');
             if (id == 'endAutoTrig') socketio.emit('button', 'endAutoTrig');

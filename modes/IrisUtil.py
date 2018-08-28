@@ -16,7 +16,7 @@ except Exception as e:
     sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
     import GUI
 
-GUI.log('IrisUtil is loaded')
+# GUI.log('IrisUtil is loaded')
 
 def EVENT_trigger_do_nothing(self):
     print('haha')

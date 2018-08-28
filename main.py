@@ -8,6 +8,7 @@ export variables:
     IrisSerialNums      # a vector recording all Iris module serial number
     loopDelay           # delay between one "loop()" end and next "loop()" begin, see loop() function below
     userTrig            # user press "trig" button, using in some mode
+    userSing            # user press "sing" button
     sampleRate          # sample rate, default is 10e6
     extraInfos          # other information, such as the temperature of each Iris, or so
     extraInfosReady     # tell the server to send infos to others
@@ -36,8 +37,14 @@ from helperfuncs import ModifyQueue
 from IrisSimpleRxTxSuperClass import IrisSimpleRxTxSuperClass
 import modes.manager as modesm
 modesm.import2main()  # support reload by call this twice
+availableModes = modesm.makelist()
 def reload():
-    modesm.import2main()
+    try:
+        modesm.import2main()
+        global availableModes
+        availableModes = modesm.makelist()
+    except Exception as e:
+        GUI.error(str(e))
 
 version = "ArgosWebGui v0.3"
 state = "stopped"
@@ -45,6 +52,7 @@ IrisCount = 0  # when it's 0, it could be used to test the web page functionalit
 IrisSerialNums = []
 loopDelay = 0.5
 userTrig = False
+userSing = False
 sampleData = None
 sampleDataReady = False
 extraInfos = {}
@@ -55,8 +63,9 @@ otherSystemSettings = {
     'QueryExtra': 'true'
 }
 
-availableModes = ["sinusoid transceiver", "hdf5 analysis", "sinusoid dev-front"]
-mode = availableModes[0]
+# availableModes = ["sinusoid transceiver", "hdf5 analysis", "sinusoid dev-front"]
+# mode = availableModes[0]
+mode = "choose a mode"
 
 changed = False
 def changedF():  # when any export varible is modified, call this function
@@ -73,20 +82,16 @@ def setup():
 def extraInfosQueryTimerdo(timer):
     global extraInfos
     global extraInfosReady
-    if IrisObj is not None:
-        extraInfos = IrisObj.getExtraInfos()  # get information from Iris board
-        extraInfosReady = True
-    else:  # error, inform user
-        extraInfos = {
-            "list": ["error"], 
-            "data": {
-                "error": [["Iris object", "None"], ["Please", "ask developer"]]
-            }
-        }
-        extraInfosReady = True
+    if IrisObj is not None and hasattr(IrisObj, 'getExtraInfos'):
+        try:
+            extraInfos = IrisObj.getExtraInfos()  # get information from Iris board
+            extraInfosReady = True
+        except Exception as e:  # just print, but not die
+            GUI.error(str(e))
+
 extraInfosQueryTimer = LoopTimer(extraInfosQueryTimerdo, 2000, Always=True, running=False)
 
-def loop(sleepFunc=None):
+def loop(main, sleepFunc=None):
     global state
     global IrisCount
     global IrisSerialNums
@@ -103,99 +108,117 @@ def loop(sleepFunc=None):
             GUI.error("select a mode to run")
             state = "stop-pending"            
         else:
-            if mode == "hdf5 analysis":
-                from Hdf5OfflineAnalysis import Hdf5OfflineAnalysis
-                IrisObj = Hdf5OfflineAnalysis(sleepFunc=sleepFunc)  # new object
-                IrisCount = 0
-                IrisSerialNums = []
+            try:
+                Mode = modesm.modefiles[mode][0]
+                IrisObj = Mode(main)
                 state = 'running'
-                # extraInfosQueryTimer.restart()
-            elif IrisCount == 0:  # the mode below requires IrisCount > 0
-                GUI.error("at least one Iris is required to run")
-                state = "stop-pending"
-            elif mode == "sinusoid transceiver":
-                from SinusoidTransceiveWithPrecode import SinusoidTransceiveWithPrecode
-                try:
-                    IrisObj = SinusoidTransceiveWithPrecode(serials=IrisSerialNums)  # new object
-                    state = 'running'
-                    extraInfosQueryTimer.restart()
-                except RuntimeError as e:
-                    IrisObj = None
-                    GUI.error("RuntimeError: %s" % str(e))
-                    state = 'stop-pending'
-            elif mode == "sinusoid dev-front":
-                from SinusoidTransceiveForDevFrontendRevB import SinusoidTransceiveForDevFrontendRevB
-                try:
-                    IrisObj = SinusoidTransceiveForDevFrontendRevB(serials=IrisSerialNums)  # new object
-                    state = 'running'
-                    extraInfosQueryTimer.restart()
-                except RuntimeError as e:
-                    IrisObj = None
-                    GUI.error("RuntimeError: %s" % str(e))
-                    state = 'stop-pending'
+            except Exception as e:  # just print, but not die
+                GUI.error(str(e))
+                state = 'stop-pending'
+                
+            # if mode == "hdf5 analysis":
+            #     from Hdf5OfflineAnalysis import Hdf5OfflineAnalysis
+            #     IrisObj = Hdf5OfflineAnalysis(sleepFunc=sleepFunc)  # new object
+            #     IrisCount = 0
+            #     IrisSerialNums = []
+            #     state = 'running'
+            #     # extraInfosQueryTimer.restart()
+            # elif IrisCount == 0:  # the mode below requires IrisCount > 0
+            #     GUI.error("at least one Iris is required to run")
+            #     state = "stop-pending"
+            # elif mode == "sinusoid transceiver":
+            #     from SinusoidTransceiveWithPrecode import SinusoidTransceiveWithPrecode
+            #     try:
+            #         IrisObj = SinusoidTransceiveWithPrecode(serials=IrisSerialNums)  # new object
+            #         state = 'running'
+            #         extraInfosQueryTimer.restart()
+            #     except RuntimeError as e:
+            #         IrisObj = None
+            #         GUI.error("RuntimeError: %s" % str(e))
+            #         state = 'stop-pending'
+            # elif mode == "sinusoid dev-front":
+            #     from SinusoidTransceiveForDevFrontendRevB import SinusoidTransceiveForDevFrontendRevB
+            #     try:
+            #         IrisObj = SinusoidTransceiveForDevFrontendRevB(serials=IrisSerialNums)  # new object
+            #         state = 'running'
+            #         extraInfosQueryTimer.restart()
+            #     except RuntimeError as e:
+            #         IrisObj = None
+            #         GUI.error("RuntimeError: %s" % str(e))
+            #         state = 'stop-pending'
         changedF()
     elif state == 'stop-pending':
-        # deinitialize operations
         extraInfosQueryTimer.stop()
         if IrisObj is not None:
-            # IrisObj.close()  # close api is deleted
-            IrisObj = None
+            try:
+                IrisObj = None
+            except Exception as e:
+                GUI.error(str(e))
         state = 'stopped'
         changedF()
     elif state == 'running':
         if otherSystemSettings['QueryExtra'] == "true":
             extraInfosQueryTimer.loop()
-        if IrisObj is not None and  not gainModified.empty():  # set new gains during run-time (but not when using the stream, so it's safe)
+        if IrisObj is not None and not gainModified.empty():  # set new gains during run-time (but not when using the stream, so it's safe)
             dic = {}
             while not gainModified.empty():
                 a = gainModified.dequeue()
                 dic[a[0]] = a[1]
-            IrisObj.setGains(dic)
+            try:
+                if hasattr(IrisObj, 'setGains'): IrisObj.setGains(dic)
+            except Exception as e:  # just print, but not die
+                GUI.error(str(e))
             changedF()  # notify user
-        if mode == "sinusoid transceiver" or mode == "sinusoid dev-front":  # some send, others receive
-            if userTrig:
-                userTrig = False
-                ((tx_serials_ant, tx_complex_data), (rx_serials_ant, rx_complex_data)) = IrisObj.doSimpleRxTx()
-                struct = []
-                for r,serial_ant in enumerate(tx_serials_ant + rx_serials_ant):
-                    serial, ant = IrisSimpleRxTxSuperClass.splitSerialAnt(serial_ant)
-                    if ant == 2:
-                        struct.append(serial + '-0')
-                        struct.append(serial + '-1')
-                    else:
-                        struct.append(serial_ant)
-                data = {}
-                for r,serial_ant in enumerate(tx_serials_ant):
-                    serial, ant = IrisSimpleRxTxSuperClass.splitSerialAnt(serial_ant)
-                    cdat = tx_complex_data[r]
-                    if ant == 2:
-                        for antt in [0,1]:
-                            data["I-%s-%d" % (serial, antt)] = [float(e.real) for e in cdat[antt]]
-                            data["Q-%s-%d" % (serial, antt)] = [float(e.imag) for e in cdat[antt]]
-                    else:
-                        data["I-" + serial_ant] = [float(e.real) for e in cdat[0]]
-                        data["Q-" + serial_ant] = [float(e.imag) for e in cdat[0]]
-                for r,serial_ant in enumerate(rx_serials_ant):
-                    serial, ant = IrisSimpleRxTxSuperClass.splitSerialAnt(serial_ant)
-                    cdat = rx_complex_data[r]
-                    if ant == 2:
-                        for antt in [0,1]:
-                            data["I-%s-%d" % (serial, antt)] = [float(e.real) for e in cdat[antt]]
-                            data["Q-%s-%d" % (serial, antt)] = [float(e.imag) for e in cdat[antt]]
-                    else:
-                        data["I-" + serial_ant] = [float(e.real) for e in cdat[0]]
-                        data["Q-" + serial_ant] = [float(e.imag) for e in cdat[0]]
-                sampleData = {"struct": struct, "data": data}
-                sampleDataReady = True
-        if mode == "hdf5 analysis":
-            if userTrig:
-                userTrig = False
-                ret = IrisObj.givemesamples()
-                if ret is not None:
-                    sampleData = ret
-                    sampleDataReady = True
-                else:
-                    GUI.error("trigger failed, the hdf5 file may have error")
+        if IrisObj is not None:
+            try:
+                IrisObj.loop()
+            except Exception as e:  # just print, but not die
+                GUI.error(str(e))
+                state = 'stop-pending'  # if running cause problem, just stop later
+        # if mode == "sinusoid transceiver" or mode == "sinusoid dev-front":  # some send, others receive
+        #     if userTrig:
+        #         userTrig = False
+        #         ((tx_serials_ant, tx_complex_data), (rx_serials_ant, rx_complex_data)) = IrisObj.doSimpleRxTx()
+        #         struct = []
+        #         for r,serial_ant in enumerate(tx_serials_ant + rx_serials_ant):
+        #             serial, ant = IrisSimpleRxTxSuperClass.splitSerialAnt(serial_ant)
+        #             if ant == 2:
+        #                 struct.append(serial + '-0')
+        #                 struct.append(serial + '-1')
+        #             else:
+        #                 struct.append(serial_ant)
+        #         data = {}
+        #         for r,serial_ant in enumerate(tx_serials_ant):
+        #             serial, ant = IrisSimpleRxTxSuperClass.splitSerialAnt(serial_ant)
+        #             cdat = tx_complex_data[r]
+        #             if ant == 2:
+        #                 for antt in [0,1]:
+        #                     data["I-%s-%d" % (serial, antt)] = [float(e.real) for e in cdat[antt]]
+        #                     data["Q-%s-%d" % (serial, antt)] = [float(e.imag) for e in cdat[antt]]
+        #             else:
+        #                 data["I-" + serial_ant] = [float(e.real) for e in cdat[0]]
+        #                 data["Q-" + serial_ant] = [float(e.imag) for e in cdat[0]]
+        #         for r,serial_ant in enumerate(rx_serials_ant):
+        #             serial, ant = IrisSimpleRxTxSuperClass.splitSerialAnt(serial_ant)
+        #             cdat = rx_complex_data[r]
+        #             if ant == 2:
+        #                 for antt in [0,1]:
+        #                     data["I-%s-%d" % (serial, antt)] = [float(e.real) for e in cdat[antt]]
+        #                     data["Q-%s-%d" % (serial, antt)] = [float(e.imag) for e in cdat[antt]]
+        #             else:
+        #                 data["I-" + serial_ant] = [float(e.real) for e in cdat[0]]
+        #                 data["Q-" + serial_ant] = [float(e.imag) for e in cdat[0]]
+        #         sampleData = {"struct": struct, "data": data}
+        #         sampleDataReady = True
+        # if mode == "hdf5 analysis":
+        #     if userTrig:
+        #         userTrig = False
+        #         ret = IrisObj.givemesamples()
+        #         if ret is not None:
+        #             sampleData = ret
+        #             sampleDataReady = True
+        #         else:
+        #             GUI.error("trigger failed, the hdf5 file may have error")
 
 if __name__ == '__main__':
     print("run host.py with python3.x")

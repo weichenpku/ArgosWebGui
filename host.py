@@ -16,19 +16,25 @@ def nowSettings():  # 用户想获取当前的系统信息，返回一个字典
     assert main.IrisCount == len(main.IrisSerialNums)  # 他们应当长度相同的
     for i in range(main.IrisCount):
         ret['userSettings']['BasicSettings-IrisDevices-%d' % i] = main.IrisSerialNums[i]
-    if main.IrisObj is not None:
-        gains = main.IrisObj.nowGains()
-        ret["gainStructure"] = gains["list"]
-        nowGain = main.IrisObj.nowGains()
-        data = gains["data"]
-        for gainKey in data:
-            ret['userSettings']['GainSettings-%s' % gainKey] = data[gainKey]  # 把设置加入进去
+    if main.IrisObj is not None and hasattr(main.IrisObj, 'nowGains'):
+        try:
+            gains = main.IrisObj.nowGains()
+            ret["gainStructure"] = gains["list"]
+            data = gains["data"]
+            for gainKey in data:
+                ret['userSettings']['GainSettings-%s' % gainKey] = data[gainKey]  # 把设置加入进去
+        except Exception as e:
+            GUI.error(str(e))
     else:
         ret["gainStructure"] = []
     for key in main.otherSystemSettings:
         ret['userSettings']["OtherSettings-" + key] = main.otherSystemSettings[key]
     ret['userSettings']['BasicSettings-RunMode'] = main.mode
     ret['availableModes'] = main.availableModes  # tell user about this
+    ret['buttonStatus'] = {
+        "trig": main.userTrig,
+        "sing": main.userSing
+    }
     return ret
 
 def userClickButton(button):  # 用户点击按钮事件
@@ -45,14 +51,19 @@ def userClickButton(button):  # 用户点击按钮事件
     elif button == 'stop':
         if main.state == "running":
             main.state = "stop-pending"
-    elif button == 'trig' or button == 'AutoTrig':
+    elif button == 'trigger' or button == 'AutoTrig':
         main.userTrig = True
-    elif button == 'reload':
+    elif button == 'cancel trigger':
+        main.userTrig = False
+    elif button == 'hot':
         if main.state == "stopped":
-            print("reload called")
             main.reload()
         else:
-            GUI.error("cannot reload in no \"stopped\" state")
+            GUI.error("cannot perform hot reload in no \"stopped\" state")
+    elif button == 'single':
+        main.userSing= True
+    elif button == 'cancel single':
+        main.userSing= False
 
 def userSyncSettings(settings):
     if 'BasicSettings-IrisCount' in settings:
@@ -104,7 +115,7 @@ def maincall():
     main.setup()
     GUI.log('setup finished at: %s' % time.strftime("%Y-%m-%d %H:%M:%S", time.localtime()))
     while True:
-        main.loop(socketio.sleep)
+        main.loop(main, socketio.sleep)
         socketio.sleep(main.loopDelay)
 
 @app.route("/")
