@@ -2,7 +2,7 @@ from IrisSimpleRxTxSuperClass import IrisSimpleRxTxSuperClass
 import GUI, helperfuncs
 import numpy as np
 
-class SinosuidTransceiveWithPrecode(IrisSimpleRxTxSuperClass):  # provding precode settings to practice MU-MIMO or beamforming
+class SinusoidTransceiveWithPrecode(IrisSimpleRxTxSuperClass):  # provding precode settings to practice MU-MIMO or beamforming
     def __init__(self, 
         serials=[]
     ):
@@ -24,7 +24,7 @@ class SinosuidTransceiveWithPrecode(IrisSimpleRxTxSuperClass):  # provding preco
             else:
                 GUI.error("unkown TorR: %s" % TorR)
                 return
-        super(SinosuidTransceiveWithPrecode, self).__init__(
+        super(SinusoidTransceiveWithPrecode, self).__init__(
             rate=10e6, 
             freq=3.6e9, 
             bw=None, 
@@ -91,7 +91,7 @@ class SinosuidTransceiveWithPrecode(IrisSimpleRxTxSuperClass):  # provding preco
 
     # add some parameter due to Xieyan Xu's advice, e.g. the "max sample" which is sent to the browser, to test the performance meanwhile limit overhead on browser
     def nowGains(self):
-        ret = super(SinosuidTransceiveWithPrecode, self).nowGains()
+        ret = super(SinusoidTransceiveWithPrecode, self).nowGains()
         ret["list"].insert(0, ["parameters", ["numSamples", "showSamples"]])
         ret["data"]["parameters-numSamples"] = str(self.numSamples)
         ret["data"]["parameters-showSamples"] = str(self.showSamples)
@@ -109,10 +109,10 @@ class SinosuidTransceiveWithPrecode(IrisSimpleRxTxSuperClass):  # provding preco
                     self.numSamples = int(gains[gainKey])
                 except:
                     GUI.error("set numSamples error")
-        super(SinosuidTransceiveWithPrecode, self).setGains(gains)
+        super(SinusoidTransceiveWithPrecode, self).setGains(gains)
     
     def doSimpleRxTx(self):
-        ret = super(SinosuidTransceiveWithPrecode, self).doSimpleRxTx(self.numSamples)
+        ret = super(SinusoidTransceiveWithPrecode, self).doSimpleRxTx(self.numSamples)
         ((_, tones), (_, sampsRecv)) = ret
         exceeded = False  # flag to indicate whether there is sequence longer than self.showSamples
         for i in range(len(tones)):

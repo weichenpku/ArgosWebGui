@@ -15,12 +15,12 @@ import GUI, helperfuncs, time
 import numpy as np
 
 def main_test():
-    obj = SinosuidTransceiveForDevFrontendRevB(["0313-0-Tx-1", "0283-0-Rx-0"])
+    obj = SinusoidTransceiveForDevFrontendRevB(["0313-0-Tx-1", "0283-0-Rx-0"])
     obj.doSimpleRxTx()
     print(obj.getExtraInfos())
 
 
-class SinosuidTransceiveForDevFrontendRevB(IrisSimpleRxTxSuperClass):  # provding precode settings to practice MU-MIMO or beamforming
+class SinusoidTransceiveForDevFrontendRevB(IrisSimpleRxTxSuperClass):  # provding precode settings to practice MU-MIMO or beamforming
     def __init__(self, 
         serials=[]
     ):
@@ -51,7 +51,7 @@ class SinosuidTransceiveForDevFrontendRevB(IrisSimpleRxTxSuperClass):  # provdin
         if len(triggerIrisList) != 1:  # for dedicated use: just a few Iris, about 8, that's our case
             GUI.error("no trigger Iris or more than one trigger Iris are provided, this will cause exception when trigger")
         self.triggerIrisList = [ele for ele in triggerIrisList]  # deep copy
-        super(SinosuidTransceiveForDevFrontendRevB, self).__init__(
+        super(SinusoidTransceiveForDevFrontendRevB, self).__init__(
             rate=10e6, 
             freq=2.35e9, 
             bw=30e6, 
@@ -179,7 +179,7 @@ class SinosuidTransceiveForDevFrontendRevB(IrisSimpleRxTxSuperClass):  # provdin
 
     # add some parameter due to Xieyan Xu's advice, e.g. the "max sample" which is sent to the browser, to test the performance meanwhile limit overhead on browser
     def nowGains(self):
-        ret = super(SinosuidTransceiveForDevFrontendRevB, self).nowGains()
+        ret = super(SinusoidTransceiveForDevFrontendRevB, self).nowGains()
         ret["list"].insert(0, ["parameters", ["numSamples", "showSamples"]])
         ret["data"]["parameters-numSamples"] = str(self.numSamples)
         ret["data"]["parameters-showSamples"] = str(self.showSamples)
@@ -197,10 +197,10 @@ class SinosuidTransceiveForDevFrontendRevB(IrisSimpleRxTxSuperClass):  # provdin
                     self.numSamples = int(gains[gainKey])
                 except:
                     GUI.error("set numSamples error")
-        super(SinosuidTransceiveForDevFrontendRevB, self).setGains(gains)
+        super(SinusoidTransceiveForDevFrontendRevB, self).setGains(gains)
     
     def doSimpleRxTx(self):
-        ret = super(SinosuidTransceiveForDevFrontendRevB, self).doSimpleRxTx(self.numSamples)
+        ret = super(SinusoidTransceiveForDevFrontendRevB, self).doSimpleRxTx(self.numSamples)
         ((_, tones), (_, sampsRecv)) = ret
         exceeded = False  # flag to indicate whether there is sequence longer than self.showSamples
         for i in range(len(tones)):

@@ -280,7 +280,11 @@
     </script>
 
     <script id="RunModeElementTemplate" type="text/html">
-        <a class="dropdown-item" href="#" onclick="$('#BasicSettings-RunMode').html('{{:name}}'); $('#BasicSettings-RunMode').val('{{:name}}'); generalValChanged('BasicSettings-RunMode');" modename="{{:name}}">{{:name}}</a>
+        <div modename="{{:name}}">
+            <a class="dropdown-item" href="#" onclick="$('#BasicSettings-RunMode').html('{{:name}}'); $('#BasicSettings-RunMode').val('{{:name}}'); generalValChanged('BasicSettings-RunMode');">{{:name}}</a>
+            <button class="btn btn-success basic-button" style="height: 25px; margin: 0 10px 0 10px; width: 100px; padding-top: 0;"
+                onclick="window.open('/static/docs/{{:name}}.html')">instruction</button>
+        </div>
     </script>
 
     <script id="GainSettingBlockTemplate" type="text/html">
@@ -449,17 +453,20 @@
             $('#SystemBasicInfo-SystemVersion').html(settings.version);
             $('#SystemBasicInfo-RunStatus').html(settings.state);
             if ("availableModes" in settings) {
+                console.log(settings["availableModes"]);
                 let runmodebox = $("#BasicSettings-RunModeBox");
-                runmodebox.find("[modename!='choose a mode']").attr("toDelete", "yes");
+                runmodebox.children("[modename!='choose a mode']").attr("toDelete", "yes");
                 for (let i=0; i < settings.availableModes.length; ++i) {
-                    let found = runmodebox.find("[modename='" + settings.availableModes[i] + "']");
-                    if (runmodebox.find("[modename='" + settings.availableModes[i] + "']").length == 0) {
+                    let found = runmodebox.children("[modename='" + settings.availableModes[i] + "']");
+                    console.log(found);
+                    if (found.length == 0) {
                         runmodebox.append($.templates('#RunModeElementTemplate').render({name: settings.availableModes[i]}));
                     } else {
                         found.removeAttr("toDelete")
                     }
                 }
-                runmodebox.find("[toDelete='yes']").remove();
+                console.log(runmodebox.children("[toDelete='yes']"));
+                runmodebox.children("[toDelete='yes']").remove();
             }
             if ("gainStructure" in settings) {
                 let santarr = settings["gainStructure"];
@@ -479,7 +486,7 @@
                         $("#GainSettings-" + name).removeAttr("toDelete");
                     }
                 }
-                gainbox.find("[toDelete='yes']").remove();
+                gainbox.children("[toDelete='yes']").remove();
             }
             if (settings.state == "stopped") {  // stopped stop-pending
                 $('#Init').removeAttr("disabled");  $('#Stop').attr("disabled", "disabled"); $("#SystemBasicInfo-RunStatus").css('color', 'red');
@@ -529,17 +536,17 @@
                     for (let j=0; j < localdata.length; ++j) {
                         let key = localdata[j][0];
                         let val = localdata[j][1];
-                        if (ulbox.find("[keyName='" + key + "']").length == 0) {
+                        if (ulbox.children("[keyName='" + key + "']").length == 0) {
                             ulbox.append($.templates("#SystemExtraInfosElementTemplate").render({name: key}))
                         }
-                        ulbox.find("[keyName='" + key + "']").find("strong").html(val);
+                        ulbox.children("[keyName='" + key + "']").children("strong").html(val);
                     }
                 }
             } else {
                 console.error("extraInfos doesn't have list or data, do not kown how to display");
                 $('#SystemExtraInfos-body').children().remove();  // delete all its children
             }
-            $('#SystemExtraInfos-body').find("[toDelete='yes']").remove();
+            $('#SystemExtraInfos-body').children("[toDelete='yes']").remove();
         }
 
 
@@ -641,14 +648,14 @@
                     grefers[name] = g;
                 } else found.parent().removeAttr("toDelete");
             }
-            originbody.find("[toDelete='yes']").each(function() {
+            originbody.children("[toDelete='yes']").each(function() {
                 let id = $(this).attr("id");
                 let name = id.slice("OriginGraphDiv-".length);
                 grefers[name].destroy();
                 delete grefers[name];  // delete from map
                 // grefers.remove(name);  
             })
-            originbody.find("[toDelete='yes']").remove();
+            originbody.children("[toDelete='yes']").remove();
             updateAllOriginGraph();
         }
         $(function() {

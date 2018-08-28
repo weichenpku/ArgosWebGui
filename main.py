@@ -50,7 +50,7 @@ otherSystemSettings = {
     'QueryExtra': 'true'
 }
 
-availableModes = ["sinosuid transceive", "hdf5 analysis", "sinosuid dev-front"]
+availableModes = ["sinusoid transceiver", "hdf5 analysis", "sinusoid dev-front"]
 mode = availableModes[0]
 
 changed = False
@@ -108,20 +108,20 @@ def loop(sleepFunc=None):
             elif IrisCount == 0:  # the mode below requires IrisCount > 0
                 GUI.error("at least one Iris is required to run")
                 state = "stop-pending"
-            elif mode == "sinosuid transceive":
-                from SinosuidTransceiveWithPrecode import SinosuidTransceiveWithPrecode
+            elif mode == "sinusoid transceiver":
+                from SinusoidTransceiveWithPrecode import SinusoidTransceiveWithPrecode
                 try:
-                    IrisObj = SinosuidTransceiveWithPrecode(serials=IrisSerialNums)  # new object
+                    IrisObj = SinusoidTransceiveWithPrecode(serials=IrisSerialNums)  # new object
                     state = 'running'
                     extraInfosQueryTimer.restart()
                 except RuntimeError as e:
                     IrisObj = None
                     GUI.error("RuntimeError: %s" % str(e))
                     state = 'stop-pending'
-            elif mode == "sinosuid dev-front":
-                from SinosuidTransceiveForDevFrontendRevB import SinosuidTransceiveForDevFrontendRevB
+            elif mode == "sinusoid dev-front":
+                from SinusoidTransceiveForDevFrontendRevB import SinusoidTransceiveForDevFrontendRevB
                 try:
-                    IrisObj = SinosuidTransceiveForDevFrontendRevB(serials=IrisSerialNums)  # new object
+                    IrisObj = SinusoidTransceiveForDevFrontendRevB(serials=IrisSerialNums)  # new object
                     state = 'running'
                     extraInfosQueryTimer.restart()
                 except RuntimeError as e:
@@ -147,7 +147,7 @@ def loop(sleepFunc=None):
                 dic[a[0]] = a[1]
             IrisObj.setGains(dic)
             changedF()  # notify user
-        if mode == "sinosuid transceive" or mode == "sinosuid dev-front":  # some send, others receive
+        if mode == "sinusoid transceiver" or mode == "sinusoid dev-front":  # some send, others receive
             if userTrig:
                 userTrig = False
                 ((tx_serials_ant, tx_complex_data), (rx_serials_ant, rx_complex_data)) = IrisObj.doSimpleRxTx()
