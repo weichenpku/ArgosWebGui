@@ -33,6 +33,9 @@ import time, random, GUI
 from helperfuncs import LoopTimer
 from helperfuncs import ModifyQueue
 from IrisSimpleRxTxSuperClass import IrisSimpleRxTxSuperClass
+import modes.manager as modesm
+modesm.import2main()
+print(modesm.modefiles)
 
 version = "ArgosWebGui v0.2"
 state = "stopped"
@@ -191,3 +194,6 @@ def loop(sleepFunc=None):
                     sampleDataReady = True
                 else:
                     GUI.error("trigger failed, the hdf5 file may have error")
+
+if __name__ == '__main__':
+    print("run host.py with python3.x")
