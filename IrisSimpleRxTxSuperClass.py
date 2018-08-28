@@ -36,7 +36,7 @@ def main_test():  # you could play with this class here
         freq=3.6e9,
         bw=None,
         clockRate=80e6,
-        rx_serials_ant = ['RF3C000034:0'],
+        rx_serials_ant = ['RF3C000034-2'],
         tx_serials_ant = []
     )
     obj.setTrigger(["RF3C000034"])
@@ -56,7 +56,6 @@ def main_test():  # you could play with this class here
     #     a = queue.dequeue()
     #     dic[a[0]] = a[1]
     # obj.setGains(dic)
-    obj.close()
 
 
 class IrisSimpleRxTxSuperClass:
@@ -70,17 +69,16 @@ class IrisSimpleRxTxSuperClass:
         dcoffset = True
     ):
         self.sdrs = {}
-        self.rx_gains = []
-        self.tx_gains = []
+        self.rx_gains = {}  # if rx_serials_ant contains xxx-3-rx-1 then it has "xxx-0-rx" and "xxx-1-rx", they are separate (without trigger option)
+        self.tx_gains = {}
         # deep copy of rx_serials_ant and tx_serials_ant, this is python necessary :)
         self.rx_serials_ant = [ele for ele in rx_serials_ant]
         self.tx_serials_ant = [ele for ele in tx_serials_ant]
-        self.rxStreams = []  # index just matched to rx_serials_ant, also does rx_gains
+        self.rxStreams = []  # index just matched to rx_serials_ant
         self.txStreams = []
         if not hasattr(self, 'triggerIrisList'): self.triggerIrisList = []
         self.all_used_serials = []
         self.rate = rate  # rate of sampling
-        self.released = False
 
         # first collect what sdr has been included (it's possible that some only use one antenna)
         for ele in self.rx_serials_ant: self.sdrs[IrisSimpleRxTxSuperClass.splitSerialAnt(ele)[0]] = None
@@ -116,84 +114,108 @@ class IrisSimpleRxTxSuperClass:
         # create basic gain settings for tx/rx (surely you can add new "gain" settings or even delete some of them in child class, it's up to you!)
         for serial_ant in self.rx_serials_ant:
             serial, ant = IrisSimpleRxTxSuperClass.splitSerialAnt(serial_ant)
-            self.rx_gains.append(self.default_rx_gains)
-            chan = ant  # TODO: two antenna using two channel! I'm not sure if it works! wy@180804
+            if ant == 2:
+                self.rx_gains["%s-0-rx" % serial] = self.default_rx_gains.copy()  # this is a fixed bug, no copy will lead to the same gain
+                self.rx_gains["%s-1-rx" % serial] = self.default_rx_gains.copy()
+            else:
+                self.rx_gains["%s-%d-rx" % (serial, ant)] = self.default_rx_gains.copy()
             sdr = self.sdrs[serial]  # get sdr object reference
-            if rate is not None: sdr.setSampleRate(SOAPY_SDR_RX, chan, rate)
-            if bw is not None: sdr.setBandwidth(SOAPY_SDR_RX, chan, bw)
-            if freq is not None: sdr.setFrequency(SOAPY_SDR_RX, chan, "RF", freq)
-            sdr.setAntenna(SOAPY_SDR_RX, chan, "TRX")  # TODO: I assume that in base station given, it only has two TRX antenna but no RX antenna wy@180804
-            sdr.setFrequency(SOAPY_SDR_RX, chan, "BB", 0) # don't use cordic
-            sdr.setDCOffsetMode(SOAPY_SDR_RX, chan, dcoffset) # dc removal on rx
-            for key in self.default_rx_gains:
-                if key == "rxGain":  # this is a special gain value for Iris, just one parameter
-                    sdr.setGain(SOAPY_SDR_RX, chan, self.default_rx_gains[key])
-                else: sdr.setGain(SOAPY_SDR_RX, chan, key, self.default_rx_gains[key])
+            chans = [0, 1] if ant == 2 else [ant]  # if ant is 2, it means [0, 1] both
+            for chan in chans:
+                if rate is not None: sdr.setSampleRate(SOAPY_SDR_RX, chan, rate)
+                if bw is not None: sdr.setBandwidth(SOAPY_SDR_RX, chan, bw)
+                if freq is not None: sdr.setFrequency(SOAPY_SDR_RX, chan, "RF", freq)
+                sdr.setAntenna(SOAPY_SDR_RX, chan, "TRX")  # TODO: I assume that in base station given, it only has two TRX antenna but no RX antenna wy@180804
+                sdr.setFrequency(SOAPY_SDR_RX, chan, "BB", 0) # don't use cordic
+                sdr.setDCOffsetMode(SOAPY_SDR_RX, chan, dcoffset) # dc removal on rx
+                for key in self.default_rx_gains:
+                    if key == "rxGain":  # this is a special gain value for Iris, just one parameter
+                        sdr.setGain(SOAPY_SDR_RX, chan, self.default_rx_gains[key])
+                    else: sdr.setGain(SOAPY_SDR_RX, chan, key, self.default_rx_gains[key])
         for serial_ant in self.tx_serials_ant:
             serial, ant = IrisSimpleRxTxSuperClass.splitSerialAnt(serial_ant)
-            self.tx_gains.append(self.default_tx_gains)
-            chan = ant
+            if ant == 2:
+                self.tx_gains["%s-0-tx" % serial] = self.default_tx_gains.copy()
+                self.tx_gains["%s-1-tx" % serial] = self.default_tx_gains.copy()
+            else:
+                self.tx_gains["%s-%d-tx" % (serial, ant)] = self.default_tx_gains.copy()
             sdr = self.sdrs[serial]
-            if rate is not None: sdr.setSampleRate(SOAPY_SDR_TX, chan, rate)
-            if bw is not None: sdr.setBandwidth(SOAPY_SDR_TX, chan, bw)
-            if freq is not None: sdr.setFrequency(SOAPY_SDR_TX, chan, "RF", freq)
-            sdr.setAntenna(SOAPY_SDR_TX, chan, "TRX")
-            sdr.setFrequency(SOAPY_SDR_TX, chan, "BB", 0)  # don't use cordic
-            for key in self.default_tx_gains:
-                if key == "txGain":  # this is a special gain value for Iris, just one parameter
-                    sdr.setGain(SOAPY_SDR_TX, chan, self.default_tx_gains[key])
-                else: sdr.setGain(SOAPY_SDR_TX, chan, key, self.default_tx_gains[key])
+            chans = [0, 1] if ant == 2 else [ant]  # if ant is 2, it means [0, 1] both
+            for chan in chans:
+                if rate is not None: sdr.setSampleRate(SOAPY_SDR_TX, chan, rate)
+                if bw is not None: sdr.setBandwidth(SOAPY_SDR_TX, chan, bw)
+                if freq is not None: sdr.setFrequency(SOAPY_SDR_TX, chan, "RF", freq)
+                sdr.setAntenna(SOAPY_SDR_TX, chan, "TRX")
+                sdr.setFrequency(SOAPY_SDR_TX, chan, "BB", 0)  # don't use cordic
+                for key in self.default_tx_gains:
+                    if key == "txGain":  # this is a special gain value for Iris, just one parameter
+                        sdr.setGain(SOAPY_SDR_TX, chan, self.default_tx_gains[key])
+                    else: sdr.setGain(SOAPY_SDR_TX, chan, key, self.default_tx_gains[key])
 
         # create rx/tx streams
         for r, serial_ant in enumerate(self.rx_serials_ant):
             serial, ant = IrisSimpleRxTxSuperClass.splitSerialAnt(serial_ant)
-            chan = ant  # different ant using different channel
+            chans = [0, 1] if ant == 2 else [ant]
             sdr = self.sdrs[serial]
-            stream = self.rxStreamSetup(sdr, chan)
+            stream = self.rxStreamSetup(sdr, chans)
             self.rxStreams.append(stream) 
             # np.empty(num_samps).astype(np.complex64)  # not create numpy arrays here, leave this to child class (maybe user could change num_samps at run-time)
         for r, serial_ant in enumerate(self.tx_serials_ant):
             serial, ant = IrisSimpleRxTxSuperClass.splitSerialAnt(serial_ant)
-            chan = ant
+            chans = [0, 1] if ant == 2 else [ant]
             sdr = self.sdrs[serial]
-            stream = self.txStreamSetup(sdr, chan)
+            stream = self.txStreamSetup(sdr, chans)
             self.txStreams.append(stream) 
             # for sdr in self.tx_sdrs: sdr.activateStream(txStream)  # not activate streams, leave it to child class or trigger function in this class
 
-    def rxStreamSetup(self, sdr, chan):
-        stream = sdr.setupStream(SOAPY_SDR_RX, SOAPY_SDR_CF32, [chan], {"remote:prot": "tcp", "remote:mtu": "1024"})
+    def rxStreamSetup(self, sdr, chans):
+        stream = sdr.setupStream(SOAPY_SDR_RX, SOAPY_SDR_CF32, chans, {"remote:prot": "tcp", "remote:mtu": "1024"})
         return stream
     
-    def txStreamSetup(self, sdr, chan):
-        stream = sdr.setupStream(SOAPY_SDR_TX, SOAPY_SDR_CF32, [chan], {"remote:prot": "tcp", "remote:mtu": "1024"})
+    def txStreamSetup(self, sdr, chans):
+        stream = sdr.setupStream(SOAPY_SDR_TX, SOAPY_SDR_CF32, chans, {"remote:prot": "tcp", "remote:mtu": "1024"})
         return stream
 
     def buildTxTones(self, num_samps):
         waveFreq = self.rate / 100  # every period has 100 points
         s_time_vals = np.array(np.arange(0, num_samps)).transpose() * 1 / self.rate  # time of each point
         tone = np.exp(s_time_vals * 2.j * np.pi * waveFreq).astype(np.complex64)
-        return [tone for i in range(len(self.txStreams))]  # send all sinosuid wave
+        tones = []
+        for r, serial_ant in enumerate(self.tx_serials_ant):
+            serial, ant = IrisSimpleRxTxSuperClass.splitSerialAnt(serial_ant)
+            if ant == 2:
+                tones.append([tone, tone])  # two stream
+            else:
+                tones.append([tone])
+        return tones  # send all sinosuid wave
     
     def postProcessRxSamples(self):
         for r,rxStream in enumerate(self.rxStreams):
-            sampsRecv = self.sampsRecv[r]  # received samples
+            sampsRecv = self.sampsRecv[r]  # received samples, it a list of 1 or 2
             # do nothing here, if you want to modify received stream (for example, to practice the process of recognize pilot and )
 
     def doSimpleRxTx(self, num_samps, breakWhenBadRW = True):  # this is just a demo: send sinosuid to all tx
         tones = self.buildTxTones(num_samps)  # build tx samples
 
         # create numpy arrays for receiving
-        self.sampsRecv = [np.zeros(num_samps, np.complex64) for r in range(len(self.rxStreams))]
+        self.sampsRecv = []
+        for r, serial_ant in enumerate(self.rx_serials_ant):
+            serial, ant = IrisSimpleRxTxSuperClass.splitSerialAnt(serial_ant)
+            chans = [0, 1] if ant == 2 else [ant]
+            if ant == 2:
+                self.sampsRecv.append([np.zeros(num_samps, np.complex64), np.zeros(num_samps, np.complex64)])
+            else:
+                self.sampsRecv.append([np.zeros(num_samps, np.complex64)])
 
         # clear out socket buffer from old requests
         for r,rxStream in enumerate(self.rxStreams):
             serial_ant = self.rx_serials_ant[r]
             serial, ant = IrisSimpleRxTxSuperClass.splitSerialAnt(serial_ant)
             sdr = self.sdrs[serial]
-            sr = sdr.readStream(rxStream, [self.sampsRecv[r][:]], len(self.sampsRecv[r]), timeoutUs = 0)
+            sr = sdr.readStream(rxStream, self.sampsRecv[r], len(self.sampsRecv[r][0]), timeoutUs = 0)
             while sr.ret != SOAPY_SDR_TIMEOUT and not UseFakeSoapy:
-                sr = sdr.readStream(rxStream, [self.sampsRecv[r][:]], len(self.sampsRecv[r]), timeoutUs = 0)
-        
+                sr = sdr.readStream(rxStream, self.sampsRecv[r], len(self.sampsRecv[r][0]), timeoutUs = 0)
+
         # prepare data for sending, if child class define the function, just call it, otherwise use the default one
         if hasattr(self, "prepareTx"):
             self.prepareTx(tones)
@@ -206,9 +228,8 @@ class IrisSimpleRxTxSuperClass:
                 sdr.activateStream(txStream)  # activate it!
                 # then send data, make sure that all data is written
                 numSent = 0
-                tone = tones[r]
-                while numSent < len(tone):
-                    sr = sdr.writeStream(txStream, [tone[numSent:]], len(tone)-numSent, flags)
+                while numSent < len(tones[r]):
+                    sr = sdr.writeStream(txStream, [tone[numSent:] for tone in tones[r]], len(tones[r][0])-numSent, flags)
                     if sr.ret == -1:
                         print("Error: Bad Write!")
                         if breakWhenBadRW: break
@@ -224,7 +245,7 @@ class IrisSimpleRxTxSuperClass:
                 serial_ant = self.rx_serials_ant[r]
                 serial, ant = IrisSimpleRxTxSuperClass.splitSerialAnt(serial_ant)
                 sdr = self.sdrs[serial]
-                sdr.activateStream(rxStream, flags, 0, len(self.sampsRecv[r]))
+                sdr.activateStream(rxStream, flags, 0, len(self.sampsRecv[r][0]))
 
         if hasattr(self, "triggerProcess"):
             self.triggerProcess()
@@ -241,8 +262,8 @@ class IrisSimpleRxTxSuperClass:
             serial, ant = IrisSimpleRxTxSuperClass.splitSerialAnt(serial_ant)
             sdr = self.sdrs[serial]
             numRecv = 0
-            while numRecv < len(self.sampsRecv[r]):
-                sr = sdr.readStream(rxStream, [self.sampsRecv[r][numRecv:]], len(self.sampsRecv[r])-numRecv, timeoutUs=int(1e6))
+            while numRecv < len(self.sampsRecv[r][0]):
+                sr = sdr.readStream(rxStream, [samps[numRecv:] for samps in self.sampsRecv[r]], len(self.sampsRecv[r][0])-numRecv, timeoutUs=int(1e6))
                 if sr.ret == -1:
                     print('Error: Bad Read!')
                     if breakWhenBadRW: break
@@ -268,7 +289,7 @@ class IrisSimpleRxTxSuperClass:
 
     @staticmethod
     def splitSerialAnt(serial_ant):
-        idx = serial_ant.rfind(':')
+        idx = serial_ant.rfind('-')
         if idx == -1: return None
         return (serial_ant[:idx], int(serial_ant[idx+1:]))
     
@@ -295,25 +316,25 @@ class IrisSimpleRxTxSuperClass:
         key = gainKey[a+1:]
         if ant != "1" and ant != "0": return None  # only for Iris, two antenna/channel
         if txrx != "rx" and txrx != "tx": return None
-        serial_ant = serial + ':' + ant
-        index = -1
-        if txrx == "rx": index = self.rx_serials_ant.index(serial_ant)  # this step consume linear time! but always antenna is under 20 elements I guessssssss......
-        else: index = self.tx_serials_ant.index(serial_ant)
-        if index == -1: return None
+        serial_ant = serial + '-' + ant
+        # index = -1
+        # if txrx == "rx": index = self.rx_serials_ant.index(serial_ant)  # this step consume linear time! but always antenna is under 20 elements I guessssssss......
+        # else: index = self.tx_serials_ant.index(serial_ant)
+        # if index == -1: return None
         gk = key
         if txrx == "rx":
-            if gk not in self.rx_gains[index]: return None
-        elif gk not in self.tx_gains[index]: return None
-        return serial_ant, index, txrx, key
+            if gk not in self.rx_gains[gainKey[:a]]: return None
+        elif gk not in self.tx_gains[gainKey[:a]]: return None
+        return serial_ant, txrx, key
     
     # return anything if cannot change the gain or unknown gainKey, otherwise just return None (or simply do not return)
-    def changeGain(self, serial_ant, gainObj, gainKey, gainNewValue):  # note that when using web controller, gainNewValue will always be string!
+    def changeGain(self, serial_ant, txrx, gainObj, gainKey, gainNewValue):  # note that when using web controller, gainNewValue will always be string!
         # you can overwrite this, but note that you can call IrisSimpleRxTxSuperClass.changeGain(self, xxx) to support basic gain settings without repeat code
         gk = gainKey
         serial, ant = IrisSimpleRxTxSuperClass.splitSerialAnt(serial_ant)
         chan = ant
         sdr = self.sdrs[serial]
-        if serial_ant in self.rx_serials_ant:
+        if txrx == "rx":
             if gk=="LNA2" or gk=="LNA1" or gk=="ATTN" or gk=="LNA" or gk=="TIA" or gk=="PGA" or gk == "rxGain":
                 try:
                     gainObj[gainKey] = int(gainNewValue)
@@ -323,7 +344,7 @@ class IrisSimpleRxTxSuperClass:
                     return None
                 return True
             return self.rxGainKeyException(gainKey, newValue=gainNewValue, gainObj=gainObj)
-        elif serial_ant in self.tx_serials_ant:
+        elif txrx == "tx":
             if gk=="ATTN" or gk=="PA1" or gk=="PA2" or gk=="PA3" or gk=="IAMP" or gk=="PAD" or gk == "txGain":
                 try:
                     gainObj[gainKey] = int(gainNewValue)
@@ -364,17 +385,6 @@ class IrisSimpleRxTxSuperClass:
     
     def __del__(self):
         print('Iris destruction called')
-        for serial in self.sdrs:
-            sdr = self.sdrs[serial]
-            print('deleting serial:', serial)
-            if UseFakeSoapy: sdr.deleteref()  # this is simulation, if you want to delete all references, call it explicitly 
-            del sdr  # release sdr device
-        self.sdrs = None
-        if not self.released:
-            self.close()
-    
-    def close(self):
-        print("Iris close called")
         for r,stream in enumerate(self.rxStreams):
             serial_ant = self.rx_serials_ant[r]
             serial, ant = IrisSimpleRxTxSuperClass.splitSerialAnt(serial_ant)
@@ -383,7 +393,12 @@ class IrisSimpleRxTxSuperClass:
             serial_ant = self.tx_serials_ant[r]
             serial, ant = IrisSimpleRxTxSuperClass.splitSerialAnt(serial_ant)
             self.sdrs[serial].closeStream(stream)
-        self.released = True
+        for serial in self.sdrs:
+            sdr = self.sdrs[serial]
+            print('deleting serial:', serial)
+            if UseFakeSoapy: sdr.deleteref()  # this is simulation, if you want to delete all references, call it explicitly 
+            del sdr  # release sdr device
+        self.sdrs = None
 
     def getExtraInfos(self):
         info = {}
@@ -403,23 +418,31 @@ class IrisSimpleRxTxSuperClass:
         ret = {}
         rxlst = []
         txlst = []
-        for serial_ant in self.rx_serials_ant:
-            serial, ant = IrisSimpleRxTxSuperClass.splitSerialAnt(serial_ant)
-            rxlst.append(serial + '-%d-rx' % ant)
         for serial_ant in self.tx_serials_ant:
             serial, ant = IrisSimpleRxTxSuperClass.splitSerialAnt(serial_ant)
-            txlst.append(serial + '-%d-tx' % ant)
+            if ant == 2:
+                txlst.append(serial + '-0-tx')
+                txlst.append(serial + '-1-tx')
+            else:
+                txlst.append(serial + '-%d-tx' % ant)
+        for serial_ant in self.rx_serials_ant:
+            serial, ant = IrisSimpleRxTxSuperClass.splitSerialAnt(serial_ant)
+            if ant == 2:
+                rxlst.append(serial + '-0-rx')
+                rxlst.append(serial + '-1-rx')
+            else:
+                rxlst.append(serial + '-%d-rx' % ant)
         data = {}
         retlist = []
-        for r,name in enumerate(rxlst):
-            gains = self.rx_gains[r]
+        for r,name in enumerate(txlst):
+            gains = self.tx_gains[name]
             a = []
             for gainElementKey in gains:
                 a.append(gainElementKey)
                 data[name + '-' + gainElementKey] = str(gains[gainElementKey])
             retlist.append([name, a])
-        for r,name in enumerate(txlst):
-            gains = self.tx_gains[r]
+        for r,name in enumerate(rxlst):
+            gains = self.rx_gains[name]
             a = []
             for gainElementKey in gains:
                 a.append(gainElementKey)
@@ -433,14 +456,15 @@ class IrisSimpleRxTxSuperClass:
     def setGains(self, gains):  # newGain is dict e.t. {"SERIAL-ANT-rx-gainKey": "13"} where SERIAL and ANT is defined before
         for gainKey in gains:
             ret = self.splitGainKey(gainKey)
+            print(ret)
             if ret is None: 
                 print("unknown key: " + gainKey)
                 continue
-            serial_ant, index, txrx, key = ret
+            serial_ant, txrx, key = ret
             gainObj = None
-            if txrx == 'rx': gainObj = self.rx_gains[index]
-            else: gainObj = self.tx_gains[index]
-            self.changeGain(serial_ant, gainObj, key, gains[gainKey])
+            if txrx == 'rx': gainObj = self.rx_gains["%s-%s" % (serial_ant, txrx)]
+            else: gainObj = self.tx_gains["%s-%s" % (serial_ant, txrx)]
+            self.changeGain(serial_ant, txrx, gainObj, key, gains[gainKey])
 
 if __name__=='__main__':
     main_test()

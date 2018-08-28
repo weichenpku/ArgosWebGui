@@ -32,6 +32,7 @@ export functions:
 import time, random, GUI
 from helperfuncs import LoopTimer
 from helperfuncs import ModifyQueue
+from IrisSimpleRxTxSuperClass import IrisSimpleRxTxSuperClass
 
 version = "ArgosWebGui v0.2"
 state = "stopped"
@@ -132,7 +133,7 @@ def loop(sleepFunc=None):
         # deinitialize operations
         extraInfosQueryTimer.stop()
         if IrisObj is not None:
-            IrisObj.close()
+            # IrisObj.close()  # close api is deleted
             IrisObj = None
         state = 'stopped'
         changedF()
@@ -149,21 +150,36 @@ def loop(sleepFunc=None):
         if mode == "sinosuid transceive" or mode == "sinosuid dev-front":  # some send, others receive
             if userTrig:
                 userTrig = False
-                ret = IrisObj.doSimpleRxTx()
-                tx_serial_ant = [ele.replace(':', '-') for ele in ret[0][0]]  # browser cannot handle id with ':' character
-                tx_complex_data = ret[0][1]
-                rx_serial_ant = [ele.replace(':', '-') for ele in ret[1][0]]
-                rx_complex_data = ret[1][1]
-                struct = tx_serial_ant + rx_serial_ant
+                ((tx_serials_ant, tx_complex_data), (rx_serials_ant, rx_complex_data)) = IrisObj.doSimpleRxTx()
+                struct = []
+                for r,serial_ant in enumerate(tx_serials_ant + rx_serials_ant):
+                    serial, ant = IrisSimpleRxTxSuperClass.splitSerialAnt(serial_ant)
+                    if ant == 2:
+                        struct.append(serial + '-0')
+                        struct.append(serial + '-1')
+                    else:
+                        struct.append(serial_ant)
                 data = {}
-                for r,serial_ant in enumerate(tx_serial_ant):
+                for r,serial_ant in enumerate(tx_serials_ant):
+                    serial, ant = IrisSimpleRxTxSuperClass.splitSerialAnt(serial_ant)
                     cdat = tx_complex_data[r]
-                    data["I-" + serial_ant] = [float(e.real) for e in cdat]
-                    data["Q-" + serial_ant] = [float(e.imag) for e in cdat]
-                for r,serial_ant in enumerate(rx_serial_ant):
+                    if ant == 2:
+                        for antt in [0,1]:
+                            data["I-%s-%d" % (serial, antt)] = [float(e.real) for e in cdat[antt]]
+                            data["Q-%s-%d" % (serial, antt)] = [float(e.imag) for e in cdat[antt]]
+                    else:
+                        data["I-" + serial_ant] = [float(e.real) for e in cdat[0]]
+                        data["Q-" + serial_ant] = [float(e.imag) for e in cdat[0]]
+                for r,serial_ant in enumerate(rx_serials_ant):
+                    serial, ant = IrisSimpleRxTxSuperClass.splitSerialAnt(serial_ant)
                     cdat = rx_complex_data[r]
-                    data["I-" + serial_ant] = [float(e.real) for e in cdat]
-                    data["Q-" + serial_ant] = [float(e.imag) for e in cdat]
+                    if ant == 2:
+                        for antt in [0,1]:
+                            data["I-%s-%d" % (serial, antt)] = [float(e.real) for e in cdat[antt]]
+                            data["Q-%s-%d" % (serial, antt)] = [float(e.imag) for e in cdat[antt]]
+                    else:
+                        data["I-" + serial_ant] = [float(e.real) for e in cdat[0]]
+                        data["Q-" + serial_ant] = [float(e.imag) for e in cdat[0]]
                 sampleData = {"struct": struct, "data": data}
                 sampleDataReady = True
         if mode == "hdf5 analysis":

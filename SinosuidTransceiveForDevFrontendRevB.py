@@ -18,7 +18,6 @@ def main_test():
     obj = SinosuidTransceiveForDevFrontendRevB(["0313-0-Tx-1", "0283-0-Rx-0"])
     # obj.doSimpleRxTx()
     print(obj.getExtraInfos())
-    obj.close()
 
 
 class SinosuidTransceiveForDevFrontendRevB(IrisSimpleRxTxSuperClass):  # provding precode settings to practice MU-MIMO or beamforming
@@ -37,9 +36,9 @@ class SinosuidTransceiveForDevFrontendRevB(IrisSimpleRxTxSuperClass):  # provdin
             if trigger:
                 triggerIrisList.append(serial)
             if TorR == 'Rx':
-                rx_serials_ant.append(serial + ':' + ant)
+                rx_serials_ant.append(serial + '-' + ant)
             elif TorR == 'Tx':
-                tx_serials_ant.append(serial + ':' + ant)
+                tx_serials_ant.append(serial + '-' + ant)
             else:
                 GUI.error("unkown TorR: %s" % TorR)
                 return
@@ -70,10 +69,10 @@ class SinosuidTransceiveForDevFrontendRevB(IrisSimpleRxTxSuperClass):  # provdin
         
         self.numSamples = 1024  # could be changed during runtime
         # didn't check trigger condition. It's your responsibility to make sure they'll all be triggered
-        for ele in self.tx_gains:  # add precode 'gain' :)
-            ele["precode"] = 1.+0.j  
-        for ele in self.rx_gains: 
-            ele["postcode"] = 1.+0.j  # I don't known how to name it >.< see "postProcessRxSamples" below
+        for key in self.tx_gains:  # add precode 'gain' :)
+            self.tx_gains[key]["precode"] = 1.+0.j  
+        for key in self.rx_gains: 
+            self.rx_gains[key]["postcode"] = 1.+0.j  # I don't known how to name it >.< see "postProcessRxSamples" below
         self.showSamples = 8192  # init max samples
     
     def getExtraInfos(self):
@@ -122,15 +121,15 @@ class SinosuidTransceiveForDevFrontendRevB(IrisSimpleRxTxSuperClass):  # provdin
         if self.ts > hw_time: time.sleep((self.ts - hw_time) / 1e9)  # otherwise do not sleep
     
     # override parent function!
-    def rxStreamSetup(self, sdr, chan):
+    def rxStreamSetup(self, sdr, chans):
         sdr.writeSetting(SOAPY_SDR_RX, 0, 'CALIBRATE', 'SKLK')  # this is from sklk-demos/python/SISO.py wy@180823
-        stream = sdr.setupStream(SOAPY_SDR_RX, SOAPY_SDR_CF32, [chan], {"remote:prot": "tcp", "remote:mtu": "1024"})
+        stream = sdr.setupStream(SOAPY_SDR_RX, SOAPY_SDR_CF32, chans, {"remote:prot": "tcp", "remote:mtu": "1024"})
         return stream
     
     # override parent function!
-    def txStreamSetup(self, sdr, chan):
+    def txStreamSetup(self, sdr, chans):
         sdr.writeSetting(SOAPY_SDR_TX, 0, 'CALIBRATE', 'SKLK')  # this is from sklk-demos/python/SISO.py wy@180823
-        stream = sdr.setupStream(SOAPY_SDR_TX, SOAPY_SDR_CF32, [chan], {"remote:prot": "tcp", "remote:mtu": "1024"})
+        stream = sdr.setupStream(SOAPY_SDR_TX, SOAPY_SDR_CF32, chans, {"remote:prot": "tcp", "remote:mtu": "1024"})
         return stream
     
     # override parent function!

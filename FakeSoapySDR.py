@@ -62,8 +62,14 @@ class Device:
     def setSampleRate(self, RXTX, chan, rate):
         print("%s (%s:%d) set sample rate to %d" % (self.serial, "TX" if RXTX==1 else "RX", chan, rate))
     
-    def setGain(self, RXTX, chan, key, val):
-        print("%s (%s:%d) set gain \"%s\" to %f" % (self.serial, "TX" if RXTX==1 else "RX", chan, key, val))
+    def setBandwidth(self, RXTX, chan, bw):
+        print("%s (%s:%d) set bandwidth to %d" % (self.serial, "TX" if RXTX==1 else "RX", chan, bw))
+    
+    def setGain(self, RXTX, chan, key, val=None):
+        if val is None:
+            print("%s (%s:%d) set gain global to %f" % (self.serial, "TX" if RXTX==1 else "RX", chan, key))
+        else:
+            print("%s (%s:%d) set gain \"%s\" to %f" % (self.serial, "TX" if RXTX==1 else "RX", chan, key, val))
 
     def setHardwareTime(self, time, condition):
         print("%s set hardware time %d under \"%s\" condition" % (self.serial, time, condition))
@@ -72,8 +78,11 @@ class Device:
         print("%s getting hardware time" % self.serial)
         return time.time()  # make sure every time call is different
     
-    def writeSetting(self, key, val):
-        print("%s write setting \"%s\" to \"%s\"" % (self.serial, key, val))
+    def writeSetting(self, key, val, v2=None, v3=None):
+        if v2 is None:
+            print("%s write setting \"%s\" to \"%s\"" % (self.serial, key, val))
+        else:
+            print("%s write setting \"%s\" \"%s\" \"%s\" \"%s\"" % (self.serial, key, val, v2, v3))
     
     def readSensor(self, *arg):
         # print("%s try read sensor %s" % (self.serial, str(arg)))

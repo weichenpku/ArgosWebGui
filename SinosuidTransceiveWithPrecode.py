@@ -18,9 +18,9 @@ class SinosuidTransceiveWithPrecode(IrisSimpleRxTxSuperClass):  # provding preco
             if trigger:
                 triggerIrisList.append(serial)
             if TorR == 'Rx':
-                rx_serials_ant.append(serial + ':' + ant)
+                rx_serials_ant.append(serial + '-' + ant)
             elif TorR == 'Tx':
-                tx_serials_ant.append(serial + ':' + ant)
+                tx_serials_ant.append(serial + '-' + ant)
             else:
                 GUI.error("unkown TorR: %s" % TorR)
                 return
@@ -37,10 +37,10 @@ class SinosuidTransceiveWithPrecode(IrisSimpleRxTxSuperClass):  # provding preco
         triggerret = self.tryTrigger()
         if len(triggerret) != 0:
             GUI.alert("not triggered Iris: %s" % str(triggerret))
-        for ele in self.tx_gains:  # add precode 'gain' :)
-            ele["precode"] = 1.+0.j  
-        for ele in self.rx_gains: 
-            ele["postcode"] = 1.+0.j  # I don't known how to name it >.< see "postProcessRxSamples" below
+        for key in self.tx_gains:  # add precode 'gain' :)
+            self.tx_gains[key]["precode"] = 1.+0.j  
+        for key in self.rx_gains: 
+            self.rx_gains[key]["postcode"] = 1.+0.j  # I don't known how to name it >.< see "postProcessRxSamples" below
         self.showSamples = 8192  # init max samples
     
     # override parent function!
@@ -48,16 +48,24 @@ class SinosuidTransceiveWithPrecode(IrisSimpleRxTxSuperClass):  # provding preco
         waveFreq = self.rate / 100  # every period has 100 points
         s_time_vals = np.array(np.arange(0, numSamples)).transpose() * 1 / self.rate  # time of each point
         tone = np.exp(s_time_vals * 2.j * np.pi * waveFreq).astype(np.complex64)
-        ret = []
-        for i in range(len(self.txStreams)):
-            localtone = tone * complex(self.tx_gains[i]["precode"])
-            ret.append(localtone)
-        return ret
+        tones = []
+        for r, serial_ant in enumerate(self.tx_serials_ant):
+            serial, ant = IrisSimpleRxTxSuperClass.splitSerialAnt(serial_ant)
+            if ant == 2:
+                tones.append([tone * complex(self.tx_gains[serial + '-0-tx']["precode"]), tone * complex(self.tx_gains[serial + '-1-tx']["precode"])])  # two stream
+            else:
+                tones.append([tone * complex(self.tx_gains[serial_ant + '-tx']["precode"])])
+        return tones
     
     # override parent function!
     def postProcessRxSamples(self):
-        for r,rxStream in enumerate(self.rxStreams):
-            self.sampsRecv[r] *= complex(self.rx_gains[r]["postcode"])   # received samples
+        for r, serial_ant in enumerate(self.rx_serials_ant):
+            serial, ant = IrisSimpleRxTxSuperClass.splitSerialAnt(serial_ant)
+            if ant == 2:
+                self.sampsRecv[r][0] *= complex(self.rx_gains[serial + "-0-rx"]["postcode"])
+                self.sampsRecv[r][1] *= complex(self.rx_gains[serial + "-1-rx"]["postcode"])
+            else:
+                self.sampsRecv[r][0] *= complex(self.rx_gains[serial + "-%d-rx" % ant]["postcode"])  # received samples
     
     # override parent function!
     def rxGainKeyException(self, gainKey, newValue=None, gainObj=None):  # for DIY gain key
@@ -109,11 +117,11 @@ class SinosuidTransceiveWithPrecode(IrisSimpleRxTxSuperClass):  # provding preco
         exceeded = False  # flag to indicate whether there is sequence longer than self.showSamples
         for i in range(len(tones)):
             if (len(tones[i]) > self.showSamples):
-                tones[i] = tones[i][:self.showSamples]
+                tones[i] = [tone[:self.showSamples] for tone in tones[i]]
                 exceeded = True
         for i in range(len(sampsRecv)):
             if (len(sampsRecv[i]) > self.showSamples):
-                sampsRecv[i] = sampsRecv[i][:self.showSamples]
+                sampsRecv[i] = [samps[:self.showSamples] for samps in sampsRecv[i]]
                 exceeded = True
         if exceeded:
             print("data has been sliced to %d due to showSamples" % self.showSamples)
