@@ -16,7 +16,7 @@ import numpy as np
 
 def main_test():
     obj = SinosuidTransceiveForDevFrontendRevB(["0313-0-Tx-1", "0283-0-Rx-0"])
-    # obj.doSimpleRxTx()
+    obj.doSimpleRxTx()
     print(obj.getExtraInfos())
 
 
@@ -97,9 +97,8 @@ class SinosuidTransceiveForDevFrontendRevB(IrisSimpleRxTxSuperClass):  # provdin
             sdr.activateStream(txStream)  # activate it!
             # then send data, make sure that all data is written
             numSent = 0
-            tone = tones[r]
-            while numSent < len(tone):
-                sr = sdr.writeStream(txStream, [tone[numSent:]], len(tone)-numSent, flags, timeNs=self.ts)
+            while numSent < len(tones[r]):
+                sr = sdr.writeStream(txStream, [tone[numSent:] for tone in tones[r]], len(tones[r][0])-numSent, flags, timeNs=self.ts)
                 if sr.ret == -1:
                     print("Error: Bad Write!")
                     if breakWhenBadRW: break
@@ -114,7 +113,7 @@ class SinosuidTransceiveForDevFrontendRevB(IrisSimpleRxTxSuperClass):  # provdin
             serial_ant = self.rx_serials_ant[r]
             serial, ant = IrisSimpleRxTxSuperClass.splitSerialAnt(serial_ant)
             sdr = self.sdrs[serial]
-            sdr.activateStream(rxStream, flags, ts, len(self.sampsRecv[r]))
+            sdr.activateStream(rxStream, flags, ts, len(self.sampsRecv[r][0]))
 
     def triggerProcess(self):  # use HAS_TIME mode, so no trigger will be generated
         hw_time = self.sdrs[self.triggerIrisList[0]].getHardwareTime()
@@ -137,16 +136,24 @@ class SinosuidTransceiveForDevFrontendRevB(IrisSimpleRxTxSuperClass):  # provdin
         waveFreq = self.rate / 100  # every period has 100 points
         s_time_vals = np.array(np.arange(0, numSamples)).transpose() * 1 / self.rate  # time of each point
         tone = np.exp(s_time_vals * 2.j * np.pi * waveFreq).astype(np.complex64)
-        ret = []
-        for i in range(len(self.txStreams)):
-            localtone = tone * complex(self.tx_gains[i]["precode"])
-            ret.append(localtone)
-        return ret
+        tones = []
+        for r, serial_ant in enumerate(self.tx_serials_ant):
+            serial, ant = IrisSimpleRxTxSuperClass.splitSerialAnt(serial_ant)
+            if ant == 2:
+                tones.append([tone * complex(self.tx_gains[serial + '-0-tx']["precode"]), tone * complex(self.tx_gains[serial + '-1-tx']["precode"])])  # two stream
+            else:
+                tones.append([tone * complex(self.tx_gains[serial_ant + '-tx']["precode"])])
+        return tones
     
     # override parent function!
     def postProcessRxSamples(self):
-        for r,rxStream in enumerate(self.rxStreams):
-            self.sampsRecv[r] *= complex(self.rx_gains[r]["postcode"])   # received samples
+        for r, serial_ant in enumerate(self.rx_serials_ant):
+            serial, ant = IrisSimpleRxTxSuperClass.splitSerialAnt(serial_ant)
+            if ant == 2:
+                self.sampsRecv[r][0] *= complex(self.rx_gains[serial + "-0-rx"]["postcode"])
+                self.sampsRecv[r][1] *= complex(self.rx_gains[serial + "-1-rx"]["postcode"])
+            else:
+                self.sampsRecv[r][0] *= complex(self.rx_gains[serial + "-%d-rx" % ant]["postcode"])  # received samples
     
     # override parent function!
     def rxGainKeyException(self, gainKey, newValue=None, gainObj=None):  # for DIY gain key
@@ -191,8 +198,6 @@ class SinosuidTransceiveForDevFrontendRevB(IrisSimpleRxTxSuperClass):  # provdin
                 except:
                     GUI.error("set numSamples error")
         super(SinosuidTransceiveForDevFrontendRevB, self).setGains(gains)
-        print(self.rx_gains)
-        print(self.tx_gains)
     
     def doSimpleRxTx(self):
         ret = super(SinosuidTransceiveForDevFrontendRevB, self).doSimpleRxTx(self.numSamples)
@@ -200,11 +205,11 @@ class SinosuidTransceiveForDevFrontendRevB(IrisSimpleRxTxSuperClass):  # provdin
         exceeded = False  # flag to indicate whether there is sequence longer than self.showSamples
         for i in range(len(tones)):
             if (len(tones[i]) > self.showSamples):
-                tones[i] = tones[i][:self.showSamples]
+                tones[i] = [tone[:self.showSamples] for tone in tones[i]]
                 exceeded = True
         for i in range(len(sampsRecv)):
             if (len(sampsRecv[i]) > self.showSamples):
-                sampsRecv[i] = sampsRecv[i][:self.showSamples]
+                sampsRecv[i] = [samps[:self.showSamples] for samps in sampsRecv[i]]
                 exceeded = True
         if exceeded:
             print("data has been sliced to %d due to showSamples" % self.showSamples)

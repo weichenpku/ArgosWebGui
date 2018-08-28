@@ -9,7 +9,8 @@ SOAPY_SDR_TX = 1
 SOAPY_SDR_CF32 = None
 SOAPY_SDR_TIMEOUT = None
 SOAPY_SDR_WAIT_TRIGGER = 0
-SOAPY_SDR_END_BURST = 0
+SOAPY_SDR_HAS_TIME = 1
+SOAPY_SDR_END_BURST = 2
 
 import time
 import numpy as np
@@ -30,6 +31,9 @@ class FakeStream:
         self.name = "uninitialized Stream"
     def __str__(self):
         return self.name
+
+def ticksToTimeNs(delay, rate):
+    return int(10e9 / rate * delay)
 
 class Device:
     def __init__(self, attr):
@@ -74,7 +78,7 @@ class Device:
     def setHardwareTime(self, time, condition):
         print("%s set hardware time %d under \"%s\" condition" % (self.serial, time, condition))
     
-    def getHardwareTime(self, condition):
+    def getHardwareTime(self, condition=None):
         print("%s getting hardware time" % self.serial)
         return time.time()  # make sure every time call is different
     
@@ -107,8 +111,10 @@ class Device:
                     rxStreamFromAllChannel(self.streams[chan], fakeDeviceInstants, npLst[npidx], length)
         return FakeRetClass(length)
 
-    def writeStream(self, stream, npLst:list, length, flags):
+    def writeStream(self, stream, npLst:list, length, flags, timeNs=None):
         print("%s's stream %s write stream of lenth %d, flags are %s" % (self.serial, stream, length, str(flags)))
+        if timeNs is not None:
+            print("timeNs = %d" % timeNs)
         for npidx in range(len(npLst)):
             for chan in (0,1):
                 if self.streams[chan].name == stream:
