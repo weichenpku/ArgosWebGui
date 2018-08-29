@@ -47,17 +47,3 @@ class LoopTimer:
     
     def stop(self):
         self.running = False
-
-def FormatFromSerialAntTRtrigger(ele):
-    print(ele)
-    a = ele.rfind('-')
-    if a == -1: return None
-    b = ele[:a].rfind('-')
-    if b == -1: return None
-    c = ele[:b].rfind('-')
-    if c == -1: return None
-    serial = ele[:c]
-    ant = ele[c+1:b]
-    TorR = ele[b+1:a]
-    trigger = (ele[a+1:] == '1')
-    return (serial, ant, TorR, trigger)
