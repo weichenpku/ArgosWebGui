@@ -495,8 +495,7 @@ def Process_ReadFromRxStream(self):
         while numRecv < len(self.sampsRecv[r][0]):
             sr = sdr.readStream(rxStream, [samps[numRecv:] for samps in self.sampsRecv[r]], len(self.sampsRecv[r][0])-numRecv, timeoutUs=int(1e6))
             if sr.ret == -1:
-                print('Error: Bad Read!')
-                if breakWhenBadRW: break
+                GUI.error('Error: Bad Read!')
             else: numRecv += sr.ret
 
 def Process_TxDeactive(self):
