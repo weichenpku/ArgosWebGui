@@ -1,4 +1,4 @@
-# sinusoid transceiver
+# Sinusoid_Transceiver_ArgosV2_180828
 
 send and receive sinusoid wave, with multiple sender and receiver enabled.
 
@@ -11,5 +11,5 @@ send and receive sinusoid wave, with multiple sender and receiver enabled.
 
 ### 1. on simulator
 
-![](sinusoid transceiver/pic1.png)
+![](180828/pic1.png)
 

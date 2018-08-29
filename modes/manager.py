@@ -17,7 +17,10 @@ modefiles = {}
 def loadModeFiles(prefix=''):
     global modefiles
     for key in modefiles:
-        importlib.reload(modefiles[key][1])
+        try:
+            importlib.reload(modefiles[key][1])
+        except Exception as e:
+            print(e)
     modefiles = {}  # clear the older one
     for f in os.listdir(os.path.dirname(os.path.abspath(__file__))):  # get all files in this folder
         if f[-3:] == '.py' and f != "manager.py":

@@ -12,7 +12,7 @@ txAnt(arg deleted, as always using "TRX")
 num_samps           number of samples
 rx_serials_ant      serial number of Iris, an array of strings like "xxx:0", where the last number is channal (in Iris will be 0/1)
 tx_serials_antpython
-all_used_serials    if you want to control the order of output (seial number), then provide the order you want here, otherwise it'll be random
+odered_serials    if you want to control the order of output (seial number), then provide the order you want here, otherwise it'll be random
 """
 
 DEBUG_WITH_FAKESOAPYSDR = False
@@ -77,7 +77,7 @@ class IrisSimpleRxTxSuperClass:
         self.rxStreams = []  # index just matched to rx_serials_ant
         self.txStreams = []
         if not hasattr(self, 'triggerIrisList'): self.triggerIrisList = []
-        self.all_used_serials = []
+        self.odered_serials = []
         self.rate = rate  # rate of sampling
 
         # first collect what sdr has been included (it's possible that some only use one antenna)
@@ -85,12 +85,12 @@ class IrisSimpleRxTxSuperClass:
         for ele in self.tx_serials_ant: self.sdrs[IrisSimpleRxTxSuperClass.splitSerialAnt(ele)[0]] = None
         # then create SoapySDR objects for these serial numbers, as they are now all 'None' object
         for serial in self.sdrs:
-            if serial not in self.all_used_serials:
-                self.all_used_serials.append(serial)  # this may be a mistake of user, just recover it
+            if serial not in self.odered_serials:
+                self.odered_serials.append(serial)  # this may be a mistake of user, just recover it
             sdr = SoapySDR.Device(dict(driver="iris", serial=serial))
             self.sdrs[serial] = sdr
             if clockRate is not None: sdr.setMasterClockRate(clockRate)  # set master clock
-        # self.all_used_serials = [serial for serial in self.all_used_serials if serial in self.sdrs]  # to avoid user input strange serial numbers :)
+        # self.odered_serials = [serial for serial in self.odered_serials if serial in self.sdrs]  # to avoid user input strange serial numbers :)
 
         if not hasattr(self, 'default_rx_gains'):  # could be set by child class before super.init
             self.default_rx_gains = {
@@ -402,9 +402,9 @@ class IrisSimpleRxTxSuperClass:
 
     def getExtraInfos(self):
         info = {}
-        info["list"] = [ele for ele in self.all_used_serials]
+        info["list"] = [ele for ele in self.odered_serials]
         info["data"] = {}
-        for serial in self.all_used_serials:  # to keep order, that's necessary for using web controller wy@180804
+        for serial in self.odered_serials:  # to keep order, that's necessary for using web controller wy@180804
             localinfo = []
             localinfo.append(["LMS7", float(self.sdrs[serial].readSensor("LMS7_TEMP"))])
             localinfo.append(["Zynq", float(self.sdrs[serial].readSensor("ZYNQ_TEMP"))])
