@@ -31,7 +31,7 @@ export functions:
     reload()            # reload mode functions by file
 """
 
-import time, random, GUI
+import time, random, GUI, traceback
 from helperfuncs import LoopTimer
 from helperfuncs import ModifyQueue
 import modes.manager as modesm
@@ -44,6 +44,7 @@ def reload():
         availableModes = modesm.makelist()
     except Exception as e:
         GUI.error(str(e))
+        print(traceback.format_exc())
 
 version = "ArgosWebGui v0.3"
 state = "stopped"
@@ -87,6 +88,7 @@ def extraInfosQueryTimerdo(timer):
             extraInfosReady = True
         except Exception as e:  # just print, but not die
             GUI.error(str(e))
+            print(traceback.format_exc())
 
 extraInfosQueryTimer = LoopTimer(extraInfosQueryTimerdo, 2000, Always=True, running=False)
 
@@ -113,6 +115,7 @@ def loop(main, sleepFunc=None):
                 state = 'running'
             except Exception as e:  # just print, but not die
                 GUI.error(str(e))
+                print(traceback.format_exc())
                 state = 'stop-pending'
         changedF()
     elif state == 'stop-pending':
@@ -122,6 +125,7 @@ def loop(main, sleepFunc=None):
                 IrisObj = None
             except Exception as e:
                 GUI.error(str(e))
+                print(traceback.format_exc())
         state = 'stopped'
         changedF()
     elif state == 'running':
@@ -136,12 +140,14 @@ def loop(main, sleepFunc=None):
                 if hasattr(IrisObj, 'setGains'): IrisObj.setGains(dic)
             except Exception as e:  # just print, but not die
                 GUI.error(str(e))
+                print(traceback.format_exc())
             changedF()  # notify user
         if IrisObj is not None:
             try:
                 IrisObj.loop()
             except Exception as e:  # just print, but not die
                 GUI.error(str(e))
+                print(traceback.format_exc())
                 state = 'stop-pending'  # if running cause problem, just stop later
 
 if __name__ == '__main__':

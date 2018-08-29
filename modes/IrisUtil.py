@@ -102,7 +102,6 @@ def Format_CheckEndWithHDF5OrAddIt(filename):
 
 def Format_GetObjectClassName(self):
     s = str(type(self))[:-2]
-    print(s)
     fd = s.rfind('.')
     if fd != -1:
         s = s[fd+1:]

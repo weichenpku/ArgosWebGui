@@ -3,7 +3,7 @@
 written by wy@180802
 """
 
-import time, main, GUI, HDF5Worker
+import time, main, GUI, HDF5Worker, traceback
 
 def nowSettings():  # 用户想获取当前的系统信息，返回一个字典
     ret = {
@@ -25,6 +25,7 @@ def nowSettings():  # 用户想获取当前的系统信息，返回一个字典
                 ret['userSettings']['GainSettings-%s' % gainKey] = data[gainKey]  # 把设置加入进去
         except Exception as e:
             GUI.error(str(e))
+            print(traceback.format_exc())
     else:
         ret["gainStructure"] = []
     for key in main.otherSystemSettings:
