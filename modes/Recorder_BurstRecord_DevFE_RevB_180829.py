@@ -7,23 +7,25 @@ import time
 def test():
     class FakeMain:
         def __init__(self):
-            self.IrisSerialNums = ["0313-0-Tx-1", "0283-0-Rx-0"]
+            self.IrisSerialNums = ["0313-0-Rx-1", "0283-0-Rx-0"]
             self.userTrig = True
         def changedF(self):
             print('changedF called')
     main = FakeMain()
-    obj = Sinusoid_Transceiver_DevFE_RevB_180828(main)
+    obj = Recorder_BurstRecord_DevFE_RevB_180829(main)
     obj.setGains({
-        "parameters-numSamples": "512"
+        "parameters-numSamples": "4096",
+        "parameters-showSamples": "16"
     })
     print(obj.nowGains())
     print(obj.loop())
     print(main.sampleData)
 
-class Sinusoid_Transceiver_DevFE_RevB_180828:
+class Recorder_BurstRecord_DevFE_RevB_180829:
     def __init__(self, main):
         self.main = main
         IrisUtil.Assert_ZeroSerialNotAllowed(self)
+        IrisUtil.Alert_OnlyTorR_OtherIgnored(self, "Rx")  # ignore Iris not Rx
         IrisUtil.Format_UserInputSerialAnts(self)
 
         # init sdr object
@@ -42,11 +44,16 @@ class Sinusoid_Transceiver_DevFE_RevB_180828:
 
         self.numSamples = 1024  # could be changed during runtime
         self.showSamples = 8192  # init max show samples
-        self.selfparameters = {"numSamples": int, "showSamples": int}  # this will automatically added to UI
+        self.fileName = ""  # the hdf5 filename, must end with ".hdf5" otherwise will be create automatically by class name and time
+        self.selfparameters = {
+            "fileName": IrisUtil.Format_CheckEndWithHDF5OrAddIt,
+            "numSamples": int, 
+            "showSamples": int
+        }  # this will automatically added to UI
 
         # add precode and postcode support
         IrisUtil.Gains_AddPrecodePostcodeGains(self)
-        IrisUtil.Gains_LoadGainKeyException(self, rxGainKeyException=IrisUtil.Gains_GainKeyException_RxPostcode, txGainKeyException=IrisUtil.Gains_GainKeyException_TxPrecode)
+        IrisUtil.Gains_LoadGainKeyException(self, rxGainKeyException=IrisUtil.Gains_GainKeyException_RxPostcode)
     
     def __del__(self):
         print('Iris destruction called')
@@ -66,14 +73,15 @@ class Sinusoid_Transceiver_DevFE_RevB_180828:
         IrisUtil.Gains_SetBasicGains(self, gains)
     
     def doSimpleRxTx(self):
-        # prepare work, create tx rx buffer
-        IrisUtil.Process_BuildTxTones_Sinusoid(self)
+        # create hdf5 file first, in case the file is not proper
+        IrisUtil.Process_InitHDF5File_RxOnlyBurst(self)
+
+        # prepare work, create rx buffer
         IrisUtil.Process_CreateReceiveBuffer(self)
         IrisUtil.Process_ClearStreamBuffer(self)
         # activate
         IrisUtil.Process_ComputeTimeToDoThings_UseHasTime(self, delay = 10000000)
-        IrisUtil.Process_TxActivate_WriteFlagAndDataToTxStream_UseHasTime(self)
-        IrisUtil.Process_RxActivate_WriteFlagToRxStream_UseHasTime(self, rx_delay = 57)
+        IrisUtil.Process_RxActivate_WriteFlagToRxStream_UseHasTime(self, rx_delay = 0)
 
         # sleep to wait
         IrisUtil.Process_WaitForTime_NoTrigger(self)
@@ -83,8 +91,10 @@ class Sinusoid_Transceiver_DevFE_RevB_180828:
         IrisUtil.Process_HandlePostcode(self)  # postcode is work on received data
     
         # deactive
-        IrisUtil.Process_TxDeactive(self)
         IrisUtil.Process_RxDeactive(self)
+
+        # save data to hdf5 file
+        IrisUtil.Process_SaveHDF5File_RxOnlyBurst(self)
     
     def loop(self):
         if self.main.userTrig:

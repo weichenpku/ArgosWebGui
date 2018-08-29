@@ -12,12 +12,10 @@ this make sure that all classes can use these functions, just like their own cla
 DEBUG_WITH_FAKESOAPYSDR = False
 UseFakeSoapy = False
 
-try:
-    import GUI
-except Exception as e:
-    import sys, os
-    sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
-    import GUI
+import sys, os
+sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+import GUI
+from HDF5Worker import HDF5Worker
 
 try:
     if DEBUG_WITH_FAKESOAPYSDR: raise Exception("debug")
@@ -36,7 +34,8 @@ import time
 # GUI.log('IrisUtil is loaded')
 
 def Format_UserInputSerialAnts(self):
-    serials = self.main.IrisSerialNums
+    if not hasattr(self, "IrisSerialNums"): self.IrisSerialNums = self.main.IrisSerialNums
+    serials = self.IrisSerialNums
     self.rx_serials_ant = []
     self.tx_serials_ant = []
     self.trigger_serial = None
@@ -96,9 +95,42 @@ def Format_SplitGainKey(self, gainKey):
     elif gk not in self.tx_gains[gainKey[:a]]: return None
     return serial_ant, txrx, key
 
+def Format_CheckEndWithHDF5OrAddIt(filename):
+    if len(filename) > 5 and filename[-5:] == ".hdf5":
+        return filename
+    return filename + ".hdf5"
+
+def Format_GetObjectClassName(self):
+    s = str(type(self))[:-2]
+    print(s)
+    fd = s.rfind('.')
+    if fd != -1:
+        s = s[fd+1:]
+    return s
+
+def Format_AddSelfAttr(self, attrs, namelst):
+    for name in namelst:
+        if hasattr(self, name):
+            attrs[name] = getattr(self, name)
+
 def Assert_ZeroSerialNotAllowed(self):
     if len(self.main.IrisSerialNums) == 0:
         raise Exception("zero serial not allowed")
+
+def Alert_SerialNumsIgnored(self):
+    if len(self.main.IrisSerialNums) != 0:
+        GUI.alert("serial numbers not allowed")
+
+def Alert_OnlyTorR_OtherIgnored(self, TorR):  # TorR should be "Rx" or "Tx"
+    self.IrisSerialNums = []
+    for ele in self.main.IrisSerialNums:
+        ret = Format_FromSerialAntTRtrigger(ele)
+        if ret is None: continue  # leave it to Format_UserInputSerialAnts
+        serial, ant, nTorR, trigger = ret
+        if nTorR != TorR:
+            GUI.alert("serial \"%s\" is not %s so ignore" % (serial, TorR))
+        else:
+            self.IrisSerialNums.append(ele)
 
 def Init_CreateDefaultGain_WithFrontEnd(self):
     self.default_rx_gains = {
@@ -126,9 +158,16 @@ def Init_CreateDefaultGain_WithDevFE(self):
         "txGain": 40  # Tx gain (dB)
     }
 
+def Init_CreateDefaultGain_FileAnalyze(self):  # the following arguments will be changed when a file is loaded
+    self.tx_gains = {}
+    self.rx_gains = {}
+    self.tx_serials_ant = []
+    self.rx_serials_ant = []
+
 def Init_CollectSDRInstantNeeded(self, clockRate=80e6):
     self.sdrs = {}
     self.odered_serials = []
+    self.clockRate = clockRate
     # first collect what sdr has been included (it's possible that some only use one antenna)
     for ele in self.rx_serials_ant + self.tx_serials_ant:
         serial = Format_SplitSerialAnt(ele)[0]
@@ -143,6 +182,10 @@ def Init_CollectSDRInstantNeeded(self, clockRate=80e6):
 def Init_CreateBasicGainSettings(self, rate=None, bw=None, freq=None, dcoffset=None):
     self.rx_gains = {}  # if rx_serials_ant contains xxx-3-rx-1 then it has "xxx-0-rx" and "xxx-1-rx", they are separate (without trigger option)
     self.tx_gains = {}
+    self.rate = rate
+    self.bw = bw
+    self.freq = freq
+    self.dcoffset = dcoffset
     # create basic gain settings for tx/rx (surely you can add new "gain" settings or even delete some of them in child class, it's up to you!)
     for serial_ant in self.rx_serials_ant:
         serial, ant = Format_SplitSerialAnt(serial_ant)
@@ -369,7 +412,7 @@ def Gains_GainKeyException_RxPostcode(self, gainKey, newValue, gainObj):
         return True
     return None
 
-def Gains_LoadGainKeyException(self, rxGainKeyException, txGainKeyException):
+def Gains_LoadGainKeyException(self, rxGainKeyException=Gains_NoGainKeyException, txGainKeyException=Gains_NoGainKeyException):
     self.rxGainKeyException = rxGainKeyException
     self.txGainKeyException = txGainKeyException
 
@@ -386,7 +429,12 @@ def Gains_HandleSelfParameters(self, gains):
                 self.__dict__[key] = parser(gains[gainKey])
     for key in toDelete: gains.pop(key)
 
-def Gains_AddParameter(self, ret):
+def Gains_AddParameter(self, ret=None):
+    if ret is None:  # if doesn't provide, just create a empty one
+        ret = {
+            "list": [],
+            "data": {}
+        }
     names = [key for key in self.selfparameters]
     ret["list"].insert(0, ["parameters", names])  # random order, but OK
     for name in names:
@@ -444,8 +492,11 @@ def Process_TxActivate_WriteFlagAndDataToTxStream(self):
                 GUI.error("Error: Bad Write!")
             else: numSent += sr.ret
 
-def Process_TxActivate_WriteFlagAndDataToTxStream_UseHasTime(self, delay = 10000000):  # by default: 10ms delay
+def Process_ComputeTimeToDoThings_UseHasTime(self, delay = 10000000):  # by default: 10ms delay
+    self.delay = delay
     self.ts = self.sdrs[self.trigger_serial].getHardwareTime() + delay  # give us delay ns to set everything up.
+
+def Process_TxActivate_WriteFlagAndDataToTxStream_UseHasTime(self):
     flags = SOAPY_SDR_HAS_TIME | SOAPY_SDR_END_BURST
     for r,txStream in enumerate(self.txStreams):
         serial_ant = self.tx_serials_ant[r]
@@ -468,7 +519,7 @@ def Process_RxActivate_WriteFlagToRxStream(self):
         sdr = self.sdrs[serial]
         sdr.activateStream(rxStream, flags, 0, len(self.sampsRecv[r][0]))
 
-def Process_RxActivate_WriteFlagToRxStream_UseHasTime(self, rx_delay = 57, delay = 10000000):
+def Process_RxActivate_WriteFlagToRxStream_UseHasTime(self, rx_delay = 57):
     rx_delay_ns = SoapySDR.ticksToTimeNs(rx_delay, self.rate)
     ts = self.ts + rx_delay_ns  # rx is a bit after tx
     flags = SOAPY_SDR_HAS_TIME | SOAPY_SDR_END_BURST
@@ -522,6 +573,45 @@ def Process_HandlePostcode(self):
         else:
             self.sampsRecv[r][0] *= complex(self.rx_gains[serial + "-%d-rx" % ant]["postcode"])  # received samples
 
+def Process_InitHDF5File_RxOnlyBurst(self):
+    name = self.fileName
+    if name == "":
+        name = Format_GetObjectClassName(self) + '_' + time.strftime("%Y-%m-%d_%H-%M-%S", time.localtime()) + '.hdf5'
+    print(name)
+    self.worker = HDF5Worker(name, "w")
+    attrs = {
+        "Description": "record by class \"%s\" of ArgosWebGui GitHub project" % Format_GetObjectClassName(self),
+        "CreateTime": time.strftime("%Y-%m-%d %H:%M:%S", time.localtime()),
+    }
+    Format_AddSelfAttr(self, attrs, ['clockRate', 'rate', 'freq', 'bw', 'dcoffset', 'numSamples'])  # add self attributes to attrs
+    # create dataset in hdf5
+    self.dsetnames = []
+    for r, serial_ant in enumerate(self.rx_serials_ant):
+        serial, ant = Format_SplitSerialAnt(serial_ant)
+        if ant == 2:
+            self.dsetnames.append("%s-0" % serial)
+            self.dsetnames.append("%s-1" % serial)
+        else:
+            self.dsetnames.append("%s-%d" % (serial, ant))
+    dsetnamestr = self.dsetnames[0]
+    for i in range(1, len(self.dsetnames)): dsetnamestr += ' ' + self.dsetnames[i]
+    attrs["IQnames"] = dsetnamestr
+    self.worker.Write_Attr(attrs)
+    self.dset = self.worker.create_dataset("rawIQ", (len(self.rx_serials_ant), self.numSamples), dtype='<c8')  # complex-floating point, single resolution
+
+def Process_SaveHDF5File_RxOnlyBurst(self):
+    i = 0
+    for r,serial_ant in enumerate(self.rx_serials_ant):
+        serial, ant = Format_SplitSerialAnt(serial_ant)
+        sampsRecv = self.sampsRecv[r]
+        if ant == 2:
+            self.dset[i][:] = sampsRecv[0]
+            self.dset[i+1][:] = sampsRecv[1]
+            i += 2
+        else:
+            self.dset[i][:] = sampsRecv[0]
+            i += 1
+
 def Interface_UpdateUserGraph(self):
     struct = []
     for r,serial_ant in enumerate(self.tx_serials_ant + self.rx_serials_ant):
@@ -554,3 +644,7 @@ def Interface_UpdateUserGraph(self):
             data["Q-" + serial_ant] = [float(e.imag) for e in cdat[0]]
     self.main.sampleData = {"struct": struct, "data": data}
     self.main.sampleDataReady = True
+
+def Analyze_LoadHDF5FileByName(self, filename):
+    print("loading %s" % filename)
+    return filename

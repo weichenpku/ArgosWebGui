@@ -92,6 +92,7 @@
             <button type="button" class="btn btn-dark basic-button" id="Reset" onclick="leftButtonClicked('Reset');">Reset</button>
             <button type="button" class="btn btn-success basic-button" onclick="window.open('/save.json')">Save</button>
             <button type="button" class="btn btn-primary basic-button" onclick="$('#loadFileInput').click();">Load</button>
+            <button type="button" class="btn btn-dark basic-button" onclick="leftButtonClicked('Data');">Data</button>
         </div>
         <div style="grid-area: main;">
             <div class="card">
@@ -207,6 +208,43 @@
             </div-->
         </div>
     </div>
+  
+    <!-- Modal -->
+    <div class="modal fade bd-example-modal-lg" id="ModalLong-Item" tabindex="-1" role="dialog" aria-hidden="true">
+        <div class="modal-dialog modal-lg" role="document">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="ModalLong-Title">Modal title</h5>
+                    <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                        <span aria-hidden="true">&times;</span>
+                    </button>
+                </div>
+                <div class="modal-body">
+                    <table class="table">
+                        <thead>
+                            <tr>
+                                <th scope="col">#</th>
+                                <th scope="col">File Name</th>
+                                <th scope="col">Size(B)</th>
+                                <th scope="col">Create Time</th>
+                            </tr>
+                        </thead>
+                        <tbody id="ModalLong-Content">
+                            <tr>
+                                <th scope="row">1</th>
+                                <td>Filename here</td>
+                                <td>666666666</td>
+                                <td>2018-00-00 00:00:00</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
+                </div>
+            </div>
+        </div>
+    </div>
 
     <script src="/static/js/jquery.min.js"></script>
     <script src="/static/js/popper.min.js"></script>
@@ -307,6 +345,15 @@
                 onblur="generalValChanged('GainSettings-{{:name}}-{{:gainkey}}');">
             <div class="modified-warning" id="m-GainSettings-{{:name}}-{{:gainkey}}">* argument modified but not sync yet.</div>
         </div>
+    </script>
+
+    <script id="DataDirInfoTemplate" type="text/html">
+        <tr>
+            <th scope="row">{{:index}}</th>
+            <td>{{:filename}}</td>
+            <td>{{:size}}</td>
+            <td>{{:ctime}}</td>
+        </tr>
     </script>
 
 
@@ -722,7 +769,24 @@
                 $('#loadFileInput').val('');
             })
         })
-        
+
+
+        // 显示data文件夹内容
+        var nextShowDataDir = false;
+        function dataDirInfoFromServer(dataDirInfo) {
+            if (nextShowDataDir) {
+                console.log(dataDirInfo);
+                nextShowDataDir = false;
+                $('#ModalLong-Title').html("Data Directory Files: <font style='color: red;'>" + dataDirInfo.length + "</font> files");
+                $('#ModalLong-Content').children().remove();
+                for (let i=0; i<dataDirInfo.length; ++i) {
+                    let a = dataDirInfo[i];
+                    $('#ModalLong-Content').append($.templates('#DataDirInfoTemplate').render({index: i, filename: a[0], size: a[1], ctime: a[2]}));
+                }
+                $('#ModalLong-Item').modal("show");
+            }
+        }
+
 
         // 通信部分，逻辑不在以下部分实现
         var socketio = null;  // 全局变量，websocket client对象
@@ -749,6 +813,9 @@
             });
             socketio.on('extraInfos', function(extraInfos) {
                 extraInfosFromServer(extraInfos);
+            });
+            socketio.on('dataDirInfo', function(dataDirInfo) {
+                dataDirInfoFromServer(dataDirInfo)
             });
             socketio.on('log', function(msg) {
                 console.log(msg);
@@ -778,6 +845,10 @@
             if (id == 'startAutoTrig') socketio.emit('button', 'startAutoTrig');
             if (id == 'endAutoTrig') socketio.emit('button', 'endAutoTrig');
             if (id == 'AutoTrig') socketio.emit('button', 'AutoTrig');
+            if (id == 'Data') {
+                nextShowDataDir = true;
+                socketio.emit('button', 'data');
+            }
         }
         function syncSettingsToServer() {
             console.log(userModified);

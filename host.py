@@ -3,7 +3,7 @@
 written by wy@180802
 """
 
-import time, main, GUI
+import time, main, GUI, HDF5Worker
 
 def nowSettings():  # 用户想获取当前的系统信息，返回一个字典
     ret = {
@@ -64,6 +64,8 @@ def userClickButton(button):  # 用户点击按钮事件
         main.userSing= True
     elif button == 'cancel single':
         main.userSing= False
+    elif button == 'data':
+        socketio.emit('dataDirInfo', HDF5Worker.HDF5Workder.LsDir(), broadcast=True)
 
 def userSyncSettings(settings):
     if 'BasicSettings-IrisCount' in settings:
