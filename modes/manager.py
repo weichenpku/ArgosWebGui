@@ -44,6 +44,7 @@ def makelist():
     for key in modefiles:
         if modefiles[key][0] is not None:
             ret.append(key)
+    ret.sort()
     return ret
 
 if __name__ == "__main__":
