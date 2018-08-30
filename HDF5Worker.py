@@ -2,8 +2,8 @@ import os, time
 
 def test():
     # print(HDF5Worker.LsDir())
-    # worker = HDF5Worker("ArgosCSI-96x2-2016-03-31-15-53-27_Jian_left_to_right.hdf5", mode='r')
-    worker = HDF5Worker("Recorder_BurstRecord_DevFE_RevB_180829_2018-08-29_18-01-51.hdf5", mode='r')
+    worker = HDF5Worker("ArgosCSI-96x2-2016-03-31-15-53-27_Jian_left_to_right.hdf5", mode='r')
+    # worker = HDF5Worker("Recorder_BurstRecord_DevFE_RevB_180829_2018-08-29_18-01-51.hdf5", mode='r')
     # worker = HDF5Worker("test.hdf5", mode='r')
     # worker.Write_Attr({"a": "foo", "b": 666})
     worker.printStructure(verbose=True)
