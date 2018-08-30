@@ -124,6 +124,10 @@ def Assert_ZeroSerialNotAllowed(self):
     if len(self.main.IrisSerialNums) == 0:
         raise Exception("zero serial not allowed")
 
+def Assert_Tx_Required(self):  # call after Format_UserInputSerialAnts
+    if len(self.tx_serials_ant) == 0:
+        raise Exception("tx serial required")
+
 def Alert_SerialNumsIgnored(self):
     if len(self.main.IrisSerialNums) != 0:
         GUI.alert("serial numbers not allowed")
@@ -234,15 +238,8 @@ def Init_CreateBasicGainSettings(self, rate=None, bw=None, freq=None, dcoffset=N
                     sdr.setGain(SOAPY_SDR_TX, chan, self.default_tx_gains[key])
                 else: sdr.setGain(SOAPY_SDR_TX, chan, key, self.default_tx_gains[key])
 
-def Init_CreateTxRxStreams(self):
-    self.rxStreams = []  # index just matched to rx_serials_ant
-    self.txStreams = []
-    for r, serial_ant in enumerate(self.rx_serials_ant):
-        serial, ant = Format_SplitSerialAnt(serial_ant)
-        chans = [0, 1] if ant == 2 else [ant]
-        sdr = self.sdrs[serial]
-        stream = sdr.setupStream(SOAPY_SDR_RX, SOAPY_SDR_CF32, chans, {"remote:prot": "tcp", "remote:mtu": "1024"})
-        self.rxStreams.append(stream) 
+def Init_CreateTxStreams(self):
+    self.txStreams = []  # index just matched to tx_serials_ant
     for r, serial_ant in enumerate(self.tx_serials_ant):
         serial, ant = Format_SplitSerialAnt(serial_ant)
         chans = [0, 1] if ant == 2 else [ant]
@@ -250,16 +247,21 @@ def Init_CreateTxRxStreams(self):
         stream = sdr.setupStream(SOAPY_SDR_TX, SOAPY_SDR_CF32, chans, {"remote:prot": "tcp", "remote:mtu": "1024"})
         self.txStreams.append(stream)
 
-def Init_CreateTxRxStreams_RevB(self):
-    self.rxStreams = []  # index just matched to rx_serials_ant
-    self.txStreams = []
+def Init_CreateRxStreams(self):
+    self.rxStreams = [] # index just matched to rx_serials_ant
     for r, serial_ant in enumerate(self.rx_serials_ant):
         serial, ant = Format_SplitSerialAnt(serial_ant)
         chans = [0, 1] if ant == 2 else [ant]
         sdr = self.sdrs[serial]
-        sdr.writeSetting(SOAPY_SDR_RX, 0, 'CALIBRATE', 'SKLK')  # this is from sklk-demos/python/SISO.py wy@180823
         stream = sdr.setupStream(SOAPY_SDR_RX, SOAPY_SDR_CF32, chans, {"remote:prot": "tcp", "remote:mtu": "1024"})
         self.rxStreams.append(stream) 
+
+def Init_CreateTxRxStreams(self):
+    Init_CreateRxStreams(self)
+    Init_CreateTxStreams(self)
+
+def Init_CreateTxRxStreams_RevB(self):
+    self.txStreams = []  # index just matched to tx_serials_ant
     for r, serial_ant in enumerate(self.tx_serials_ant):
         serial, ant = Format_SplitSerialAnt(serial_ant)
         chans = [0, 1] if ant == 2 else [ant]
@@ -267,6 +269,20 @@ def Init_CreateTxRxStreams_RevB(self):
         sdr.writeSetting(SOAPY_SDR_TX, 0, 'CALIBRATE', 'SKLK')  # this is from sklk-demos/python/SISO.py wy@180823
         stream = sdr.setupStream(SOAPY_SDR_TX, SOAPY_SDR_CF32, chans, {"remote:prot": "tcp", "remote:mtu": "1024"})
         self.txStreams.append(stream)
+
+def Init_CreateRxStreams_RevB(self):
+    self.rxStreams = []  # index just matched to rx_serials_ant
+    for r, serial_ant in enumerate(self.rx_serials_ant):
+        serial, ant = Format_SplitSerialAnt(serial_ant)
+        chans = [0, 1] if ant == 2 else [ant]
+        sdr = self.sdrs[serial]
+        sdr.writeSetting(SOAPY_SDR_RX, 0, 'CALIBRATE', 'SKLK')  # this is from sklk-demos/python/SISO.py wy@180823
+        stream = sdr.setupStream(SOAPY_SDR_RX, SOAPY_SDR_CF32, chans, {"remote:prot": "tcp", "remote:mtu": "1024"})
+        self.rxStreams.append(stream) 
+
+def Init_CreateTxRxStreams_RevB(self):
+    Init_CreateRxStreams_RevB(self)
+    Init_CreateTxStreams_RevB(self)
 
 def Init_SynchronizeTriggerClock(self):
     trigsdr = self.sdrs[self.trigger_serial]
@@ -473,11 +489,14 @@ def Gains_AddParameter(self, ret=None):
     for name in names:
         ret["data"]["parameters-" + name] = str(self.__dict__[name])
 
+def Gains_AddPostcodeGains(self):
+    for key in self.rx_gains: 
+        self.rx_gains[key]["postcode"] = 1.+0.j  # I don't known how to name it >.< see "postProcessRxSamples" below
+
 def Gains_AddPrecodePostcodeGains(self):
     for key in self.tx_gains:  # add precode 'gain' :)
         self.tx_gains[key]["precode"] = 1.+0.j  
-    for key in self.rx_gains: 
-        self.rx_gains[key]["postcode"] = 1.+0.j  # I don't known how to name it >.< see "postProcessRxSamples" below
+    Gains_AddPostcodeGains(self)
 
 def Process_BuildTxTones_Sinusoid(self):
     waveFreq = self.rate / 100  # every period has 100 points
