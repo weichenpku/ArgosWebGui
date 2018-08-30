@@ -596,7 +596,7 @@ def Process_InitHDF5File_RxOnlyBurst(self):
     for i in range(1, len(self.dsetnames)): dsetnamestr += ' ' + self.dsetnames[i]
     attrs["IQnames"] = dsetnamestr
     self.worker.Write_Attr(attrs)
-    self.dset = self.worker.create_dataset("rawIQ", (len(self.rx_serials_ant), self.numSamples), dtype='<c8')  # complex-floating point, single resolution
+    self.dset = self.worker.create_dataset("rawIQ", (len(self.dsetnames), self.numSamples), dtype='<c8')  # complex-floating point, single resolution
 
 def Process_SaveHDF5File_RxOnlyBurst(self):
     i = 0
