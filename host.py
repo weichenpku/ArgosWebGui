@@ -5,6 +5,7 @@ written by wy@180802
 
 import time, main, GUI, traceback
 from HDF5Worker import HDF5Worker
+from optparse import OptionParser
 
 def nowSettings():  # 用户想获取当前的系统信息，返回一个字典
     ret = {
@@ -176,10 +177,12 @@ def timerSendUpdatedStateToUsers():
             socketio.emit('extraInfos', main.extraInfos, broadcast=True)
 socketio.start_background_task(timerSendUpdatedStateToUsers)
 if __name__=='__main__':
+    parser = OptionParser()
+    parser.add_option("--host", type="string", dest="host", help="Server Host IP", default="0.0.0.0")
+    parser.add_option("--port", type="int", dest="port", help="Server Host Port", default=8080)
+    options, args = parser.parse_args()
     GUI.registerSocketIO(socketio)  # enable GUI socketio
-    host = "0.0.0.0"
-    port = 8080
     print("\n\n##############################################")
-    print("ArgosWebGui will run on port %d of '%s'" % (port, host))
+    print("ArgosWebGui will run on port %d of '%s'" % (options.port, options.host))
     print("##############################################\n\n")
-    socketio.run(app, host=host, port=port)
+    socketio.run(app, host=options.host, port=options.port)

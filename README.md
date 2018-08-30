@@ -24,18 +24,13 @@ Then you can run `host.py` to start the web server
 python3 host.py
 ```
 
-it will then print the port information, which by default is `0.0.0.0:8080` public to other computer if your firewall allows. If you want to use it locally, modify the last few lines of `host.py`
+it will then print the port information, which by default is `0.0.0.0:8080` public to other computer if your firewall allows. If you want to use it locally, run with argument
 
-```python
-host = "0.0.0.0"
-port = 8080
-print("\n\n##############################################")
-print("ArgosWebGui will run on port %d of '%s'" % (port, host))
-print("##############################################\n\n")
-socketio.run(app, host=host, port=port)
+```shell
+python3 host.py --host="127.0.0.1" --port=80
 ```
 
-use `host = '127.0.0.1'` and `port = 80` then you can visit the GUI by `http://localhost/` in browser
+then you can visit the GUI by `http://localhost/` in browser
 
 ## Demo
 
