@@ -28,7 +28,7 @@ except:
     print("*** Warning ***: system will work with FakeSoapySDR")
 
 import numpy as np
-import time
+import time, threading
 
 
 # GUI.log('IrisUtil is loaded')
@@ -547,6 +547,27 @@ def Process_ReadFromRxStream(self):
             if sr.ret == -1:
                 GUI.error('Error: Bad Read!')
             else: numRecv += sr.ret
+
+def Thread_ReceiveStream(sdr, stream, sampsRecv):
+    numRecv = 0
+    while numRecv < len(sampsRecv[0]):
+        sr = sdr.readStream(stream, [samps[numRecv:] for samps in sampsRecv], len(sampsRecv[0])-numRecv, timeoutUs=int(1e6))
+        if sr.ret == -1:
+            GUI.error('Error: Bad Read!')
+        else: numRecv += sr.ret
+
+def Process_ReadFromRxStream_MultiThread(self):
+    ths = []
+    for r,rxStream in enumerate(self.rxStreams):
+        serial_ant = self.rx_serials_ant[r]
+        serial, ant = Format_SplitSerialAnt(serial_ant)
+        sdr = self.sdrs[serial]
+        t = threading.Thread(target=Thread_ReceiveStream, args=(sdr, rxStream, self.sampsRecv[r]))
+        t.setDaemon(False)  # set this thread to daemon thread
+        t.start()
+        ths.append(t)
+    for t in ths:
+        t.join()  # wait them to finish
 
 def Process_TxDeactive(self):
     for r,txStream in enumerate(self.txStreams):
