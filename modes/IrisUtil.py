@@ -260,7 +260,7 @@ def Init_CreateTxRxStreams(self):
     Init_CreateRxStreams(self)
     Init_CreateTxStreams(self)
 
-def Init_CreateTxRxStreams_RevB(self):
+def Init_CreateTxStreams_RevB(self):
     self.txStreams = []  # index just matched to tx_serials_ant
     for r, serial_ant in enumerate(self.tx_serials_ant):
         serial, ant = Format_SplitSerialAnt(serial_ant)
