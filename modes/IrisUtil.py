@@ -596,7 +596,8 @@ def Process_HandlePostcode(self):
 def Process_InitHDF5File_RxOnlyBurst(self):
     name = self.fileName
     if name == "":
-        name = Format_GetObjectClassName(self) + '_' + time.strftime("%Y-%m-%d_%H-%M-%S", time.localtime()) + '.hdf5'
+        mst = str((int(time.time() * 1000) % 1000) + 1000)[1:]
+        name = Format_GetObjectClassName(self) + '_' + time.strftime("%Y-%m-%d_%H-%M-%S_", time.localtime()) + mst + '.hdf5'
     print(name)
     self.worker = HDF5Worker(name, "w")
     attrs = {

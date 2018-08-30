@@ -87,7 +87,8 @@ class Recorder_BurstRecord_DevFE_RevB_180829:
         IrisUtil.Process_WaitForTime_NoTrigger(self)
 
         # read stream
-        IrisUtil.Process_ReadFromRxStream_MultiThread(self)  # change to multi-thread version, for better IO performance
+        # IrisUtil.Process_ReadFromRxStream_MultiThread(self)  # change to multi-thread version, for better IO performance
+        IrisUtil.Process_ReadFromRxStream(self)  # use single stream
         IrisUtil.Process_HandlePostcode(self)  # postcode is work on received data
     
         # deactive
