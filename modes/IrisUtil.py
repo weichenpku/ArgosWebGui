@@ -112,6 +112,14 @@ def Format_AddSelfAttr(self, attrs, namelst):
         if hasattr(self, name):
             attrs[name] = getattr(self, name)
 
+def Format_cfloat2uint32(arr, order='IQ'):  # from https://github.com/skylarkwireless/sklk-demos/blob/master/python/SISO.py
+    arr_i = (np.real(arr) * 32767).astype(np.uint16)
+    arr_q = (np.imag(arr) * 32767).astype(np.uint16)
+    if order == 'IQ':
+        return np.bitwise_or(arr_q ,np.left_shift(arr_i.astype(np.uint32), 16))
+    else:
+        return np.bitwise_or(arr_i ,np.left_shift(arr_q.astype(np.uint32), 16))
+
 def Assert_ZeroSerialNotAllowed(self):
     if len(self.main.IrisSerialNums) == 0:
         raise Exception("zero serial not allowed")
@@ -265,6 +273,32 @@ def Init_SynchronizeTriggerClock(self):
     trigsdr.writeSetting('SYNC_DELAYS', "")
     for serial in self.sdrs: self.sdrs[serial].setHardwareTime(0, "TRIGGER")
     trigsdr.writeSetting("TRIGGER_GEN", "")
+
+def Init_CreateRepeatorSinusoidSequence(self):
+    seqlen = len(self.tx_gains) + 2  # how many antennas plus 2
+    waveFreq = self.rate / 100  # every period has 100 points
+    s_time_vals = np.array(np.arange(0, self.txFrameSize)).transpose() * 1 / self.rate  # time of each point
+    tone = np.exp(s_time_vals * 2.j * np.pi * waveFreq).astype(np.complex64)
+    self.tones = []
+    idx = 0
+    for r, serial_ant in enumerate(self.tx_serials_ant):
+        serial, ant = Format_SplitSerialAnt(serial_ant)
+        if ant == 2:
+            self.tones.append([np.zeros(seqlen*self.txFrameSize, dtype=np.complex64), np.zeros(seqlen*self.txFrameSize, dtype=np.complex64)])  # two stream
+            self.tones[r][0][idx*self.txFrameSize:(idx+1)*self.txFrameSize] = tone
+            self.tones[r][1][(idx+1)*self.txFrameSize:(idx+2)*self.txFrameSize] = tone
+            idx += 2
+        else:
+            self.tones.append([np.zeros(seqlen*self.txFrameSize, dtype=np.complex64)])
+            self.tones[r][0][idx*self.txFrameSize:(idx+1)*self.txFrameSize] = tone
+            idx += 1
+
+def Deinit_SafeTxStopRepeat(self):
+    if hasattr(self, 'sdrs') and self.sdrs is not None:
+        for serial in self.sdrs:
+            sdr = self.sdrs[serial]
+            print('stopping repeating of serial:', serial)
+            sdr.writeSetting("TX_REPLAY", '')
 
 def Deinit_SafeDelete(self):
     if hasattr(self, 'rxStreams') and self.rxStreams is not None:
@@ -508,6 +542,29 @@ def Process_TxActivate_WriteFlagAndDataToTxStream_UseHasTime(self):
             if sr.ret == -1:
                 GUI.error("Error: Bad Write!")
             else: numSent += sr.ret
+
+def Process_TxActivate_WriteFlagAndDataToTxStream_RepeatFlag(self):
+    # this is from https://github.com/skylarkwireless/sklk-demos/blob/master/python/SISO.py
+    replay_addr = 0
+    max_replay = 4096  # TODO: read from hardware
+    replay_len = len(self.tones[0][0])  # assume they are all the same
+    if replay_len > max_replay:
+        replay_len = max_replay
+        GUI.alert("Continuous mode signal must be less than %d samples. Using first %d samples." % (max_replay, max_replay))
+    zeroseq = np.zeros(replay_len, dtype=np.complex64)  # for backup
+    for r, serial_ant in enumerate(self.tx_serials_ant):
+        serial, ant = Format_SplitSerialAnt(serial_ant)
+        sdr = self.sdrs[serial]
+        if ant == 2:
+            sdr.writeRegisters('TX_RAM_A', replay_addr, Format_cfloat2uint32(self.tones[r][0][:replay_len]).tolist())
+            sdr.writeRegisters('TX_RAM_B', replay_addr, Format_cfloat2uint32(self.tones[r][1][:replay_len]).tolist())
+        elif ant == 0:
+            sdr.writeRegisters('TX_RAM_A', replay_addr, Format_cfloat2uint32(self.tones[r][0][:replay_len]).tolist())
+            sdr.writeRegisters('TX_RAM_B', replay_addr, Format_cfloat2uint32(zeroseq).tolist())  # TODO: check whether this is needed
+        elif ant == 1:
+            sdr.writeRegisters('TX_RAM_A', replay_addr, Format_cfloat2uint32(zeroseq).tolist())  # TODO: check whether this is needed
+            sdr.writeRegisters('TX_RAM_B', replay_addr, Format_cfloat2uint32(self.tones[r][0][:replay_len]).tolist())
+        sdr.writeSetting("TX_REPLAY", str(replay_len))
 
 def Process_RxActivate_WriteFlagToRxStream(self):
     flags = SOAPY_SDR_WAIT_TRIGGER | SOAPY_SDR_END_BURST

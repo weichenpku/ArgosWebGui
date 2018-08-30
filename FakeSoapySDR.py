@@ -120,6 +120,9 @@ class Device:
                 if self.streams[chan].name == stream:
                     self.streams[chan].data = npLst[npidx]  # just save it
         return FakeRetClass(length)
+    
+    def writeRegisters(self, name, replay_addr, npLst:list):
+        print("%s's register %s written with lenth %d" % (self.serial, name, len(npLst)))  # TODO: simulate repeator
 
     def activateStream(self, stream, *arg):
         print("%s activate stream %s with arg: %s" % (self.serial, stream, str(arg)))
