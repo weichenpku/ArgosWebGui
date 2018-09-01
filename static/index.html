@@ -84,15 +84,25 @@
         <div class="icon"></div>
         <div class="header">Argos Controller <font style="font-size: 50%;">web version v0.2</font></div>
         <div class="basic">
-            <button type="button" class="btn btn-success basic-button" id="Init" onclick="leftButtonClicked('Init');">Init</button>
-            <button type="button" class="btn btn-danger basic-button" id="Stop" disabled="disabled" onclick="leftButtonClicked('Stop');">Stop</button>
-            <button type="button" class="btn btn-warning basic-button progress-bar-striped progress-bar-animated" style="height: 200px;" id="Sing" onclick="leftButtonClicked('Sing');">Sing</button> <!-- get a single pic of now wave form, generally used in record mode -->
-            <button type="button" class="btn btn-danger basic-button" id="Hot" onclick="leftButtonClicked('Hot');">Hot</button> <!-- reload all modes function, best for developer -->
-            <button type="button" class="btn btn-light basic-button" id="Trig" onclick="leftButtonClicked('Trig');">Trig</button>
-            <button type="button" class="btn btn-dark basic-button" id="Reset" onclick="leftButtonClicked('Reset');">Reset</button>
-            <button type="button" class="btn btn-success basic-button" onclick="window.open('/save.json')">Save</button>
-            <button type="button" class="btn btn-primary basic-button" onclick="$('#loadFileInput').click();">Load</button>
-            <button type="button" class="btn btn-dark basic-button" onclick="leftButtonClicked('Data');">Data</button>
+            <button type="button" class="btn btn-success basic-button tooltips" id="Init" onclick="leftButtonClicked('Init');"
+                data-toggle="tooltip" data-placement="right" title="mode initialization, find Iris devices, etc. if failed, return to stop state.">Init</button>
+            <button type="button" class="btn btn-danger basic-button tooltips" id="Stop" disabled="disabled" onclick="leftButtonClicked('Stop');"
+                data-toggle="tooltip" data-placement="right" title="mode deinitialization. destroy Iris device handler safely">Stop</button>
+            <button type="button" class="btn btn-warning basic-button progress-bar-striped progress-bar-animated tooltips" style="height: 200px;" id="Sing" 
+                data-toggle="tooltip" data-placement="right" title="Not implemented"
+                onclick="leftButtonClicked('Sing');">Sing</button> <!-- get a single pic of now wave form, generally used in record mode -->
+            <button type="button" class="btn btn-danger basic-button tooltips" id="Hot" onclick="leftButtonClicked('Hot');"
+                data-toggle="tooltip" data-placement="right" title="hot reload 'mode' programs. this is really helpful when developing. just click 'stop' then 'hot' to reload all your programs in 'modes' folder">Hot</button> <!-- reload all modes function, best for developer -->
+            <button type="button" class="btn btn-light basic-button tooltips" id="Trig" onclick="leftButtonClicked('Trig');"
+                data-toggle="tooltip" data-placement="right" title="trigger an action in any mode. how this is performed is defined by each 'mode' program">Trig</button>
+            <button type="button" class="btn btn-dark basic-button tooltips" id="Reset" onclick="leftButtonClicked('Reset');"
+                data-toggle="tooltip" data-placement="right" title="reset the config, call only in stopped state">Reset</button>
+            <button type="button" class="btn btn-success basic-button tooltips" onclick="window.open('/save.json')"
+                data-toggle="tooltip" data-placement="right" title="save now configuration to a JSON file, for you convience. in chrome it will require you to press 'Ctrl+S' to save the json manully">Save</button>
+            <button type="button" class="btn btn-primary basic-button tooltips" onclick="$('#loadFileInput').click();"
+                data-toggle="tooltip" data-placement="right" title="load a configuration JSON file">Load</button>
+            <button type="button" class="btn btn-dark basic-button tooltips" onclick="leftButtonClicked('Data');"
+                data-toggle="tooltip" data-placement="right" title="see what files are in 'data' folder. the latest created one will be at the top, so don't worry if you have so many files here">Data</button>
         </div>
         <div style="grid-area: main;">
             <div class="card">
@@ -768,6 +778,12 @@
                 console.log("file has been uploaded");
                 $('#loadFileInput').val('');
             })
+        })
+
+        
+        // tooltips
+        $(function () {
+            $(".tooltips").tooltip({});
         })
 
 
