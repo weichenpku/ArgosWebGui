@@ -622,6 +622,7 @@ def Process_ReadFromRxStream(self):
             sr = sdr.readStream(rxStream, [samps[numRecv:] for samps in self.sampsRecv[r]], len(self.sampsRecv[r][0])-numRecv, timeoutUs=int(1e6))
             if sr.ret == -1:
                 GUI.error('Error: Bad Read!')
+                break  # always break because it cannot recover for most of time
             else: numRecv += sr.ret
 
 def Thread_ReceiveStream(sdr, stream, sampsRecv):
@@ -630,6 +631,7 @@ def Thread_ReceiveStream(sdr, stream, sampsRecv):
         sr = sdr.readStream(stream, [samps[numRecv:] for samps in sampsRecv], len(sampsRecv[0])-numRecv, timeoutUs=int(1e6))
         if sr.ret == -1:
             GUI.error('Error: Bad Read!')
+            break  # always break because it cannot recover for most of time
         else: numRecv += sr.ret
 
 def Process_ReadFromRxStream_MultiThread(self):

@@ -7,16 +7,14 @@ import time
 def test():
     class FakeMain:
         def __init__(self):
-            self.IrisSerialNums = ["foo-0-Tx-1", "bar-0-Rx-0"]
+            self.IrisSerialNums = []
             self.userTrig = True
         def changedF(self):
             print('changedF called')
     main = FakeMain()
-    obj = Sinusoid_Transceiver_ArgosV2_180828(main)
+    obj = Analyzer_WatchHDF5_180829(main)
     obj.setGains({
-        "foo-0-tx-ATTN": "10",
-        "parameters-numSamples": "16",
-        "foo-0-tx-precode": "0.5-0.5j"
+        "parameters-fileName": "Recorder_BurstRecord_DevFE_RevB_180829_2018-08-29_21-37-59.hdf5",
     })
     print(obj.nowGains())
     print(obj.loop())
@@ -28,7 +26,7 @@ class Analyzer_WatchHDF5_180829:
         IrisUtil.Alert_SerialNumsIgnored(self)
 
         # create empty variables to prevent exception, when user load a file, it will be set again
-        Init_CreateDefaultGain_FileAnalyze(self)
+        IrisUtil.Init_CreateDefaultGain_FileAnalyze(self)
 
         # add input to user GUI, for them to input
         self.fileName = ""  # the hdf5 filename
@@ -45,9 +43,19 @@ class Analyzer_WatchHDF5_180829:
         IrisUtil.Gains_AddParameter(self, gains)
         return gains
     
+    # WARNING: this function is NOT thread safe! call only in the same thread or use lock!
+    def setGains(self, gains):
+        IrisUtil.Gains_HandleSelfParameters(self, gains)
+    
+    def doSimpleShow(self):
+        pass
+    
     def loop(self):
         if self.main.userTrig:
-            pass
+            self.main.userTrig = False
+            self.main.changedF()  # just register set
+            self.doSimpleShow()
+            IrisUtil.Interface_UpdateUserGraph(self)  # update to user graph
 
 if __name__ == "__main__":
     test()
