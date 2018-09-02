@@ -748,7 +748,10 @@ def Process_HandlePostcode(self):
 
 def Process_DoCorrelation2FindFirstPFDMSymbol(self):
     symbols = self.WaveFormData[:,0]
-    refsignal = np.fft.ifft(np.fft.ifftshift(symbols)) / 1.414  # make sure the max signal is under 1
+    upsample = int(self.rxrate / self.txrate)
+    up_zeros = np.zeros(len(symbols) // 2 * (upsample-1))
+    upsymbols = np.concatenate((up_zeros, symbols ,up_zeros))
+    refsignal = np.fft.ifft(np.fft.ifftshift(upsymbols))
     self.correlationSampes = {}
     for r, serial_ant in enumerate(self.rx_serials_ant):
         serial, ant = Format_SplitSerialAnt(serial_ant)
