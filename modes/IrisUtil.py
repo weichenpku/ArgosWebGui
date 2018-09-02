@@ -753,10 +753,10 @@ def Process_DoCorrelation2FindFirstPFDMSymbol(self):
     for r, serial_ant in enumerate(self.rx_serials_ant):
         serial, ant = Format_SplitSerialAnt(serial_ant)
         if ant == 2:
-            self.correlationSampes["corr_%s-0" % serial] = np.convolve(self.sampsRecv[r][0], refsignal, mode='same')  # by default is 'full' which is M+N-1 points
-            self.correlationSampes["corr_%s-1" % serial] = np.convolve(self.sampsRecv[r][1], refsignal, mode='same')
+            self.correlationSampes["corr_%s-0" % serial] = np.correlate(self.sampsRecv[r][0], refsignal, mode='same')  # by default is 'full' which is M+N-1 points
+            self.correlationSampes["corr_%s-1" % serial] = np.correlate(self.sampsRecv[r][1], refsignal, mode='same')
         else:
-            self.correlationSampes["corr_%s-%d" % (serial, ant)] = np.convolve(self.sampsRecv[r][0], refsignal, mode='same')
+            self.correlationSampes["corr_%s-%d" % (serial, ant)] = np.correlate(self.sampsRecv[r][0], refsignal, mode='same')
 
 def Process_InitHDF5File_RxOnlyBurst(self):
     name = self.fileName
