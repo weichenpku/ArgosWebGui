@@ -28,7 +28,7 @@ except:
     print("*** Warning ***: system will work with FakeSoapySDR")
 
 import numpy as np
-import time, threading
+import time, threading, csv, os
 
 
 # GUI.log('IrisUtil is loaded')
@@ -100,6 +100,24 @@ def Format_CheckEndWithHDF5OrAddIt(filename):
         return filename
     return filename + ".hdf5"
 
+def Format_CheckSerialAntInTx(self, new_serial_ant):
+    new_ret = Format_SplitSerialAnt(new_serial_ant)
+    if new_ret is None: raise Exception("must format as \"serial-ant\"")
+    new_serial, new_ant = new_ret
+    ifOK = False
+    for serial_ant in self.tx_serials_ant:
+        serial, ant = Format_SplitSerialAnt(serial_ant)
+        if new_serial == serial:
+            if ant == 2:
+                if new_ant == 0 or new_ant == 1: ifOK = True
+            elif ant == new_ant: ifOK = True
+    if ifOK:  # load zero to other tx, load data into specified tx
+        self.txSelect = new_serial_ant
+        Init_CreateRepeatorOnehotWaveformSequence(self)
+        Process_WriteRepeatDataToTxRAM(self)
+        return self.txSelect
+    raise Exception("cannot find serial-ant pair, please check")
+
 def Format_GetObjectClassName(self):
     s = str(type(self))[:-2]
     fd = s.rfind('.')
@@ -119,6 +137,14 @@ def Format_cfloat2uint32(arr, order='IQ'):  # from https://github.com/skylarkwir
         return np.bitwise_or(arr_q ,np.left_shift(arr_i.astype(np.uint32), 16))
     else:
         return np.bitwise_or(arr_i ,np.left_shift(arr_q.astype(np.uint32), 16))
+
+def Format_LoadWaveFormFile(self, filename):
+    with open(os.path.join(os.path.dirname(os.path.abspath(__file__)), filename)) as f:
+        reader = csv.reader(f)
+        # print(list(reader))
+        self.WaveFormData = np.array([[complex(a) for a in row] for row in list(reader)], dtype=np.complex64)
+        shape = self.WaveFormData.shape
+        GUI.log('load %s with %d×%d array' % (filename, shape[0], shape[1]))
 
 def Assert_ZeroSerialNotAllowed(self):
     if len(self.main.IrisSerialNums) == 0:
@@ -190,10 +216,16 @@ def Init_CollectSDRInstantNeeded(self, clockRate=80e6):
         self.sdrs[serial] = sdr
         if clockRate is not None: sdr.setMasterClockRate(clockRate)  # set master clock
     
-def Init_CreateBasicGainSettings(self, rate=None, bw=None, freq=None, dcoffset=None):
+def Init_CreateBasicGainSettings(self, rate=None, bw=None, freq=None, dcoffset=None, txrate=None, rxrate=None):
     self.rx_gains = {}  # if rx_serials_ant contains xxx-3-rx-1 then it has "xxx-0-rx" and "xxx-1-rx", they are separate (without trigger option)
     self.tx_gains = {}
-    self.rate = rate
+    if rate is not None:
+        self.txrate = rate
+        self.rxrate = rate
+    if txrate is not None:
+        self.txrate = txrate
+    if rxrate is not None:
+        self.rxrate = rxrate
     self.bw = bw
     self.freq = freq
     self.dcoffset = dcoffset
@@ -208,7 +240,7 @@ def Init_CreateBasicGainSettings(self, rate=None, bw=None, freq=None, dcoffset=N
         sdr = self.sdrs[serial]  # get sdr object reference
         chans = [0, 1] if ant == 2 else [ant]  # if ant is 2, it means [0, 1] both
         for chan in chans:
-            if rate is not None: sdr.setSampleRate(SOAPY_SDR_RX, chan, rate)
+            if hasattr(self, 'rxrate'): sdr.setSampleRate(SOAPY_SDR_RX, chan, self.rxrate)
             if bw is not None: sdr.setBandwidth(SOAPY_SDR_RX, chan, bw)
             if freq is not None: sdr.setFrequency(SOAPY_SDR_RX, chan, "RF", freq)
             sdr.setAntenna(SOAPY_SDR_RX, chan, "TRX")  # TODO: I assume that in base station given, it only has two TRX antenna but no RX antenna wy@180804
@@ -228,7 +260,7 @@ def Init_CreateBasicGainSettings(self, rate=None, bw=None, freq=None, dcoffset=N
         sdr = self.sdrs[serial]
         chans = [0, 1] if ant == 2 else [ant]  # if ant is 2, it means [0, 1] both
         for chan in chans:
-            if rate is not None: sdr.setSampleRate(SOAPY_SDR_TX, chan, rate)
+            if hasattr(self, 'txrate'): sdr.setSampleRate(SOAPY_SDR_TX, chan, self.txrate)
             if bw is not None: sdr.setBandwidth(SOAPY_SDR_TX, chan, bw)
             if freq is not None: sdr.setFrequency(SOAPY_SDR_TX, chan, "RF", freq)
             sdr.setAntenna(SOAPY_SDR_TX, chan, "TRX")
@@ -308,6 +340,34 @@ def Init_CreateRepeatorSinusoidSequence(self):
             self.tones.append([np.zeros(seqlen*self.txFrameSize, dtype=np.complex64)])
             self.tones[r][0][idx*self.txFrameSize:(idx+1)*self.txFrameSize] = tone
             idx += 1
+
+def Init_CreateRepeatorOnehotWaveformSequence(self):  # one-hot send on self.txSelect
+    self.WaveFormSignal = np.zeros(4096, dtype=np.complex64)
+    self.tones = []
+    act_serial, act_ant = Format_SplitSerialAnt(self.txSelect)
+    # the given self.WaveFormData is OFDM symbols
+    idx = 0
+    for i in range(self.WaveFormData.shape[1]):
+        symbols = self.WaveFormData[:,i]
+        signal = np.fft.ifft(np.fft.ifftshift(symbols)) / 1.414  # make sure the max signal is under 1
+        # add cyclic prefix
+        cplen = len(signal) // 10  # 10% prefix
+        signal = np.concatenate((signal[len(signal)-cplen:], signal))
+        # print(np.absolute(signal).max())
+        lidx = idx
+        idx += len(signal)
+        self.WaveFormSignal[lidx:idx] = signal
+    for r, serial_ant in enumerate(self.tx_serials_ant):
+        serial, ant = Format_SplitSerialAnt(serial_ant)
+        if ant == 2:
+            self.tones.append([np.zeros(4096, dtype=np.complex64), np.zeros(4096, dtype=np.complex64)])  # two stream
+        else:
+            self.tones.append([np.zeros(4096, dtype=np.complex64)])
+        if serial == act_serial:
+            if ant == 2:
+                self.tones[r][act_ant] = self.WaveFormSignal
+            elif ant == act_ant:
+                self.tones[r][0] = self.WaveFormSignal
 
 def Deinit_SafeTxStopRepeat(self):
     if hasattr(self, 'sdrs') and self.sdrs is not None:
@@ -544,9 +604,11 @@ def Process_TxActivate_WriteFlagAndDataToTxStream(self):
                 GUI.error("Error: Bad Write!")
             else: numSent += sr.ret
 
-def Process_ComputeTimeToDoThings_UseHasTime(self, delay = 10000000):  # by default: 10ms delay
+def Process_ComputeTimeToDoThings_UseHasTime(self, delay = 10000000, alignment = 0):  # by default: 10ms delay
     self.delay = delay
     self.ts = self.sdrs[self.trigger_serial].getHardwareTime() + delay  # give us delay ns to set everything up.
+    if alignment != 0:  # alignment, self.alignOffset needed
+        self.ts = ((self.ts + alignment) // alignment) * alignment + self.alignOffset
 
 def Process_TxActivate_WriteFlagAndDataToTxStream_UseHasTime(self):
     flags = SOAPY_SDR_HAS_TIME | SOAPY_SDR_END_BURST
@@ -585,6 +647,19 @@ def Process_TxActivate_WriteFlagAndDataToTxStream_RepeatFlag(self):
             sdr.writeRegisters('TX_RAM_B', replay_addr, Format_cfloat2uint32(self.tones[r][0][:replay_len]).tolist())
         sdr.writeSetting("TX_REPLAY", str(replay_len))
 
+def Process_WriteRepeatDataToTxRAM(self):
+    replay_addr = 0
+    for r, serial_ant in enumerate(self.tx_serials_ant):
+        serial, ant = Format_SplitSerialAnt(serial_ant)
+        sdr = self.sdrs[serial]
+        if ant == 2:
+            sdr.writeRegisters('TX_RAM_A', replay_addr, Format_cfloat2uint32(self.tones[r][0][:]).tolist())
+            sdr.writeRegisters('TX_RAM_B', replay_addr, Format_cfloat2uint32(self.tones[r][1][:]).tolist())
+        elif ant == 0:
+            sdr.writeRegisters('TX_RAM_A', replay_addr, Format_cfloat2uint32(self.tones[r][0][:]).tolist())
+        elif ant == 1:
+            sdr.writeRegisters('TX_RAM_B', replay_addr, Format_cfloat2uint32(self.tones[r][0][:]).tolist())
+
 def Process_RxActivate_WriteFlagToRxStream(self):
     flags = SOAPY_SDR_WAIT_TRIGGER | SOAPY_SDR_END_BURST
     # activate all receive stream
@@ -595,7 +670,7 @@ def Process_RxActivate_WriteFlagToRxStream(self):
         sdr.activateStream(rxStream, flags, 0, len(self.sampsRecv[r][0]))
 
 def Process_RxActivate_WriteFlagToRxStream_UseHasTime(self, rx_delay = 57):
-    rx_delay_ns = SoapySDR.ticksToTimeNs(rx_delay, self.rate)
+    rx_delay_ns = SoapySDR.ticksToTimeNs(rx_delay, self.rate) if rx_delay != 0 else 0
     ts = self.ts + rx_delay_ns  # rx is a bit after tx
     flags = SOAPY_SDR_HAS_TIME | SOAPY_SDR_END_BURST
     # activate all receive stream
