@@ -746,6 +746,18 @@ def Process_HandlePostcode(self):
         else:
             self.sampsRecv[r][0] *= complex(self.rx_gains[serial + "-%d-rx" % ant]["postcode"])  # received samples
 
+def Process_DoCorrelation2FindFirstPFDMSymbol(self):
+    symbols = self.WaveFormData[:,0]
+    refsignal = np.fft.ifft(np.fft.ifftshift(symbols)) / 1.414  # make sure the max signal is under 1
+    self.correlationSampes = {}
+    for r, serial_ant in enumerate(self.rx_serials_ant):
+        serial, ant = Format_SplitSerialAnt(serial_ant)
+        if ant == 2:
+            self.correlationSampes["corr_%s-0" % serial] = np.convolve(self.sampsRecv[r][0], refsignal, mode='same')  # by default is 'full' which is M+N-1 points
+            self.correlationSampes["corr_%s-1" % serial] = np.convolve(self.sampsRecv[r][1], refsignal, mode='same')
+        else:
+            self.correlationSampes["corr_%s-%d" % (serial, ant)] = np.convolve(self.sampsRecv[r][0], refsignal, mode='same')
+
 def Process_InitHDF5File_RxOnlyBurst(self):
     name = self.fileName
     if name == "":
@@ -786,7 +798,7 @@ def Process_SaveHDF5File_RxOnlyBurst(self):
             self.dset[i][:] = sampsRecv[0]
             i += 1
 
-def Interface_UpdateUserGraph(self):
+def Interface_UpdateUserGraph(self, addition=None):  # addition should be a map object
     struct = []
     for r,serial_ant in enumerate(self.tx_serials_ant + self.rx_serials_ant):
         serial, ant = Format_SplitSerialAnt(serial_ant)
@@ -816,6 +828,13 @@ def Interface_UpdateUserGraph(self):
         else:
             data["I-" + serial_ant] = [float(e.real) for e in cdat[0]]
             data["Q-" + serial_ant] = [float(e.imag) for e in cdat[0]]
+    # if has additional graphs, just append them
+    if addition is not None:
+        for key in addition:
+            struct.append(key)
+            cdat = addition[key][:self.showSamples] if len(addition[key]) > self.showSamples else addition[key]
+            data["I-" + key] = [float(e.real) for e in cdat]
+            data["Q-" + key] = [float(e.imag) for e in cdat]
     self.main.sampleData = {"struct": struct, "data": data}
     self.main.sampleDataReady = True
 

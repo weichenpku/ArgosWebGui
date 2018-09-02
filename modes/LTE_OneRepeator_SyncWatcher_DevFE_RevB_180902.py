@@ -102,13 +102,16 @@ class LTE_OneRepeator_SyncWatcher_DevFE_RevB_180902:
     
         # deactive
         IrisUtil.Process_RxDeactive(self)
+
+        # do correlation
+        IrisUtil.Process_DoCorrelation2FindFirstPFDMSymbol(self)
     
     def loop(self):
         if self.main.userTrig:
             self.main.userTrig = False
             self.main.changedF()  # just register set
             self.doSimpleRx()
-            IrisUtil.Interface_UpdateUserGraph(self)  # update to user graph
+            IrisUtil.Interface_UpdateUserGraph(self, self.correlationSampes)  # update to user graph
 
 if __name__ == "__main__":
     test()
