@@ -36,7 +36,7 @@ class LTE_OneRepeator_SyncWatcher_DevFE_RevB_180902:
 
         # create gains and set them
         IrisUtil.Init_CreateDefaultGain_WithDevFE(self)
-        IrisUtil.Init_CreateBasicGainSettings(self, bw=10e6, freq=2.35e9, dcoffset=True, txrate=1.5e6, rxrate=9e6)
+        IrisUtil.Init_CreateBasicGainSettings(self, bw=4e6, freq=2.35e9, dcoffset=True, txrate=1.5e6, rxrate=9e6)
 
         # create streams (but not activate them)
         IrisUtil.Init_CreateRxStreams_RevB(self)

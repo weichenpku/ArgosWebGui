@@ -21,7 +21,7 @@ eng = matlab.engine.connect_matlab()
 steps = {
     "load raw data": True,
     "load correlation seq": True,
-    "do correlation": False,  # consume much time
+    "do correlation": True,  # consume much time
     "show sendcorr": False,
     "show recvcorr": True
 }
@@ -40,8 +40,8 @@ def main():
         _eq("recvcorrseq", "upsample(corrseq, 6)")  # 9Ms/s, 1.5MS/s, so do 6 times upsample
     
     if steps["do correlation"]:
-        _eq("sendcorr", "xcorr(senderseq, corrseq)")
-        _eq("recvcorr", "xcorr(receiverseq, recvcorrseq)")
+        _eq("sendcorr", "xcorr(senderseq, conj(corrseq))")
+        _eq("recvcorr", "xcorr(receiverseq, conj(recvcorrseq))")
     
     if steps["show sendcorr"]:
         _do("plot(abs(sendcorr))")

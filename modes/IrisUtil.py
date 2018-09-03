@@ -751,7 +751,7 @@ def Process_DoCorrelation2FindFirstPFDMSymbol(self):
     upsample = int(self.rxrate / self.txrate)
     up_zeros = np.zeros(len(symbols) // 2 * (upsample-1))
     upsymbols = np.concatenate((up_zeros, symbols ,up_zeros))
-    refsignal = np.fft.ifft(np.fft.ifftshift(upsymbols))
+    refsignal = np.conjugate(np.fft.ifft(np.fft.ifftshift(upsymbols)))  # must do conjugate
     self.correlationSampes = {}
     for r, serial_ant in enumerate(self.rx_serials_ant):
         serial, ant = Format_SplitSerialAnt(serial_ant)
