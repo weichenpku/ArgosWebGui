@@ -19,11 +19,12 @@ eng = matlab.engine.connect_matlab()
 
 # for better speed, the elements are all stored in MATLAB workspace, so you can jump through some time-consuming steps
 steps = {
-    "load raw data": True,
-    "load correlation seq": True,
-    "do correlation": True,  # consume much time
+    "load raw data": False,
+    "load correlation seq": False,
+    "do correlation": False,  # consume much time
     "show sendcorr": False,
-    "show recvcorr": True
+    "show recvcorr": False,
+    "find peaks and slice SSS seq": True
 }
 
 def main():
@@ -48,6 +49,28 @@ def main():
     
     if steps["show recvcorr"]:
         _do("plot(abs(recvcorr))")
+    
+    if steps["find peaks and slice SSS seq"]:
+        _eq("peakindex", "find(abs(recvcorr) > 0.35)")  # 0.35 is a threshold with few experiment
+        peakindex = [int(ele) for ele in eng.workspace["peakindex"][0]]
+        if len(peakindex) == 0:
+            raise Exception("no SSS correlation peak found")
+        startpeakindex = peakindex[0]
+        endpeakindex = startpeakindex
+        for ele in peakindex:
+            if ele != endpeakindex: break
+            endpeakindex += 1
+        firstpeakindex = (startpeakindex + endpeakindex) // 2
+        print("found peak from %d to %d, middle is %d" % (startpeakindex, endpeakindex, firstpeakindex))
+        # since receiverseq's length is longer than recvcorrseq, minus the length of receiverseq
+        startidx = firstpeakindex - len(eng.workspace["receiverseq"][0])
+        endidx = startidx + 600 - 1
+        _eq("firstSSS", "receiverseq(%d:%d)" % (startidx, endidx))
+        # get CSI information from peak value
+        peakIQ = eng.workspace["recvcorr"][0][firstpeakindex - 1]
+        print(peakIQ)
+
+
 
 def _sv(name, element):
     eng.workspace[name] = element
