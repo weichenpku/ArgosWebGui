@@ -349,11 +349,11 @@ def Init_CreateRepeatorOnehotWaveformSequence(self):  # one-hot send on self.txS
     idx = 0
     for i in range(self.WaveFormData.shape[1]):
         symbols = self.WaveFormData[:,i]
-        signal = np.fft.ifft(np.fft.ifftshift(symbols)) / 1.414  # make sure the max signal is under 1
+        signal = np.fft.ifft(np.fft.ifftshift(symbols)) * 4  # make sure the max signal is under 1
         # add cyclic prefix
         cplen = len(signal) // 10  # 10% prefix
         signal = np.concatenate((signal[len(signal)-cplen:], signal))
-        # print(np.absolute(signal).max())
+        print(np.absolute(signal).max())
         lidx = idx
         idx += len(signal)
         self.WaveFormSignal[lidx:idx] = signal
