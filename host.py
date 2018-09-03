@@ -71,6 +71,11 @@ def userClickButton(button):  # 用户点击按钮事件
         main.userSing= False
     elif button == 'data':
         socketio.emit('dataDirInfo', HDF5Worker.LsDir(), broadcast=True)
+    elif button == 'reload':
+        if main.sampleData is not None:
+            socketio.emit('samples', main.sampleData, broadcast=True)
+        else:
+            GUI.error("don't have data to reload")
 
 def userSyncSettings(settings):
     if 'BasicSettings-IrisCount' in settings:
@@ -131,6 +136,11 @@ def index():
 @app.route('/save.json')
 def save():
     return jsonify(nowSettings()["userSettings"])
+@app.route('/lastgraph.json')
+def lastgraph():
+    if main.sampleData is not None:
+        return jsonify(main.sampleData)
+    else: return jsonify({})
 @app.route('/load', methods=['POST'])
 def load():
     f = request.files['file']

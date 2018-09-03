@@ -106,7 +106,12 @@
         </div>
         <div style="grid-area: main;">
             <div class="card">
-                <div class="card-header"><button class="btn btn-link" data-toggle="collapse" data-target="#AllInOneGraph" aria-expanded="true" onclick="updateAllInOneGraph();">All-in-one Graph</button></div>
+                <div class="card-header">
+                    <button class="btn btn-link" data-toggle="collapse" data-target="#AllInOneGraph" aria-expanded="true" 
+                        onclick="updateAllInOneGraph();">All-in-one Graph</button>
+                    <button class="btn btn-primary" onclick="window.open('/lastgraph.json')">see data in JSON</button>
+                    <button class="btn btn-warning" onclick="leftButtonClicked('Reload')">reload previous one</button>
+                </div>
                 <div id="AllInOneGraph" class="collapse show"><div class="card-body">
                     <div style="height: 200px;" id="AllInOneGraph-0"></div>
                 </div></div>
@@ -284,7 +289,7 @@
             </div>
             <div class="input-group-append">
                 <button class="btn btn-outline-secondary dropdown-toggle" type="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false"
-                    style="width: 47px;" id="BasicSettings-IrisDevices-Direction-{{:num}}">Rx</button>
+                    style="width: 47px;" id="BasicSettings-IrisDevices-Direction-{{:num}}"data>Rx</button>
                 <div class="dropdown-menu">
                     <a class="dropdown-item" href="#" onclick="$('#BasicSettings-IrisDevices-Direction-{{:num}}').html('Rx'); generalValChanged('BasicSettings-IrisDevices-{{:num}}');">Rx</a>
                     <a class="dropdown-item" href="#" onclick="$('#BasicSettings-IrisDevices-Direction-{{:num}}').html('Tx'); generalValChanged('BasicSettings-IrisDevices-{{:num}}');">Tx</a>
@@ -865,6 +870,7 @@
                 nextShowDataDir = true;
                 socketio.emit('button', 'data');
             }
+            if (id == 'Reload') socketio.emit('button', 'reload');
         }
         function syncSettingsToServer() {
             console.log(userModified);
