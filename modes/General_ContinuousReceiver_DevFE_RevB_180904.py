@@ -12,7 +12,7 @@ def test():
         def changedF(self):
             print('changedF called')
     main = FakeMain()
-    obj = LTE_OneRepeator_SyncWatcher_DevFE_RevB_180902(main)
+    obj = General_ContinuousReceiver_DevFE_RevB_180904(main)
     obj.setGains({
         "parameters-showSamples": "16"
     })
@@ -20,7 +20,7 @@ def test():
     for i in range(10):
         obj.loop()
 
-class LTE_OneRepeator_SyncWatcher_DevFE_RevB_180902:
+class General_ContinuousReceiver_DevFE_RevB_180904:
     def __init__(self, main):
         self.main = main
         IrisUtil.Assert_ZeroSerialNotAllowed(self)
