@@ -71,27 +71,6 @@ class General_ContinuousReceiver_DevFE_RevB_180904:
         IrisUtil.Gains_HandleSelfParameters(self, gains)
         IrisUtil.Gains_SetBasicGains(self, gains)
     
-    def doSimpleRx(self):
-        # prepare work, create tx rx buffer
-        IrisUtil.Process_CreateReceiveBuffer(self)
-        IrisUtil.Process_ClearStreamBuffer(self)
-        # activate
-        IrisUtil.Process_ComputeTimeToDoThings_UseHasTime(self, delay = 10000000, alignment = 2730667)
-        IrisUtil.Process_RxActivate_WriteFlagToRxStream_UseHasTime(self, rx_delay = 0)
-
-        # sleep to wait
-        IrisUtil.Process_WaitForTime_NoTrigger(self)
-
-        # read stream
-        IrisUtil.Process_ReadFromRxStream(self)
-        IrisUtil.Process_HandlePostcode(self)  # postcode is work on received data
-    
-        # deactive
-        IrisUtil.Process_RxDeactive(self)
-
-        # do correlation
-        IrisUtil.Process_DoCorrelation2FindFirstPFDMSymbol(self)
-    
     def run(self):
         # do read for any length of data
         finished = IrisUtil.Process_ReadFromRxStream_Async(self)
