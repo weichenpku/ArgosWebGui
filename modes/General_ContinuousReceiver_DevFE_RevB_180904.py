@@ -14,29 +14,26 @@ def test():
     main = FakeMain()
     obj = LTE_OneRepeator_SyncWatcher_DevFE_RevB_180902(main)
     obj.setGains({
-        "parameters-showSamples": "16",
-        "parameters-txSelect": "0313-1"
+        "parameters-showSamples": "16"
     })
     print(obj.nowGains())
-    print(obj.loop())
-    print(main.sampleData)
+    for i in range(10):
+        obj.loop()
 
 class LTE_OneRepeator_SyncWatcher_DevFE_RevB_180902:
     def __init__(self, main):
         self.main = main
         IrisUtil.Assert_ZeroSerialNotAllowed(self)
+        IrisUtil.Alert_OnlyTorR_OtherIgnored(self, "Rx")  # ignore Iris not Rx
         IrisUtil.Format_UserInputSerialAnts(self)
-        IrisUtil.Assert_Tx_Required(self)  # require at least one tx
-
-        # import waveform file
-        IrisUtil.Format_LoadWaveFormFile(self, 'LTE_OneRepeator_SyncWatcher_DevFE_RevB_180902_Waveform.csv')
+        IrisUtil.Assert_Rx_Required(self)  # require at least one rx
 
         # init sdr object
         IrisUtil.Init_CollectSDRInstantNeeded(self, clockRate=80e6)
 
         # create gains and set them
         IrisUtil.Init_CreateDefaultGain_WithDevFE(self)
-        IrisUtil.Init_CreateBasicGainSettings(self, bw=4e6, freq=2.35e9, dcoffset=True, txrate=1.5e6, rxrate=9e6)
+        IrisUtil.Init_CreateBasicGainSettings(self, bw=5e6, freq=2.35e9, dcoffset=True, rxrate=9e6)
 
         # create streams (but not activate them)
         IrisUtil.Init_CreateRxStreams_RevB(self)
@@ -44,32 +41,21 @@ class LTE_OneRepeator_SyncWatcher_DevFE_RevB_180902:
         # sync trigger and clock
         IrisUtil.Init_SynchronizeTriggerClock(self)
 
-        self.numSamples = 1024  # could be changed during runtime
+        self.numSamples = 10000000  # could be changed during runtime
         self.showSamples = 8192  # init max show samples
-        serial, ant = IrisUtil.Format_SplitSerialAnt(self.tx_serials_ant[0])
-        if ant == 2: self.txSelect = "%s-0" % serial  # select one to send, other set 0
-        else: self.txSelect = "%s-%d" % (serial, ant)
-        self.alignOffset = 0
+        self.showIntervalS = 10  # 10s show one picture with length of self.showSamples
         self.selfparameters = {
-            "numSamples": int, 
-            "showSamples": int, 
-            "txSelect": lambda x: IrisUtil.Format_CheckSerialAntInTx(self, x),  # use closure to send "self" object in
-            "alignOffset": int
+            "numSamples": lambda x: int(x) if not self.running else None,  # only set when it's not running
+            "showSamples": int,
+            "showIntervalS": int
         }  # this will automatically added to UI
 
-        # add postcode support
-        IrisUtil.Gains_AddPostcodeGains(self)
-        IrisUtil.Gains_LoadGainKeyException(self, rxGainKeyException=IrisUtil.Gains_GainKeyException_RxPostcode)
-
-        # repeat sequence generate
-        IrisUtil.Init_CreateRepeatorOnehotWaveformSequence(self)
-
-        # set repeat
-        IrisUtil.Process_TxActivate_WriteFlagAndDataToTxStream_RepeatFlag(self)
+        # record time of now, it will then be used to calculate when to show samples
+        self.lastTime = time.time()
+        self.running = False
     
     def __del__(self):
         print('Iris destruction called')
-        IrisUtil.Deinit_SafeTxStopRepeat(self)
         IrisUtil.Deinit_SafeDelete(self)
     
     def getExtraInfos(self):
@@ -106,12 +92,43 @@ class LTE_OneRepeator_SyncWatcher_DevFE_RevB_180902:
         # do correlation
         IrisUtil.Process_DoCorrelation2FindFirstPFDMSymbol(self)
     
+    def run(self):
+        # do read for any length of data
+        finished = IrisUtil.Process_ReadFromRxStream_Async(self)
+
+        if finished:
+            # do deinitialize work here
+            IrisUtil.Process_RxDeactive(self)
+            self.running = False
+        
+        return finished
+    
+    def prepareReceive(self):
+        # prepare work, create tx rx buffer
+        IrisUtil.Process_CreateReceiveBuffer(self)
+        IrisUtil.Process_ClearStreamBuffer(self)
+        # activate
+        IrisUtil.Process_ComputeTimeToDoThings_UseHasTime(self, delay = 10000000)
+        IrisUtil.Process_RxActivate_SetupContinuousReadRxStream(self)
+
+        # setup registers of how many samples are already received (initialized as 0)
+        IrisUtil.Process_BuildAsyncRxRegisters(self)
+
+        # set register and time
+        self.lastTime = time.time()
+        self.running = True
+    
     def loop(self):
         if self.main.userTrig:
-            self.main.userTrig = False
-            self.main.changedF()  # just register set
-            self.doSimpleRx()
-            IrisUtil.Interface_UpdateUserGraph(self, self.correlationSampes)  # update to user graph
+            if not self.running:
+                self.main.userTrig = False
+                self.main.changedF()  # just register set
+                self.prepareReceive()
+        if self.running:
+            finished = self.run()
+            if finished or time.time() - self.lastTime >= self.showIntervalS:
+                self.lastTime = time.time()
+                IrisUtil.Interface_UpdateUserGraph(self, uselast=True)  # update to user graph, use the last few data but not the head
 
 if __name__ == "__main__":
     test()

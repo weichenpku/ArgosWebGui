@@ -154,6 +154,10 @@ def Assert_Tx_Required(self):  # call after Format_UserInputSerialAnts
     if len(self.tx_serials_ant) == 0:
         raise Exception("tx serial required")
 
+def Assert_Rx_Required(self):  # call after Format_UserInputSerialAnts
+    if len(self.rx_serials_ant) == 0:
+        raise Exception("rx serial required")
+
 def Alert_SerialNumsIgnored(self):
     if len(self.main.IrisSerialNums) != 0:
         GUI.alert("serial numbers not allowed")
@@ -418,6 +422,14 @@ def Extra_GetExtraInfo_WithDevFE(self):  # this is for dev front-end, without fr
         info["data"][serial] = localinfo
     return info
 
+def Extra_AddHasSamplesInfo(self, info):
+    for r,serial_ant in enumerate(self.rx_serials_ant):
+        info["list"].append(serial_ant + "_has_samples")
+        localinfo = []
+        serial, ant = Format_SplitSerialAnt(serial_ant)
+        if ant == 2:
+            localinfo.append(["ant0", ])
+
 def Gains_GetBasicGains(self):
     ret = {}
     rxlst = []
@@ -680,6 +692,14 @@ def Process_RxActivate_WriteFlagToRxStream_UseHasTime(self, rx_delay = 57):
         sdr = self.sdrs[serial]
         sdr.activateStream(rxStream, flags, ts, len(self.sampsRecv[r][0]))
 
+def Process_RxActivate_SetupContinuousReadRxStream(self):
+    flags = SOAPY_SDR_HAS_TIME
+    for r,rxStream in enumerate(self.rxStreams):
+        serial_ant = self.rx_serials_ant[r]
+        serial, ant = Format_SplitSerialAnt(serial_ant)
+        sdr = self.sdrs[serial]
+        sdr.activateStream(rxStream, flags, self.ts, len(self.sampsRecv[r][0]))
+
 def Process_GenerateTrigger(self):
     self.sdrs[self.trigger_serial].writeSetting("TRIGGER_GEN", "")
 
@@ -699,6 +719,24 @@ def Process_ReadFromRxStream(self):
                 GUI.error('Error: Bad Read!')
                 break  # always break because it cannot recover for most of time
             else: numRecv += sr.ret
+
+def Process_ReadFromRxStream_Async(self):
+    # first determine the streams needed to read
+    needread = [i for i in range(len(self.rxStreams)) if self.rxhasnum[i] < self.numSamples]
+    if len(needread) == 0: return True
+    for r in needread:
+        serial_ant = self.rx_serials_ant[r]
+        rxStream = self.rxStreams[r]
+        serial, ant = Format_SplitSerialAnt(serial_ant)
+        sdr = self.sdrs[serial]
+        numRecv = self.rxhasnum[r]
+        sr = sdr.readStream(rxStream, [samps[numRecv:] for samps in self.sampsRecv[r]], len(self.sampsRecv[r][0])-numRecv, timeoutUs=int(1e6))
+        if sr.ret == -1:
+            GUI.error('Error: Bad Read from %s!' % serial_ant)
+        else: self.rxhasnum[r] += sr.ret
+
+def Process_BuildAsyncRxRegisters(self):
+    self.rxhasnum = [0 for ele in self.rxStreams]  # same index as self.rxStream
 
 def Thread_ReceiveStream(sdr, stream, sampsRecv):
     numRecv = 0
@@ -801,7 +839,7 @@ def Process_SaveHDF5File_RxOnlyBurst(self):
             self.dset[i][:] = sampsRecv[0]
             i += 1
 
-def Interface_UpdateUserGraph(self, addition=None):  # addition should be a map object
+def Interface_UpdateUserGraph(self, addition=None, uselast=False):  # addition should be a map object; by default show the head, but if 'uselast', then show the last ones
     struct = []
     for r,serial_ant in enumerate(self.tx_serials_ant + self.rx_serials_ant):
         serial, ant = Format_SplitSerialAnt(serial_ant)
@@ -813,7 +851,7 @@ def Interface_UpdateUserGraph(self, addition=None):  # addition should be a map 
     data = {}
     for r,serial_ant in enumerate(self.tx_serials_ant):
         serial, ant = Format_SplitSerialAnt(serial_ant)
-        cdat = [(tone[:self.showSamples] if len(tone) > self.showSamples else tone) for tone in self.tones[r]]
+        cdat = [((tone[-self.showSamples:] if uselast else tone[:self.showSamples]) if len(tone) > self.showSamples else tone) for tone in self.tones[r]]
         if ant == 2:
             for antt in [0,1]:
                 data["I-%s-%d" % (serial, antt)] = [float(e.real) for e in cdat[antt]]
@@ -823,7 +861,7 @@ def Interface_UpdateUserGraph(self, addition=None):  # addition should be a map 
             data["Q-" + serial_ant] = [float(e.imag) for e in cdat[0]]
     for r,serial_ant in enumerate(self.rx_serials_ant):
         serial, ant = Format_SplitSerialAnt(serial_ant)
-        cdat = [(samps[:self.showSamples] if len(samps) > self.showSamples else samps) for samps in self.sampsRecv[r]]
+        cdat = [((samps[-self.showSamples:] if uselast else samps[:self.showSamples]) if len(samps) > self.showSamples else samps) for samps in self.sampsRecv[r]]
         if ant == 2:
             for antt in [0,1]:
                 data["I-%s-%d" % (serial, antt)] = [float(e.real) for e in cdat[antt]]
@@ -835,7 +873,7 @@ def Interface_UpdateUserGraph(self, addition=None):  # addition should be a map 
     if addition is not None:
         for key in addition:
             struct.append(key)
-            cdat = addition[key][:self.showSamples] if len(addition[key]) > self.showSamples else addition[key]
+            cdat = (addition[key][-self.showSamples:] if uselast else addition[key][:self.showSamples]) if len(addition[key]) > self.showSamples else addition[key]
             data["I-" + key] = [float(e.real) for e in cdat]
             data["Q-" + key] = [float(e.imag) for e in cdat]
     self.main.sampleData = {"struct": struct, "data": data}
