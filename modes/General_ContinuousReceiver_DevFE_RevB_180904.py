@@ -33,7 +33,7 @@ class General_ContinuousReceiver_DevFE_RevB_180904:
 
         # create gains and set them
         IrisUtil.Init_CreateDefaultGain_WithDevFE(self)
-        IrisUtil.Init_CreateBasicGainSettings(self, bw=5e6, freq=2.35e9, dcoffset=True, rxrate=9e6)
+        IrisUtil.Init_CreateBasicGainSettings(self, bw=5e6, freq=2.35e9, dcoffset=True, rxrate=6e6)
 
         # create streams (but not activate them)
         IrisUtil.Init_CreateRxStreams_RevB(self)

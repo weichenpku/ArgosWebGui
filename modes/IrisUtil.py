@@ -730,7 +730,7 @@ def Process_ReadFromRxStream_Async(self):
         serial, ant = Format_SplitSerialAnt(serial_ant)
         sdr = self.sdrs[serial]
         numRecv = self.rxhasnum[r]
-        sr = sdr.readStream(rxStream, [samps[numRecv:] for samps in self.sampsRecv[r]], len(self.sampsRecv[r][0])-numRecv, timeoutUs=int(1e6))
+        sr = sdr.readStream(rxStream, [samps[numRecv:] for samps in self.sampsRecv[r]], min(len(self.sampsRecv[r][0])-numRecv, 800000), timeoutUs=int(1e6))
         print("read from %s:" % serial_ant, sr.ret)
         if sr.ret == -1:
             GUI.error('Error: Bad Read from %s!' % serial_ant)
