@@ -7,7 +7,7 @@ import time
 def test():
     class FakeMain:
         def __init__(self):
-            self.IrisSerialNums = ["0313-2-Tx-1", "0283-2-Rx-0"]
+            self.IrisSerialNums = ["RF3E000002-2-Tx-1", "RF3E000010-2-Rx-0"]
             self.userTrig = True
         def changedF(self):
             print('changedF called')
@@ -15,12 +15,12 @@ def test():
     obj = LTE_OneRepeator_SyncWatcher_DevFE_RevB_180902(main)
     obj.setGains({
         "parameters-showSamples": "16",
-        "parameters-txSelect": "0313-1"
+        "parameters-txSelect": "RF3E000002-1"
     })
     print(obj.nowGains())
     print(obj.loop())
     print(main.sampleData)
-
+    
 class LTE_OneRepeator_SyncWatcher_DevFE_RevB_180902:
     def __init__(self, main):
         self.main = main

@@ -4,5 +4,6 @@
 
 # 16MB
 # sudo sysctl -w net.core.rmem_max=16777216
-# 67MB
-sudo sysctl -w net.core.rmem_max=67108864
+
+# 67MB = 0x4000000
+sudo sysctl -w net.core.rmem_max=67108864 

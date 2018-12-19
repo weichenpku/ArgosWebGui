@@ -145,6 +145,7 @@ def lastgraph():
 def load():
     f = request.files['file']
     st = str(f.read(), encoding="utf-8")
+    print("loading: %s" % st)
     try:
         js = json.loads(st)
         main.gainModified.clear()  # first clear the queue, in case user load file for twice or more!
