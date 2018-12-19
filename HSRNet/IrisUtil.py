@@ -641,7 +641,7 @@ def Process_ClearStreamBuffer(self):  # clear out socket buffer from old request
         while sr.ret != SOAPY_SDR_TIMEOUT and not UseFakeSoapy:
             sr = sdr.readStream(rxStream, self.sampsRecv[r], len(self.sampsRecv[r][0]), timeoutUs = 0)
 
-def Process_TxActivate_WriteFlagAndDataToTxStream(self):
+def Process_TxActivate_WriteFlagAndDataToTxStream(self):  # Tx burst for Argos V2
     flags = SOAPY_SDR_WAIT_TRIGGER | SOAPY_SDR_END_BURST
     for r, txStream in enumerate(self.txStreams):
         serial_ant = self.tx_serials_ant[r]
@@ -662,7 +662,38 @@ def Process_ComputeTimeToDoThings_UseHasTime(self, delay = 10000000, alignment =
     if alignment != 0:  # alignment, self.alignOffset needed
         self.ts = ((self.ts + alignment) // alignment) * alignment + self.alignOffset
 
-def Process_TxActivate_WriteFlagAndDataToTxStream_UseHasTime(self):
+def Process_TxActivate_WriteFlagAndMultiFrameToTxStream_UseHasTime(self): # Tx multi burst
+    max_len = 2816
+    replay_len = 1920
+    frame_len = len(self.tones[0][0])
+    flags = SOAPY_SDR_HAS_TIME
+    for r,txStream in enumerate(self.txStreams):
+        serial_ant = self.tx_serials_ant[r]
+        serial, ant = Format_SplitSerialAnt(serial_ant)
+        sdr = self.sdrs[serial]
+        sdr.activateStream(txStream)  # activate it!
+    turn = 0
+    maxturn = 5  # max repeat time
+    while (turn<maxturn):
+        turn = turn + 1
+        if turn==maxturn: flags = flags | SOAPY_SDR_END_BURST
+        for r,txStream in enumerate(self.txStreams):
+            serial_ant = self.tx_serials_ant[r]
+            serial, ant = Format_SplitSerialAnt(serial_ant)
+            sdr = self.sdrs[serial]
+            numsent = 0
+            ts=self.ts+(turn-1)*round(frame_len*1000000000/self.rate+1) # 1ms per subframe
+            print("turn ",turn)
+            print("current,ts",sdr.getHardwareTime())
+            print("tx_ts is ",ts)
+            while numsent < frame_len:
+                sr = sdr.writeStream(txStream, [tone[numsent:] for tone in self.tones[r]], len(self.tones[r][0])-numsent, flags, timeNs=ts)
+                if sr.ret == -1:
+                    print("sending error!!!")
+                else: numsent += sr.ret
+                print("sending ...",sr.ret)  
+
+def Process_TxActivate_WriteFlagAndDataToTxStream_UseHasTime(self):  # Tx burst
     flags = SOAPY_SDR_HAS_TIME | SOAPY_SDR_END_BURST
     for r,txStream in enumerate(self.txStreams):
         serial_ant = self.tx_serials_ant[r]
@@ -677,7 +708,7 @@ def Process_TxActivate_WriteFlagAndDataToTxStream_UseHasTime(self):
             else: numSent += sr.ret
             # print(sr.ret)
 
-def Process_TxActivate_WriteFlagAndDataToTxStream_StreamFlag(self):
+def Process_TxActivate_WriteFlagAndDataToTxStream_StreamFlag(self):  # Todo: Tx stream
     max_len = 2816
     replay_len = 1920
     frame_len = len(self.tones[0][0])
@@ -688,9 +719,9 @@ def Process_TxActivate_WriteFlagAndDataToTxStream_StreamFlag(self):
         sdr = self.sdrs[serial]
         sdr.activateStream(txStream)  # activate it!
     turn = 1
-    while (turn<10000):
+    while (turn<10):
         turn = turn + 1
-        if turn==10000: flags = flags | SOAPY_SDR_END_BURST
+        if turn==10: flags = flags | SOAPY_SDR_END_BURST
         for r,txStream in enumerate(self.txStreams):
             serial_ant = self.tx_serials_ant[r]
             serial, ant = Format_SplitSerialAnt(serial_ant)
@@ -705,7 +736,7 @@ def Process_TxActivate_WriteFlagAndDataToTxStream_StreamFlag(self):
                 else: numsent += sr.ret
                 print("sending ...",sr.ret)               
 
-def Process_TxActivate_WriteFlagAndDataToTxStream_RepeatFlag(self):
+def Process_TxActivate_WriteFlagAndDataToTxStream_RepeatFlag(self): # Tx repeat
     # this is from https://github.com/skylarkwireless/sklk-demos/blob/master/python/SISO.py
     replay_addr = 0
     max_replay = 30000  # TODO: read from hardware (the buffer size is 2816)
@@ -761,6 +792,8 @@ def Process_RxActivate_WriteFlagToRxStream_UseHasTime(self, rx_delay = 57):
         serial, ant = Format_SplitSerialAnt(serial_ant)
         sdr = self.sdrs[serial]
         sdr.activateStream(rxStream, flags, ts, len(self.sampsRecv[r][0]))
+        # print("rx_ts is ",ts)
+        # print("current_ts is ",sdr.getHardwareTime())
 
 def Process_RxActivate_SetupContinuousReadRxStream(self):
     flags = SOAPY_SDR_HAS_TIME
@@ -950,6 +983,7 @@ def Interface_UpdateUserGraph(self, addition=None, uselast=False):  # addition s
             data["Q-" + key] = [float(e.imag) for e in cdat]
     self.main.sampleData = {"struct": struct, "data": data}
     self.main.sampleDataReady = True
+
 
 def Analyze_LoadHDF5FileByName(self, filename):
     print("loading %s" % filename)

@@ -16,7 +16,7 @@ sig_f = csvread([savedir 'sig_f.csv']);
 
 %% load transmit signal
 tx_dir = '../../rxdata/';
-tx_port = 'RF3E000002-1'; 
+tx_port = 'RF3E000006-0'; 
 load([tx_dir 'I-' tx_port '.mat'])
 tx_i=wave;
 load([tx_dir 'Q-' tx_port '.mat'])
@@ -27,13 +27,15 @@ figure; plot(real(tx_t));
 
 %% load receive signal
 rx_dir = '../../rxdata/';
-rx_port = 'RF3E000022-1';
+rx_port = 'RF3E000015-0';
 load([rx_dir 'I-' rx_port '.mat'])
 rx_i=wave;
 load([rx_dir 'Q-' rx_port '.mat'])
 rx_q=wave;
 rx_t=rx_i+1i*rx_q;
 figure; plot(imag(rx_t));
+
+% save(['../../rxdata/tx_test/' tx_port '_test2.mat'],'rx_t');
 
 % rx_t=tx_t;
 % sig_len = size(sig,2);
@@ -60,3 +62,4 @@ for k = 2:num_symbols_frame
     % channel estimation: rx_f vs sig_f(k,:)
     est(:,k) = rx_f./sig_f(k,:);
 end
+

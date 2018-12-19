@@ -18,8 +18,8 @@ def test():
     obj.setGains({
         "parameters-txSamples": "512",
         "parameters-numSamples": "5120",
-        "RF3E000002-1-tx-txGain": "40",
-        "RF3E000010-1-rx-rxGain": "40"
+        "RF3E000002-1-tx-txGain": "35",
+        "RF3E000010-1-rx-rxGain": "35"
     })
     print(obj.nowGains())
     print(obj.loop())
@@ -36,11 +36,11 @@ class Sinusoid_Transceiver_DevFE_RevB_180828:
         IrisUtil.Format_UserInputSerialAnts(self)
 
         # init sdr object
-        IrisUtil.Init_CollectSDRInstantNeeded(self, clockRate=80e6)
+        IrisUtil.Init_CollectSDRInstantNeeded(self, clockRate=30.72e6)
 
         # create gains and set them
         IrisUtil.Init_CreateDefaultGain_WithDevFE(self)
-        self.rate = 10e6  # save this for later build tx tone
+        self.rate = 1.92e6  # save this for later build tx tone
         IrisUtil.Init_CreateBasicGainSettings(self, rate=self.rate, bw=30e6, freq=2.45e9, dcoffset=True)
 
         # create streams (but not activate them)
@@ -82,8 +82,10 @@ class Sinusoid_Transceiver_DevFE_RevB_180828:
         IrisUtil.Process_ClearStreamBuffer(self)
         # activate
         IrisUtil.Process_ComputeTimeToDoThings_UseHasTime(self, delay = 10000000)
-        IrisUtil.Process_TxActivate_WriteFlagAndDataToTxStream_UseHasTime(self)
+        #IrisUtil.Process_TxActivate_WriteFlagAndDataToTxStream_UseHasTime(self)       
         IrisUtil.Process_RxActivate_WriteFlagToRxStream_UseHasTime(self, rx_delay = 57)
+        IrisUtil.Process_TxActivate_WriteFlagAndMultiFrameToTxStream_UseHasTime(self)
+        
 
         # sleep to wait
         IrisUtil.Process_WaitForTime_NoTrigger(self)

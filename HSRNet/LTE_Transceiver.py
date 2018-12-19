@@ -9,7 +9,7 @@ import scipy.io as sio
 def test():
     class FakeMain:
         def __init__(self):
-            self.IrisSerialNums = ["RF3E000002-2-Tx-1", "RF3E000010-2-Rx-0"] # serial-chan-TX/RX-trigger
+            self.IrisSerialNums = ["RF3E000006-2-Tx-0", "RF3E000015-2-Rx-1"] # serial-chan-TX/RX-trigger
             self.userTrig = True
         def changedF(self):
             print('changedF called')
@@ -18,11 +18,11 @@ def test():
     obj.setGains({
         "parameters-showSamples": "30000",
         "parameters-numSamples":"19200",
-        "parameters-txSelect": "RF3E000002-1",
-        "RF3E000002-0-tx-txGain": "40",
-        "RF3E000002-1-tx-txGain": "40",
-        "RF3E000010-0-rx-rxGain": "40",
-        "RF3E000010-1-rx-rxGain": "40"
+        "parameters-txSelect": "RF3E000006-0",
+        "RF3E000006-0-tx-txGain": "30",
+        "RF3E000006-1-tx-txGain": "30",
+        "RF3E000015-0-rx-rxGain": "40",
+        "RF3E000015-1-rx-rxGain": "40"
     })
     print(obj.nowGains())
     print(obj.loop())
@@ -134,18 +134,18 @@ if __name__ == "__main__":
 
 #{'list': 
 #   [['parameters', ['txSelect', 'numSamples', 'showSamples', 'alignOffset']], 
-#    ['RF3E000002-0-tx', ['txGain']], 
-#    ['RF3E000002-1-tx', ['txGain']], 
-#    ['RF3E000010-0-rx', ['postcode', 'rxGain']], 
-#    ['RF3E000010-1-rx', ['postcode', 'rxGain']]], 
+#    ['RF3E000006-0-tx', ['txGain']], 
+#    ['RF3E000006-1-tx', ['txGain']], 
+#    ['RF3E000015-0-rx', ['postcode', 'rxGain']], 
+#    ['RF3E000015-1-rx', ['postcode', 'rxGain']]], 
 # 'data': 
-#   {'RF3E000010-1-rx-rxGain': '20', 
-#    'parameters-txSelect': 'RF3E000002-1', 
-#    'RF3E000002-0-tx-txGain': '40', 
-#    'RF3E000010-1-rx-postcode': '(1+0j)', 
-#    'RF3E000010-0-rx-postcode': '(1+0j)', 
+#   {'RF3E000015-1-rx-rxGain': '20', 
+#    'parameters-txSelect': 'RF3E000006-1', 
+#    'RF3E000006-0-tx-txGain': '40', 
+#    'RF3E000015-1-rx-postcode': '(1+0j)', 
+#    'RF3E000015-0-rx-postcode': '(1+0j)', 
 #    'parameters-numSamples': '1024', 
-#    'RF3E000002-1-tx-txGain': '40', 
-#    'RF3E000010-0-rx-rxGain': '20', 
+#    'RF3E000006-1-tx-txGain': '40', 
+#    'RF3E000015-0-rx-rxGain': '20', 
 #    'parameters-alignOffset': '0', 
 #    'parameters-showSamples': '1600'}}
