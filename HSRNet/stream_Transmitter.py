@@ -41,10 +41,10 @@ class LTE_Transmitter:
         # import waveform file
         # IrisUtil.Format_LoadWaveFormFile(self, '../modes/LTE_OneRepeator_SyncWatcher_DevFE_RevB_180902_Waveform.csv')
         IrisUtil.Format_DataDir(self, nb_rb=6)
-        IrisUtil.Format_LoadTimeWaveForm(self, self.data_dir+"sig_pss.csv")
+        IrisUtil.Format_LoadTimeWaveForm(self, self.data_dir+"tone.csv")
 
         # init sdr object
-        IrisUtil.Init_CollectSDRInstantNeeded(self, clockRate=80e6)
+        IrisUtil.Init_CollectSDRInstantNeeded(self, clockRate=30.72e6)
 
         # create gains and set them
         IrisUtil.Init_CreateDefaultGain_WithDevFE(self)

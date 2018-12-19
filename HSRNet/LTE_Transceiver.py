@@ -9,7 +9,7 @@ import scipy.io as sio
 def test():
     class FakeMain:
         def __init__(self):
-            self.IrisSerialNums = ["RF3E000002-2-Tx-1", "RF3E000003-2-Rx-0"] # serial-chan-TX/RX-trigger
+            self.IrisSerialNums = ["RF3E000002-2-Tx-1", "RF3E000010-2-Rx-0"] # serial-chan-TX/RX-trigger
             self.userTrig = True
         def changedF(self):
             print('changedF called')
@@ -21,8 +21,8 @@ def test():
         "parameters-txSelect": "RF3E000002-1",
         "RF3E000002-0-tx-txGain": "40",
         "RF3E000002-1-tx-txGain": "40",
-        "RF3E000003-0-rx-rxGain": "40",
-        "RF3E000003-1-rx-rxGain": "40"
+        "RF3E000010-0-rx-rxGain": "40",
+        "RF3E000010-1-rx-rxGain": "40"
     })
     print(obj.nowGains())
     print(obj.loop())
@@ -42,7 +42,7 @@ class LTE_OneRepeator_SyncWatcher_DevFE_RevB_180902:
         # import waveform file
         # IrisUtil.Format_LoadWaveFormFile(self, '../modes/LTE_OneRepeator_SyncWatcher_DevFE_RevB_180902_Waveform.csv')
         IrisUtil.Format_DataDir(self, nb_rb=6)
-        IrisUtil.Format_LoadTimeWaveForm(self, self.data_dir+"sig_pss.csv")
+        IrisUtil.Format_LoadTimeWaveForm(self, self.data_dir+"tone.csv")
 
         # init sdr object
         IrisUtil.Init_CollectSDRInstantNeeded(self, clockRate=80e6)
