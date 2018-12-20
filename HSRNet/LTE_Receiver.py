@@ -21,13 +21,21 @@ def test():
         "RF3E000022-0-rx-rxGain": "45",
         "RF3E000022-1-rx-rxGain": "45"
     })
-    print(obj.nowGains())
-    print(obj.loop())
+    
+    print()
+    print('[SOAR] parameters : value')
+    paras = obj.nowGains()
+    for para,value in paras['data'].items():
+        print(para,':',value)
+    print()
+
+    obj.loop()
+    
     # print(main.sampleData)
-    for key in main.sampleData['data'].keys():
-        print(type(main.sampleData['data'][key]))
-        print(key+".mat")
-        sio.savemat("rxdata/"+key+".mat", {"wave" : main.sampleData['data'][key]})
+    for key,value in main.sampleData['data'].items():
+        # print(type(main.sampleData['data'][key]))
+        # print(key+".mat")
+        sio.savemat("rxdata/"+key+".mat", {"wave" : value})
 
 class LTE_Receiver:
     def __init__(self, main):
@@ -54,8 +62,8 @@ class LTE_Receiver:
         # sync trigger and clock
         IrisUtil.Init_SynchronizeTriggerClock(self)
 
-        self.numSamples = 1024  # could be changed during runtime
-        self.showSamples = 8192  # init max show samples
+        self.numSamples = 19200  # could be changed during runtime
+        self.showSamples = 30000  # init max show samples
         self.alignOffset = 0
         self.selfparameters = {
             "numSamples": int, 

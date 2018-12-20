@@ -9,7 +9,7 @@ import scipy.io as sio
 def test():
     class FakeMain:
         def __init__(self):
-            self.IrisSerialNums = ["RF3E000002-1-Tx-1", "RF3E000010-1-Rx-0"]  # serial-chan-TX/RX-trigger
+            self.IrisSerialNums = ["RF3E000006-0-Tx-1", "RF3E000022-1-Rx-0"]  # serial-chan-TX/RX-trigger
             self.userTrig = True
         def changedF(self):
             print('changedF called')
@@ -18,16 +18,24 @@ def test():
     obj.setGains({
         "parameters-txSamples": "512",
         "parameters-numSamples": "5120",
-        "RF3E000002-1-tx-txGain": "35",
-        "RF3E000010-1-rx-rxGain": "35"
+        "RF3E000006-0-tx-txGain": "35",
+        "RF3E000022-1-rx-rxGain": "35"
     })
-    print(obj.nowGains())
-    print(obj.loop())
-    print(main.sampleData['data'].keys())
-    for key in main.sampleData['data'].keys():
-        print(type(main.sampleData['data'][key]))
-        print(key+".mat")
-        sio.savemat("rxdata/"+key+".mat", {"wave" : main.sampleData['data'][key]})
+    
+    print()
+    print('[SOAR] parameters : value')
+    paras = obj.nowGains()
+    for para,value in paras['data'].items():
+        print(para,':',value)
+    print()
+
+    obj.loop()
+
+    # print(main.sampleData)
+    for key,value in main.sampleData['data'].items():
+        # print(type(main.sampleData['data'][key]))
+        # print(key+".mat")
+        sio.savemat("rxdata/"+key+".mat", {"wave" : value})
 
 class Sinusoid_Transceiver_DevFE_RevB_180828:
     def __init__(self, main):
@@ -77,7 +85,7 @@ class Sinusoid_Transceiver_DevFE_RevB_180828:
     
     def doSimpleRxTx(self):
         # prepare work, create tx rx buffer
-        IrisUtil.Process_BuildTxTones_Sinusoid(self)
+        IrisUtil.Process_BuildTxTones_Sinusoid(self,scale=0.9)
         IrisUtil.Process_CreateReceiveBuffer(self)
         IrisUtil.Process_ClearStreamBuffer(self)
         # activate
@@ -99,11 +107,9 @@ class Sinusoid_Transceiver_DevFE_RevB_180828:
         IrisUtil.Process_RxDeactive(self)
     
     def loop(self):
-        if self.main.userTrig:
-            self.main.userTrig = False
-            self.main.changedF()  # just register set
-            self.doSimpleRxTx()
-            IrisUtil.Interface_UpdateUserGraph(self)  # update to user graph
+        self.doSimpleRxTx()
+        IrisUtil.Interface_UpdateUserGraph(self)  # update to user graph
+
 
 if __name__ == "__main__":
     test()

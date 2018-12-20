@@ -9,25 +9,33 @@ import scipy.io as sio
 def test():
     class FakeMain:
         def __init__(self):
-            self.IrisSerialNums = ["RF3E000002-2-Tx-1"] # serial-chan-TX/RX-trigger
+            self.IrisSerialNums = ["RF3E000006-2-Tx-1"] # serial-chan-TX/RX-trigger
             self.userTrig = True
         def changedF(self):
             print('changedF called')
     main = FakeMain()
     obj = LTE_Transmitter(main)
     obj.setGains({
-        "parameters-txSelect": "RF3E000002-1",
-        "RF3E000002-0-tx-txGain": "45",
-        "RF3E000002-1-tx-txGain": "45",
+        "parameters-txSelect": "RF3E000006-1",
+        "RF3E000006-0-tx-txGain": "30",
+        "RF3E000006-1-tx-txGain": "30",
     })
-    print(obj.nowGains())
-    print(obj.loop())
-    # print(main.sampleData)
-    for key in main.sampleData['data'].keys():
-        print(type(main.sampleData['data'][key]))
-        print(key+".mat")
-        sio.savemat("rxdata/"+key+".mat", {"wave" : main.sampleData['data'][key]})
     
+    print()
+    print('[SOAR] parameters : value')
+    paras = obj.nowGains()
+    for para,value in paras['data'].items():
+        print(para,':',value)
+    print()
+
+    obj.loop()
+
+    # print(main.sampleData)
+    for key,value in main.sampleData['data'].items():
+        # print(type(main.sampleData['data'][key]))
+        # print(key+".mat")
+        sio.savemat("rxdata/"+key+".mat", {"wave" : value})
+
     input() # if the program stops, iris will stop transmitting.
     
     # End
@@ -42,7 +50,7 @@ class LTE_Transmitter:
         # import waveform file
         # IrisUtil.Format_LoadWaveFormFile(self, '../modes/LTE_OneRepeator_SyncWatcher_DevFE_RevB_180902_Waveform.csv')
         IrisUtil.Format_DataDir(self, nb_rb=6)
-        IrisUtil.Format_LoadTimeWaveForm(self, self.data_dir+"tone.csv")
+        IrisUtil.Format_LoadTimeWaveForm(self, self.data_dir+"tone.csv",scale=1)
 
         # init sdr object
         IrisUtil.Init_CollectSDRInstantNeeded(self, clockRate=80e6)
@@ -121,12 +129,8 @@ class LTE_Transmitter:
         # IrisUtil.Process_DoCorrelation2FindFirstPFDMSymbol(self)
     
     def loop(self):
-        if self.main.userTrig:
-            self.main.userTrig = False
-            self.main.changedF()  # just register set
-            #self.doSimpleRx()
-            #IrisUtil.Interface_UpdateUserGraph(self, self.correlationSampes)  # update to user graph
-            IrisUtil.Interface_UpdateUserGraph(self)
+        #IrisUtil.Interface_UpdateUserGraph(self, self.correlationSampes)  # update to user graph
+        IrisUtil.Interface_UpdateUserGraph(self)
 
 if __name__ == "__main__":
     test()

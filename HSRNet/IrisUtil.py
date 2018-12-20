@@ -631,10 +631,12 @@ def Gains_AddPrecodePostcodeGains(self):
         self.tx_gains[key]["precode"] = 1.+0.j  
     Gains_AddPostcodeGains(self)
 
-def Process_BuildTxTones_Sinusoid(self):
+def Process_BuildTxTones_Sinusoid(self,scale=1):
     waveFreq = self.rate / 100  # every period has 100 points
     s_time_vals = np.array(np.arange(0, self.txSamples)).transpose() * 1 / self.rate  # time of each point
     tone = np.exp(s_time_vals * 2.j * np.pi * waveFreq).astype(np.complex64)
+    tone = tone * scale
+    print('[SOAR] MaxIQ:',np.real(tone).max(),np.imag(tone).max())
     self.tones = []
     for r, serial_ant in enumerate(self.tx_serials_ant):
         serial, ant = Format_SplitSerialAnt(serial_ant)
@@ -697,7 +699,7 @@ def Process_TxActivate_WriteFlagAndMultiFrameToTxStream_UseHasTime(self): # Tx m
         sdr = self.sdrs[serial]
         sdr.activateStream(txStream)  # activate it!
     turn = 0
-    maxturn = 5  # max repeat time
+    maxturn = 1  # max repeat time
     while (turn<maxturn):
         turn = turn + 1
         if turn==maxturn: flags = flags | SOAPY_SDR_END_BURST
