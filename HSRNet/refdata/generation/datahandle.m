@@ -27,7 +27,7 @@ figure; plot(real(tx_t));
 
 %% load receive signal
 rx_dir = '../../rxdata/';
-rx_port = 'RF3E000015-0';
+rx_port = 'RF3E000022-1';
 load([rx_dir 'I-' rx_port '.mat'])
 rx_i=wave;
 load([rx_dir 'Q-' rx_port '.mat'])

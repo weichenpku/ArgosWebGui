@@ -9,7 +9,7 @@ import scipy.io as sio
 def test():
     class FakeMain:
         def __init__(self):
-            self.IrisSerialNums = ["RF3E000006-2-Tx-0", "RF3E000015-2-Rx-1"] # serial-chan-TX/RX-trigger
+            self.IrisSerialNums = ["RF3E000006-2-Tx-1", "RF3E000022-1-Rx-0"] # serial-chan-TX/RX-trigger
             self.userTrig = True
         def changedF(self):
             print('changedF called')
@@ -17,20 +17,28 @@ def test():
     obj = LTE_OneRepeator_SyncWatcher_DevFE_RevB_180902(main)
     obj.setGains({
         "parameters-showSamples": "30000",
-        "parameters-numSamples":"19200",
+        "parameters-numSamples":"1920",
         "parameters-txSelect": "RF3E000006-0",
         "RF3E000006-0-tx-txGain": "30",
         "RF3E000006-1-tx-txGain": "30",
-        "RF3E000015-0-rx-rxGain": "40",
-        "RF3E000015-1-rx-rxGain": "40"
+        # "RF3E000022-0-rx-rxGain": "30",
+        "RF3E000022-1-rx-rxGain": "30"
     })
-    print(obj.nowGains())
-    print(obj.loop())
+
+    print()
+    print('[SOAR] parameters : value')
+    paras = obj.nowGains()
+    for para,value in paras['data'].items():
+        print(para,':',value)
+    print()
+    
+    obj.loop()
+    
     # print(main.sampleData)
-    for key in main.sampleData['data'].keys():
-        print(type(main.sampleData['data'][key]))
-        print(key+".mat")
-        sio.savemat("rxdata/"+key+".mat", {"wave" : main.sampleData['data'][key]})
+    for key,value in main.sampleData['data'].items():
+        # print(type(main.sampleData['data'][key]))
+        # print(key+".mat")
+        sio.savemat("rxdata/"+key+".mat", {"wave" : value})
 
 class LTE_OneRepeator_SyncWatcher_DevFE_RevB_180902:
     def __init__(self, main):
@@ -42,7 +50,7 @@ class LTE_OneRepeator_SyncWatcher_DevFE_RevB_180902:
         # import waveform file
         # IrisUtil.Format_LoadWaveFormFile(self, '../modes/LTE_OneRepeator_SyncWatcher_DevFE_RevB_180902_Waveform.csv')
         IrisUtil.Format_DataDir(self, nb_rb=6)
-        IrisUtil.Format_LoadTimeWaveForm(self, self.data_dir+"tone.csv")
+        IrisUtil.Format_LoadTimeWaveForm(self, self.data_dir+"tone.csv", scale=0.5)
 
         # init sdr object
         IrisUtil.Init_CollectSDRInstantNeeded(self, clockRate=80e6)
@@ -121,12 +129,9 @@ class LTE_OneRepeator_SyncWatcher_DevFE_RevB_180902:
         # IrisUtil.Process_DoCorrelation2FindFirstPFDMSymbol(self)
     
     def loop(self):
-        if self.main.userTrig:
-            self.main.userTrig = False
-            self.main.changedF()  # just register set
-            self.doSimpleRx()
-            #IrisUtil.Interface_UpdateUserGraph(self, self.correlationSampes)  # update to user graph
-            IrisUtil.Interface_UpdateUserGraph(self)
+        self.doSimpleRx()
+        #IrisUtil.Interface_UpdateUserGraph(self, self.correlationSampes)  # update to user graph
+        IrisUtil.Interface_UpdateUserGraph(self)
 
 if __name__ == "__main__":
     test()
@@ -136,16 +141,16 @@ if __name__ == "__main__":
 #   [['parameters', ['txSelect', 'numSamples', 'showSamples', 'alignOffset']], 
 #    ['RF3E000006-0-tx', ['txGain']], 
 #    ['RF3E000006-1-tx', ['txGain']], 
-#    ['RF3E000015-0-rx', ['postcode', 'rxGain']], 
-#    ['RF3E000015-1-rx', ['postcode', 'rxGain']]], 
+#    ['RF3E000022-0-rx', ['postcode', 'rxGain']], 
+#    ['RF3E000022-1-rx', ['postcode', 'rxGain']]], 
 # 'data': 
-#   {'RF3E000015-1-rx-rxGain': '20', 
+#   {'RF3E000022-1-rx-rxGain': '20', 
 #    'parameters-txSelect': 'RF3E000006-1', 
 #    'RF3E000006-0-tx-txGain': '40', 
-#    'RF3E000015-1-rx-postcode': '(1+0j)', 
-#    'RF3E000015-0-rx-postcode': '(1+0j)', 
+#    'RF3E000022-1-rx-postcode': '(1+0j)', 
+#    'RF3E000022-0-rx-postcode': '(1+0j)', 
 #    'parameters-numSamples': '1024', 
 #    'RF3E000006-1-tx-txGain': '40', 
-#    'RF3E000015-0-rx-rxGain': '20', 
+#    'RF3E000022-0-rx-rxGain': '20', 
 #    'parameters-alignOffset': '0', 
 #    'parameters-showSamples': '1600'}}

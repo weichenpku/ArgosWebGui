@@ -139,25 +139,30 @@ def Format_AddSelfAttr(self, attrs, namelst):
             attrs[name] = getattr(self, name)
 
 def Format_cfloat2uint32(arr, order='IQ'):  # from https://github.com/skylarkwireless/sklk-demos/blob/master/python/SISO.py
-    arr_i = (np.real(arr) * 32767).astype(np.uint16)
+    # check whether the maximum of IQ data is less than 1
+    max_i = np.absolute(np.real(arr)).max() 
+    max_q = np.absolute(np.imag(arr)).max() 
+    print('[SOAR] Max_IQ is',max_i,max_q)
+    if max_i>1 or max_q>1:
+        print('[SOAR] WARNING: Max_IQ must be less than 1')
+    arr_i = (np.real(arr) * 32767).astype(np.uint16)   # arr [-1,1]+[-1,1]j => arr_i/arr_q [-32767,32767]
     arr_q = (np.imag(arr) * 32767).astype(np.uint16)
     if order == 'IQ':
         return np.bitwise_or(arr_q ,np.left_shift(arr_i.astype(np.uint32), 16))
     else:
         return np.bitwise_or(arr_i ,np.left_shift(arr_q.astype(np.uint32), 16))
 
-def Format_LoadTimeWaveForm(self, filename):
+def Format_LoadTimeWaveForm(self, filename, scale=1):
     absolutefilename = os.path.join(os.path.dirname(os.path.abspath(__file__)), filename)
-    print('file is ', absolutefilename)
+    print('[SOAR] load data from file:', absolutefilename)
     with open(os.path.join(os.path.dirname(os.path.abspath(__file__)), filename)) as f:
         reader = csv.reader(f)
         buffer = list(reader)[0]
         self.WaveFormData = np.array([complex(s[0:-1]+'j') if s[-1]=='i' else complex(s) for s in buffer], dtype=np.complex64)
-        shape = self.WaveFormData.shape
-        #print(shape)
-        #print(self.WaveFormData)
-        print(np.absolute(self.WaveFormData).max())
-        #print(type(self.WaveFormData[0]))
+        self.WaveFormData = self.WaveFormData * scale
+                
+        
+      
 
 def Format_LoadWaveFormFile(self, filename):
     with open(os.path.join(os.path.dirname(os.path.abspath(__file__)), filename)) as f:
@@ -346,6 +351,23 @@ def Init_SynchronizeTriggerClock(self):
     trigsdr.writeSetting('SYNC_DELAYS', "")
     for serial in self.sdrs: self.sdrs[serial].setHardwareTime(0, "TRIGGER")
     trigsdr.writeSetting("TRIGGER_GEN", "")
+    # check hardware time of each iris
+    for checktime in range(1000):
+        clockready = True
+        for serial, sdr in self.sdrs.items():
+            hw_time = sdr.getHardwareTime()
+            # print(serial,hw_time)
+            if hw_time > 1e9:                  # clock is always larger than one second if not ready
+                clockready = False
+        if clockready==False:
+            time.sleep(0.001)               # sleep 1 ms for next check
+        else:
+            break
+    print('[SOAR] CLOCK SYNCH: Check time is',checktime)
+    # double check clock is ready
+    for serial, sdr in self.sdrs.items():
+            hw_time = sdr.getHardwareTime()
+            print('[SOAR] CLOCK READY:',serial,hw_time)
 
 def Init_CreateRepeatorSinusoidSequence(self):
     seqlen = len(self.tx_gains) + 2  # how many antennas plus 2
@@ -370,7 +392,6 @@ def Init_CreateRepeatorTimeWaveformSequence(self): # one-hot send on every anten
     self.frameLength = self.WaveFormData.shape[0]
     self.tones = []
     act_serial, act_ant = Format_SplitSerialAnt(self.txSelect)
-    print('max value is', np.absolute(self.WaveFormData).max())
     for r, serial_ant in enumerate(self.tx_serials_ant):
         serial, ant = Format_SplitSerialAnt(serial_ant)
         if ant == 2:
@@ -397,7 +418,7 @@ def Init_CreateRepeatorOnehotWaveformSequence(self):  # one-hot send on self.txS
         # add cyclic prefix
         cplen = len(signal) // 10  # 10% prefix
         signal = np.concatenate((signal[len(signal)-cplen:], signal))
-        print(np.absolute(signal).max())
+        # print(np.absolute(signal).max())
         lidx = idx
         idx += len(signal)
         self.WaveFormSignal[lidx:idx] = signal
@@ -658,9 +679,12 @@ def Process_TxActivate_WriteFlagAndDataToTxStream(self):  # Tx burst for Argos V
 
 def Process_ComputeTimeToDoThings_UseHasTime(self, delay = 10000000, alignment = 0):  # by default: 10ms delay
     self.delay = delay
-    self.ts = self.sdrs[self.trigger_serial].getHardwareTime() + delay  # give us delay ns to set everything up.
+    hw_time = self.sdrs[self.trigger_serial].getHardwareTime()
+    self.ts = hw_time + delay  # give us delay ns to set everything up.
     if alignment != 0:  # alignment, self.alignOffset needed
         self.ts = ((self.ts + alignment) // alignment) * alignment + self.alignOffset
+    # print('hw time',hw_time)
+    # print('expected rx time',self.ts)
 
 def Process_TxActivate_WriteFlagAndMultiFrameToTxStream_UseHasTime(self): # Tx multi burst
     max_len = 2816
@@ -746,7 +770,7 @@ def Process_TxActivate_WriteFlagAndDataToTxStream_RepeatFlag(self): # Tx repeat
         GUI.alert("Continuous mode signal must be less than %d samples. Using first %d samples." % (max_replay, max_replay))
     zeroseq = np.zeros(replay_len, dtype=np.complex64)  # for backup
     for r, serial_ant in enumerate(self.tx_serials_ant):
-        print(serial_ant)
+        # print(serial_ant)
         serial, ant = Format_SplitSerialAnt(serial_ant)
         sdr = self.sdrs[serial]
         if ant == 2:
@@ -791,9 +815,15 @@ def Process_RxActivate_WriteFlagToRxStream_UseHasTime(self, rx_delay = 57):
         serial_ant = self.rx_serials_ant[r]
         serial, ant = Format_SplitSerialAnt(serial_ant)
         sdr = self.sdrs[serial]
+        # self.tsbf = sdr.getHardwareTime()
+        # print('1 ts before activate',self.tsbf)
         sdr.activateStream(rxStream, flags, ts, len(self.sampsRecv[r][0]))
-        # print("rx_ts is ",ts)
-        # print("current_ts is ",sdr.getHardwareTime())
+        # self.tsaf = sdr.getHardwareTime()
+        # print('2 ts after activate',self.tsaf)
+        # self.tsrx = ts
+        # print('hw: ts start read',self.tsrx)
+        # print('hw: ts finish read',self.tsrx+ round(self.numSamples/self.rxrate*1e9)+1)
+        
 
 def Process_RxActivate_SetupContinuousReadRxStream(self):
     flags = SOAPY_SDR_HAS_TIME
@@ -807,8 +837,13 @@ def Process_GenerateTrigger(self):
     self.sdrs[self.trigger_serial].writeSetting("TRIGGER_GEN", "")
 
 def Process_WaitForTime_NoTrigger(self):
+    ts = self.ts + round(self.numSamples/self.rxrate*1e9) + 1
     hw_time = self.sdrs[self.trigger_serial].getHardwareTime()
-    if self.ts > hw_time: time.sleep((self.ts - hw_time) / 1e9)  # otherwise do not sleep
+    # print('3 time before wait',hw_time)
+    # print('4 time wake expected',ts)
+    if ts > hw_time:  time.sleep((ts - hw_time) / 1e9)  # otherwise do not sleep
+    # self.tswk = self.sdrs[self.trigger_serial].getHardwareTime()
+    # print('4 ts after awake',self.tswk)
 
 def Process_ReadFromRxStream(self):
     for r,rxStream in enumerate(self.rxStreams):
@@ -817,12 +852,19 @@ def Process_ReadFromRxStream(self):
         sdr = self.sdrs[serial]
         numRecv = 0
         while numRecv < len(self.sampsRecv[r][0]):
+            # ts_tmp=self.sdrs[self.trigger_serial].getHardwareTime()
             sr = sdr.readStream(rxStream, [samps[numRecv:] for samps in self.sampsRecv[r]], len(self.sampsRecv[r][0])-numRecv, timeoutUs=int(1e6))
+            # print('5 ts before read',ts_tmp)
+            # print('6 ts after read',self.sdrs[self.trigger_serial].getHardwareTime())
             if sr.ret == -1:
                 print('Error: Bad Read!')
                 GUI.error('Error: Bad Read!')
                 break  # always break because it cannot recover for most of time
-            else: numRecv += sr.ret
+            else: 
+                numRecv += sr.ret
+                print('[SOAR] SUCCESS: read',numRecv,'samples')
+        print('[SOAR] FINISH reading')
+        print()
 
 def Process_ReadFromRxStream_Async(self):
     # first determine the streams needed to read
