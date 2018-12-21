@@ -2,19 +2,32 @@ close all;
 clear all;
 
 nb_rb = 6; %this can be 6,15,25,50,75 or 100
-if nb_rb<10
-    savedir='1.4m/';
-else
-    savedir=[int2str(nb_rb/5),'m/'];
-end
+rxdir = '../../rxdata/hsr_1/';
 
 %% load reference signal
+% nb_rb
+if nb_rb<10
+    savedir='../generation/1.4m/';
+else
+    savedir=['../generation/',int2str(nb_rb/5),'m/'];
+end
+
 load([savedir 'paras.mat']);
 pss_t = csvread([savedir 'pss.csv']);
 sig = csvread([savedir 'sig.csv']);
 sig_f = csvread([savedir 'sig_f.csv']);
 
+
+%% load recv signal
+% rxdir
+rxfile = dir([rxdir 'rx*'])
+rxnum = size(rxfile,1)
+for file = 1:rxnum
+    filename = rxfile(rxnum).name
+end
+
 %% load transmit signal
+load([rxdir,filename])
 tx_dir = '../../rxdata/';
 tx_port = 'RF3E000006-1'; 
 load([tx_dir 'I-' tx_port '.mat'])
