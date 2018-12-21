@@ -9,30 +9,39 @@ import scipy.io as sio
 def test():
     class FakeMain:
         def __init__(self):
-            self.IrisSerialNums = ["RF3E000002-2-Tx-1"] # serial-chan-TX/RX-trigger
+            self.IrisSerialNums = ["RF3E000006-2-Tx-1"] # serial-chan-TX/RX-trigger
             self.userTrig = True
         def changedF(self):
             print('changedF called')
     main = FakeMain()
-    obj = LTE_Transmitter(main)
+    obj = LTE_Transmitter(main,data_file='tone.csv',scale=0.9)
     obj.setGains({
-        "parameters-txSelect": "RF3E000002-1",
-        "RF3E000002-0-tx-txGain": "40",
-        "RF3E000002-1-tx-txGain": "40",
+        "parameters-txSelect": "RF3E000006-1",
+        "RF3E000006-0-tx-txGain": "30",
+        "RF3E000006-1-tx-txGain": "30",
     })
-    print(obj.nowGains())
-    print(obj.loop())
-    # print(main.sampleData)
-    for key in main.sampleData['data'].keys():
-        print(type(main.sampleData['data'][key]))
-        print(key+".mat")
-        sio.savemat("rxdata/"+key+".mat", {"wave" : main.sampleData['data'][key]})
     
-    obj.stream_trans()
+    print()
+    print('[SOAR] parameters : value')
+    paras = obj.nowGains()
+    for para,value in paras['data'].items():
+        print(para,':',value)
+    print()
+
+    obj.loop()
+
+    # print(main.sampleData)
+    for key,value in main.sampleData['data'].items():
+        # print(type(main.sampleData['data'][key]))
+        # print(key+".mat")
+        sio.savemat("rxdata/"+key+".mat", {"wave" : value})
+
+    input() # if the program stops, iris will stop transmitting.
+    
     # End
 
 class LTE_Transmitter:
-    def __init__(self, main):
+    def __init__(self, main, data_file, scale):
         self.main = main
         IrisUtil.Assert_ZeroSerialNotAllowed(self)
         IrisUtil.Format_UserInputSerialAnts(self)
@@ -41,18 +50,20 @@ class LTE_Transmitter:
         # import waveform file
         # IrisUtil.Format_LoadWaveFormFile(self, '../modes/LTE_OneRepeator_SyncWatcher_DevFE_RevB_180902_Waveform.csv')
         IrisUtil.Format_DataDir(self, nb_rb=6)
-        IrisUtil.Format_LoadTimeWaveForm(self, self.data_dir+"tone.csv")
+        IrisUtil.Format_LoadTimeWaveForm(self, self.data_dir+data_file,scale)
 
         # init sdr object
-        IrisUtil.Init_CollectSDRInstantNeeded(self, clockRate=30.72e6)
+        IrisUtil.Init_CollectSDRInstantNeeded(self, clockRate=80e6)
 
         # create gains and set them
         IrisUtil.Init_CreateDefaultGain_WithDevFE(self)
-        IrisUtil.Init_CreateBasicGainSettings(self, bw=5e6, freq=2.45e9, dcoffset=True, txrate=1.92e6, rxrate=1.92e6)
+        self.rate = 1.92e6
+        IrisUtil.Init_CreateBasicGainSettings(self, rate=self.rate, bw=5e6, freq=3.5e9, dcoffset=True)
 
+         # create streams (but not activate them)
+        IrisUtil.Init_CreateTxStreams_RevB(self)
         # create streams (but not activate them)
         # IrisUtil.Init_CreateRxStreams_RevB(self)
-        IrisUtil.Init_CreateTxStreams_RevB(self)
 
         # sync trigger and clock
         IrisUtil.Init_SynchronizeTriggerClock(self)
@@ -80,16 +91,10 @@ class LTE_Transmitter:
 
         # set repeat
         # IrisUtil.Process_TxActivate_WriteFlagAndDataToTxStream_RepeatFlag(self)
-        
-
-    def stream_trans(self):
-        IrisUtil.Process_ComputeTimeToDoThings_UseHasTime(self, delay = 10000000)
-
-        IrisUtil.Process_TxActivate_WriteFlagAndDataToTxStream_StreamFlag(self)
-
+    
     def __del__(self):
         print('Iris destruction called')
-        IrisUtil.Deinit_SafeTxStopRepeat(self)
+        # IrisUtil.Deinit_SafeTxStopRepeat(self)
         IrisUtil.Deinit_SafeDelete(self)
     
     def getExtraInfos(self):
@@ -104,13 +109,20 @@ class LTE_Transmitter:
     def setGains(self, gains):
         IrisUtil.Gains_HandleSelfParameters(self, gains)
         IrisUtil.Gains_SetBasicGains(self, gains)
+    
+    def doSimpleTx(self):
+        # activate
+        IrisUtil.Process_ComputeTimeToDoThings_UseHasTime(self, delay = 10000000, alignment = 0)
+        IrisUtil.Process_TxActivate_WriteFlagAndMultiFrameToTxStream_UseHasTime(self)
+
+    
+        # deactive
+        IrisUtil.Process_TxDeactive(self)
 
     def loop(self):
-        if self.main.userTrig:
-            self.main.userTrig = False
-            self.main.changedF()  # just register set
-            #IrisUtil.Interface_UpdateUserGraph(self, self.correlationSampes)  # update to user graph
-            IrisUtil.Interface_UpdateUserGraph(self)
+        self.doSimpleTx()
+        #IrisUtil.Interface_UpdateUserGraph(self, self.correlationSampes)  # update to user graph
+        IrisUtil.Interface_UpdateUserGraph(self)
 
 if __name__ == "__main__":
     test()

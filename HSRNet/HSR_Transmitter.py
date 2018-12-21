@@ -8,25 +8,26 @@ import scipy.io as sio
 
 def test():
     class FakeMain:
-        def __init__(self):
-            self.IrisSerialNums = ["RF3E000006-2-Tx-1", "RF3E000022-1-Rx-0"] # serial-chan-TX/RX-trigger
+        def __init__(self,tx_serial):
+            self.IrisSerialNums = [tx_serial+"-2-Tx-1"] # serial-chan-TX/RX-trigger
             self.userTrig = True
         def changedF(self):
             print('changedF called')
-    main = FakeMain()
-    obj = LTE_OneRepeator_SyncWatcher_DevFE_RevB_180902(main)
 
+    tx_serial = "RF3E000006"
+    tx_ant = "0"
+    tx_gain = "40"
+    tx_rb = 6  # 1.4MHz
+    tx_repeat_time = 1000 # number of frames(10ms)
 
+    main = FakeMain(tx_serial)
+    obj = LTE_Transmitter(main, nb_rb=tx_rb, data_file='sig.csv', scale=1)
     obj.setGains({
-        "parameters-showSamples": "30000",
-        "parameters-numSamples":"1920",
-        "parameters-txSelect": "RF3E000006-0",
-        "RF3E000006-0-tx-txGain": "40",
-        "RF3E000006-1-tx-txGain": "40",
-        "RF3E000022-0-rx-rxGain": "30",
-        "RF3E000022-1-rx-rxGain": "40"
+        "parameters-txSelect": tx_serial+"-"+tx_ant,
+        tx_serial+"-0-tx-txGain": tx_gain,
+        tx_serial+"-1-tx-txGain": tx_gain,
     })
-
+    
     print()
     print('[SOAR] parameters : value')
     paras = obj.nowGains()
@@ -34,16 +35,18 @@ def test():
         print(para,':',value)
     print()
 
-    obj.loop()
-    
+    obj.loop(repeat_time=tx_repeat_time)
+
     # print(main.sampleData)
     for key,value in main.sampleData['data'].items():
         # print(type(main.sampleData['data'][key]))
         # print(key+".mat")
         sio.savemat("rxdata/"+key+".mat", {"wave" : value})
+   
+    # End
 
-class LTE_OneRepeator_SyncWatcher_DevFE_RevB_180902:
-    def __init__(self, main):
+class LTE_Transmitter:
+    def __init__(self, main, nb_rb, data_file, scale):
         self.main = main
         IrisUtil.Assert_ZeroSerialNotAllowed(self)
         IrisUtil.Format_UserInputSerialAnts(self)
@@ -51,18 +54,21 @@ class LTE_OneRepeator_SyncWatcher_DevFE_RevB_180902:
         
         # import waveform file
         # IrisUtil.Format_LoadWaveFormFile(self, '../modes/LTE_OneRepeator_SyncWatcher_DevFE_RevB_180902_Waveform.csv')
-        IrisUtil.Format_DataDir(self, nb_rb=6)
-        IrisUtil.Format_LoadTimeWaveForm(self, self.data_dir+"tone.csv", scale=0.5)
+        IrisUtil.Format_DataDir(self, nb_rb=nb_rb)
+        IrisUtil.Format_LoadTimeWaveForm(self, self.data_dir+data_file,scale)
 
         # init sdr object
         IrisUtil.Init_CollectSDRInstantNeeded(self, clockRate=80e6)
 
         # create gains and set them
         IrisUtil.Init_CreateDefaultGain_WithDevFE(self)
-        IrisUtil.Init_CreateBasicGainSettings(self, bw=5e6, freq=3.5e9, dcoffset=True, txrate=1.92e6, rxrate=1.92e6)
+        self.rate = 1.92e6
+        IrisUtil.Init_CreateBasicGainSettings(self, rate=self.rate, bw=5e6, freq=3.5e9, dcoffset=True)
 
+         # create streams (but not activate them)
+        IrisUtil.Init_CreateTxStreams_RevB(self)
         # create streams (but not activate them)
-        IrisUtil.Init_CreateRxStreams_RevB(self)
+        # IrisUtil.Init_CreateRxStreams_RevB(self)
 
         # sync trigger and clock
         IrisUtil.Init_SynchronizeTriggerClock(self)
@@ -89,11 +95,11 @@ class LTE_OneRepeator_SyncWatcher_DevFE_RevB_180902:
         IrisUtil.Init_CreateRepeatorTimeWaveformSequence(self)
 
         # set repeat
-        IrisUtil.Process_TxActivate_WriteFlagAndDataToTxStream_RepeatFlag(self)
+        # IrisUtil.Process_TxActivate_WriteFlagAndDataToTxStream_RepeatFlag(self)
     
     def __del__(self):
         print('Iris destruction called')
-        IrisUtil.Deinit_SafeTxStopRepeat(self)
+        # IrisUtil.Deinit_SafeTxStopRepeat(self)
         IrisUtil.Deinit_SafeDelete(self)
     
     def getExtraInfos(self):
@@ -109,29 +115,17 @@ class LTE_OneRepeator_SyncWatcher_DevFE_RevB_180902:
         IrisUtil.Gains_HandleSelfParameters(self, gains)
         IrisUtil.Gains_SetBasicGains(self, gains)
     
-    def doSimpleRx(self):
-        # prepare work, create tx rx buffer
-        IrisUtil.Process_CreateReceiveBuffer(self)
-        IrisUtil.Process_ClearStreamBuffer(self)
+    def doSimpleTx(self,repeat_time):
         # activate
         IrisUtil.Process_ComputeTimeToDoThings_UseHasTime(self, delay = 10000000, alignment = 0)
-        IrisUtil.Process_RxActivate_WriteFlagToRxStream_UseHasTime(self, rx_delay = 0)
+        IrisUtil.Process_TxActivate_WriteFlagAndMultiFrameToTxStream_UseHasTime(self,repeat_time=repeat_time)
 
-        # sleep to wait
-        IrisUtil.Process_WaitForTime_NoTrigger(self)
-
-        # read stream
-        IrisUtil.Process_ReadFromRxStream(self)
-        IrisUtil.Process_HandlePostcode(self)  # postcode is work on received data
     
         # deactive
-        IrisUtil.Process_RxDeactive(self)
+        IrisUtil.Process_TxDeactive(self)
 
-        # do correlation
-        # IrisUtil.Process_DoCorrelation2FindFirstPFDMSymbol(self)
-    
-    def loop(self):
-        self.doSimpleRx()
+    def loop(self,repeat_time):
+        self.doSimpleTx(repeat_time=repeat_time)
         #IrisUtil.Interface_UpdateUserGraph(self, self.correlationSampes)  # update to user graph
         IrisUtil.Interface_UpdateUserGraph(self)
 
@@ -141,18 +135,18 @@ if __name__ == "__main__":
 
 #{'list': 
 #   [['parameters', ['txSelect', 'numSamples', 'showSamples', 'alignOffset']], 
-#    ['RF3E000006-0-tx', ['txGain']], 
-#    ['RF3E000006-1-tx', ['txGain']], 
-#    ['RF3E000022-0-rx', ['postcode', 'rxGain']], 
-#    ['RF3E000022-1-rx', ['postcode', 'rxGain']]], 
+#    ['RF3E000002-0-tx', ['txGain']], 
+#    ['RF3E000002-1-tx', ['txGain']], 
+#    ['RF3E000010-0-rx', ['postcode', 'rxGain']], 
+#    ['RF3E000010-1-rx', ['postcode', 'rxGain']]], 
 # 'data': 
-#   {'RF3E000022-1-rx-rxGain': '20', 
-#    'parameters-txSelect': 'RF3E000006-1', 
-#    'RF3E000006-0-tx-txGain': '40', 
-#    'RF3E000022-1-rx-postcode': '(1+0j)', 
-#    'RF3E000022-0-rx-postcode': '(1+0j)', 
+#   {'RF3E000010-1-rx-rxGain': '20', 
+#    'parameters-txSelect': 'RF3E000002-1', 
+#    'RF3E000002-0-tx-txGain': '40', 
+#    'RF3E000010-1-rx-postcode': '(1+0j)', 
+#    'RF3E000010-0-rx-postcode': '(1+0j)', 
 #    'parameters-numSamples': '1024', 
-#    'RF3E000006-1-tx-txGain': '40', 
-#    'RF3E000022-0-rx-rxGain': '20', 
+#    'RF3E000002-1-tx-txGain': '40', 
+#    'RF3E000010-0-rx-rxGain': '20', 
 #    'parameters-alignOffset': '0', 
 #    'parameters-showSamples': '1600'}}

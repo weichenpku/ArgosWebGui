@@ -16,7 +16,7 @@ sig_f = csvread([savedir 'sig_f.csv']);
 
 %% load transmit signal
 tx_dir = '../../rxdata/';
-tx_port = 'RF3E000006-0'; 
+tx_port = 'RF3E000006-1'; 
 load([tx_dir 'I-' tx_port '.mat'])
 tx_i=wave;
 load([tx_dir 'Q-' tx_port '.mat'])

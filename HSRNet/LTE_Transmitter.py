@@ -14,11 +14,12 @@ def test():
         def changedF(self):
             print('changedF called')
     main = FakeMain()
-    obj = LTE_Transmitter(main)
+    obj = LTE_Transmitter(main,data_file='tone2400.csv',scale=0.9)
+    
     obj.setGains({
         "parameters-txSelect": "RF3E000006-1",
-        "RF3E000006-0-tx-txGain": "30",
-        "RF3E000006-1-tx-txGain": "30",
+        "RF3E000006-0-tx-txGain": "40",
+        "RF3E000006-1-tx-txGain": "40",
     })
     
     print()
@@ -41,7 +42,7 @@ def test():
     # End
 
 class LTE_Transmitter:
-    def __init__(self, main):
+    def __init__(self, main, data_file, scale):
         self.main = main
         IrisUtil.Assert_ZeroSerialNotAllowed(self)
         IrisUtil.Format_UserInputSerialAnts(self)
@@ -50,14 +51,14 @@ class LTE_Transmitter:
         # import waveform file
         # IrisUtil.Format_LoadWaveFormFile(self, '../modes/LTE_OneRepeator_SyncWatcher_DevFE_RevB_180902_Waveform.csv')
         IrisUtil.Format_DataDir(self, nb_rb=6)
-        IrisUtil.Format_LoadTimeWaveForm(self, self.data_dir+"tone.csv",scale=1)
+        IrisUtil.Format_LoadTimeWaveForm(self, self.data_dir+data_file,scale)
 
         # init sdr object
         IrisUtil.Init_CollectSDRInstantNeeded(self, clockRate=80e6)
 
         # create gains and set them
         IrisUtil.Init_CreateDefaultGain_WithDevFE(self)
-        IrisUtil.Init_CreateBasicGainSettings(self, bw=5e6, freq=2.45e9, dcoffset=True, txrate=1.92e6, rxrate=1.92e6)
+        IrisUtil.Init_CreateBasicGainSettings(self, bw=5e6, freq=3.5e9, dcoffset=True, txrate=1.92e6, rxrate=1.92e6)
 
         # create streams (but not activate them)
         # IrisUtil.Init_CreateRxStreams_RevB(self)
@@ -86,8 +87,7 @@ class LTE_Transmitter:
         # IrisUtil.Init_CreateRepeatorOnehotWaveformSequence(self)
         IrisUtil.Init_CreateRepeatorTimeWaveformSequence(self)
 
-        # set repeat
-        IrisUtil.Process_TxActivate_WriteFlagAndDataToTxStream_RepeatFlag(self)
+        
     
     def __del__(self):
         print('Iris destruction called')
@@ -130,6 +130,8 @@ class LTE_Transmitter:
     
     def loop(self):
         #IrisUtil.Interface_UpdateUserGraph(self, self.correlationSampes)  # update to user graph
+        # set repeat
+        IrisUtil.Process_TxActivate_WriteFlagAndDataToTxStream_RepeatFlag(self)
         IrisUtil.Interface_UpdateUserGraph(self)
 
 if __name__ == "__main__":

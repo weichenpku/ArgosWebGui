@@ -42,6 +42,8 @@ for k=1:num_symbols_frame
     sig(1+(k-1)*(num_carriers+prefix_length):k*(num_carriers+prefix_length))=[symbol_t(num_carriers-prefix_length+1:end) symbol_t];
 end
 sig=sig*sqrt(num_carriers);
+scale_down = 0.95/max(max(abs(real(sig))),max(abs(imag(sig))));
+sig=sig*scale_down;
 
 %% add PSS
 pss_t=pss0_up;
@@ -59,3 +61,6 @@ csvwrite([savedir 'sig_f.csv'],sig_f);
 csvwrite([savedir 'sig.csv'],sig);
 csvwrite([savedir 'pss.csv'],pss_t);
 save([savedir 'paras.mat'],'nb_rb','num_carriers','srate');
+
+display(max(abs(real(sig))))
+display(max(abs(imag(sig))))

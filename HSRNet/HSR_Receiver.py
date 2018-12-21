@@ -8,19 +8,32 @@ import scipy.io as sio
 
 def test():
     class FakeMain:
-        def __init__(self):
-            self.IrisSerialNums = ["RF3E000022-2-Rx-1"] # serial-chan-TX/RX-trigger
+        def __init__(self,master,slaves):
+            self.IrisSerialNums = [master+"-2-Rx-1"] # serial-chan-TX/RX-trigger
+            for serial in slaves:
+                self.IrisSerialNums.append(serial+"-2-Rx-0")
             self.userTrig = True
         def changedF(self):
             print('changedF called')
-    main = FakeMain()
+    
+    rx_serial_master = "RF3E000022"
+    rx_serial_slaves = []
+    rx_gain = "45"
+    rx_repeat_time = 10 # number of frames
+    rx_repeat_duration = 0 # seconds
+    
+    main = FakeMain(rx_serial_master,rx_serial_slaves)
     obj = LTE_Receiver(main)
-    obj.setGains({
+    gain_dict = {
         "parameters-showSamples": "30000",
-        "parameters-numSamples":"19200",  # should be less than 60928
-        "RF3E000022-0-rx-rxGain": "40",
-        "RF3E000022-1-rx-rxGain": "40"
-    })
+        "parameters-numSamples":"38400",  # recvNum (should be less than 60928)
+        rx_serial_master+"-0-rx-rxGain": rx_gain,
+        rx_serial_master+"-1-rx-rxGain": rx_gain
+    }
+    for serial in rx_serial_slaves:
+        gain_dict[serial+"-0-rx-rxGain"] = rx_gain
+        gain_dict[serial+"-1-rx-rxGain"] = rx_gain
+    obj.setGains(gain_dict)
     
     print()
     print('[SOAR] parameters : value')
@@ -29,15 +42,8 @@ def test():
         print(para,':',value)
     print()
 
-    obj.repeat_time=10    
-    obj.repeat_duration=0 # seconds
-    obj.loop()
-    
-    # print(main.sampleData)
-    for key,value in main.sampleData['data'].items():
-        # print(type(main.sampleData['data'][key]))
-        # print(key+".mat")
-        sio.savemat("rxdata/"+key+".mat", {"wave" : value})
+    obj.loop(repeat_time=rx_repeat_time, repeat_duration=rx_repeat_duration)
+
 
 class LTE_Receiver:
     def __init__(self, main):
@@ -103,12 +109,12 @@ class LTE_Receiver:
         IrisUtil.Gains_HandleSelfParameters(self, gains)
         IrisUtil.Gains_SetBasicGains(self, gains)
     
-    def doSimpleRx(self):
+    def doSimpleRx(self,repeat_time,repeat_duration):
         # prepare work, create tx rx buffer
         IrisUtil.Process_CreateReceiveBuffer(self)
         IrisUtil.Process_ClearStreamBuffer(self)
         # activate
-        for i in range(self.repeat_time):
+        for i in range(repeat_time):
             IrisUtil.Process_ComputeTimeToDoThings_UseHasTime(self, delay = 10000000, alignment = 0)
             IrisUtil.Process_RxActivate_WriteFlagToRxStream_UseHasTime(self, rx_delay = 0)
 
@@ -119,8 +125,11 @@ class LTE_Receiver:
             IrisUtil.Process_ReadFromRxStream(self)
             IrisUtil.Process_HandlePostcode(self)  # postcode is work on received data
 
+            recvdata = IrisUtil.Process_SaveData(self)
+            print(type(recvdata))
+            sio.savemat("rxdata/rx"+str(i)+".mat",recvdata)
             # sleep before next activation
-            time.sleep(self.repeat_duration)
+            time.sleep(repeat_duration)
 
         # deactive
         IrisUtil.Process_RxDeactive(self)
@@ -128,11 +137,11 @@ class LTE_Receiver:
         # do correlation
         # IrisUtil.Process_DoCorrelation2FindFirstPFDMSymbol(self)
     
-    def loop(self):
+    def loop(self,repeat_time,repeat_duration):
         if self.main.userTrig:
             self.main.userTrig = False
             self.main.changedF()  # just register set
-            self.doSimpleRx()
+            self.doSimpleRx(repeat_time=repeat_time,repeat_duration=repeat_duration)
             #IrisUtil.Interface_UpdateUserGraph(self, self.correlationSampes)  # update to user graph
             IrisUtil.Interface_UpdateUserGraph(self)
 

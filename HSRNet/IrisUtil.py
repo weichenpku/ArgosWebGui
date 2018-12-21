@@ -688,9 +688,10 @@ def Process_ComputeTimeToDoThings_UseHasTime(self, delay = 10000000, alignment =
     # print('hw time',hw_time)
     # print('expected rx time',self.ts)
 
-def Process_TxActivate_WriteFlagAndMultiFrameToTxStream_UseHasTime(self): # Tx multi burst
-    max_len = 2816
-    replay_len = 1920
+def Process_TxActivate_WriteFlagAndMultiFrameToTxStream_UseHasTime(self,repeat_time=1000): # Tx multi burst
+    # Not suitable for writeStream tx
+    # max_len = 2816 
+    # replay_len = 1920
     frame_len = len(self.tones[0][0])
     flags = SOAPY_SDR_HAS_TIME
     for r,txStream in enumerate(self.txStreams):
@@ -699,7 +700,7 @@ def Process_TxActivate_WriteFlagAndMultiFrameToTxStream_UseHasTime(self): # Tx m
         sdr = self.sdrs[serial]
         sdr.activateStream(txStream)  # activate it!
     turn = 0
-    maxturn = 1  # max repeat time
+    maxturn = repeat_time  # max repeat time
     while (turn<maxturn):
         turn = turn + 1
         if turn==maxturn: flags = flags | SOAPY_SDR_END_BURST
@@ -713,11 +714,16 @@ def Process_TxActivate_WriteFlagAndMultiFrameToTxStream_UseHasTime(self): # Tx m
             print("current,ts",sdr.getHardwareTime())
             print("tx_ts is ",ts)
             while numsent < frame_len:
-                sr = sdr.writeStream(txStream, [tone[numsent:] for tone in self.tones[r]], len(self.tones[r][0])-numsent, flags, timeNs=ts)
+                numtosent = frame_len - numsent
+                #if numtosent > replay_len:
+                #    numtosent = replay_len
+                # suppose numsent*1e9/self.rate is an integer
+                sr = sdr.writeStream(txStream, [tone[numsent:] for tone in self.tones[r]], numtosent, flags, timeNs=ts+round(numsent*1e9/self.rate)) 
                 if sr.ret == -1:
                     print("sending error!!!")
-                else: numsent += sr.ret
-                print("sending ...",sr.ret)  
+                else: 
+                    numsent += sr.ret
+                    print("sending ...",sr.ret)  
 
 def Process_TxActivate_WriteFlagAndDataToTxStream_UseHasTime(self):  # Tx burst
     flags = SOAPY_SDR_HAS_TIME | SOAPY_SDR_END_BURST
@@ -733,34 +739,7 @@ def Process_TxActivate_WriteFlagAndDataToTxStream_UseHasTime(self):  # Tx burst
                 GUI.error("Error: Bad Write!")
             else: numSent += sr.ret
             # print(sr.ret)
-
-def Process_TxActivate_WriteFlagAndDataToTxStream_StreamFlag(self):  # Todo: Tx stream
-    max_len = 2816
-    replay_len = 1920
-    frame_len = len(self.tones[0][0])
-    flags = SOAPY_SDR_HAS_TIME
-    for r,txStream in enumerate(self.txStreams):
-        serial_ant = self.tx_serials_ant[r]
-        serial, ant = Format_SplitSerialAnt(serial_ant)
-        sdr = self.sdrs[serial]
-        sdr.activateStream(txStream)  # activate it!
-    turn = 1
-    while (turn<10):
-        turn = turn + 1
-        if turn==10: flags = flags | SOAPY_SDR_END_BURST
-        for r,txStream in enumerate(self.txStreams):
-            serial_ant = self.tx_serials_ant[r]
-            serial, ant = Format_SplitSerialAnt(serial_ant)
-            sdr = self.sdrs[serial]
-            numsent = 0
-            self.ts=self.ts+1000000 # 1ms per subframe
-            print(turn,sdr.getHardwareTime(),self.ts)
-            while numsent < frame_len:
-                sr = sdr.writeStream(txStream, [tone[numsent:] for tone in self.tones[r]], len(self.tones[r][0])-numsent, flags, timeNs=self.ts)
-                if sr.ret == -1:
-                    print("sending error!!!")
-                else: numsent += sr.ret
-                print("sending ...",sr.ret)               
+           
 
 def Process_TxActivate_WriteFlagAndDataToTxStream_RepeatFlag(self): # Tx repeat
     # this is from https://github.com/skylarkwireless/sklk-demos/blob/master/python/SISO.py
@@ -784,6 +763,7 @@ def Process_TxActivate_WriteFlagAndDataToTxStream_RepeatFlag(self): # Tx repeat
         elif ant == 1:
             sdr.writeRegisters('TX_RAM_A', replay_addr, Format_cfloat2uint32(zeroseq).tolist())  # TODO: check whether this is needed
             sdr.writeRegisters('TX_RAM_B', replay_addr, Format_cfloat2uint32(self.tones[r][0][:replay_len]).tolist())
+        # replay trigger
         sdr.writeSetting("TX_REPLAY", str(replay_len))
 
 def Process_WriteRepeatDataToTxRAM(self):
@@ -848,6 +828,11 @@ def Process_WaitForTime_NoTrigger(self):
     # print('4 ts after awake',self.tswk)
 
 def Process_ReadFromRxStream(self):
+    max_len = 60928 # 0xee00
+    read_len =1920
+    #print(self.ts)
+    if (self.numSamples>max_len):
+        print("[SOAR] WARNING: too many recv samples to read, only",max_len,"is avalable")
     for r,rxStream in enumerate(self.rxStreams):
         serial_ant = self.rx_serials_ant[r]
         serial, ant = Format_SplitSerialAnt(serial_ant)
@@ -855,12 +840,13 @@ def Process_ReadFromRxStream(self):
         numRecv = 0
         while numRecv < len(self.sampsRecv[r][0]):
             # ts_tmp=self.sdrs[self.trigger_serial].getHardwareTime()
+            # print(self.sdrs[self.trigger_serial].getHardwareTime())
             sr = sdr.readStream(rxStream, [samps[numRecv:] for samps in self.sampsRecv[r]], len(self.sampsRecv[r][0])-numRecv, timeoutUs=int(1e6))
             # print('5 ts before read',ts_tmp)
             # print('6 ts after read',self.sdrs[self.trigger_serial].getHardwareTime())
             if sr.ret == -1:
-                print('Error: Bad Read!')
-                GUI.error('Error: Bad Read!')
+                print('Error: Bad Read!!!')
+                # GUI.error('Error: Bad Read!')
                 break  # always break because it cannot recover for most of time
             else: 
                 numRecv += sr.ret
@@ -1028,7 +1014,21 @@ def Interface_UpdateUserGraph(self, addition=None, uselast=False):  # addition s
     self.main.sampleData = {"struct": struct, "data": data}
     self.main.sampleDataReady = True
 
+def Process_SaveData(self):
+    data={}
+    for r,serial_ant in enumerate(self.rx_serials_ant):
+        serial, ant = Format_SplitSerialAnt(serial_ant)
+        cdat = [samps for samps in self.sampsRecv[r]]
+        if ant == 2:
+            for antt in [0,1]:
+                data["%s_%d_I" % (serial, antt)] = [float(e.real) for e in cdat[antt]]
+                data["%s_%d_Q" % (serial, antt)] = [float(e.imag) for e in cdat[antt]]
+        else:
+            data[serial + "_I"] = [float(e.real) for e in cdat[0]]
+            data[serial + "_Q"] = [float(e.imag) for e in cdat[0]]
 
+    return data
+            
 def Analyze_LoadHDF5FileByName(self, filename):
     print("loading %s" % filename)
     return filename

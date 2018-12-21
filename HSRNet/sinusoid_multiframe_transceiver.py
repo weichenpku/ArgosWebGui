@@ -17,7 +17,7 @@ def test():
     obj = Sinusoid_Transceiver_DevFE_RevB_180828(main)
     obj.setGains({
         "parameters-txSamples": "512",
-        "parameters-numSamples": "5120",
+        "parameters-numSamples": "51200",
         "RF3E000006-0-tx-txGain": "35",
         "RF3E000022-1-rx-rxGain": "35"
     })
@@ -49,7 +49,7 @@ class Sinusoid_Transceiver_DevFE_RevB_180828:
         # create gains and set them
         IrisUtil.Init_CreateDefaultGain_WithDevFE(self)
         self.rate = 1.92e6  # save this for later build tx tone
-        IrisUtil.Init_CreateBasicGainSettings(self, rate=self.rate, bw=30e6, freq=2.45e9, dcoffset=True)
+        IrisUtil.Init_CreateBasicGainSettings(self, rate=self.rate, bw=30e6, freq=3.5e9, dcoffset=True)
 
         # create streams (but not activate them)
         IrisUtil.Init_CreateTxRxStreams_RevB(self)
@@ -86,6 +86,7 @@ class Sinusoid_Transceiver_DevFE_RevB_180828:
     def doSimpleRxTx(self):
         # prepare work, create tx rx buffer
         IrisUtil.Process_BuildTxTones_Sinusoid(self,scale=0.9)
+        sio.savemat("rxdata/tx.mat", {"wave" : self.tones})
         IrisUtil.Process_CreateReceiveBuffer(self)
         IrisUtil.Process_ClearStreamBuffer(self)
         # activate
