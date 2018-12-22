@@ -16,9 +16,9 @@ def test():
         def changedF(self):
             print('changedF called')
     
-    rx_serial_master = "RF3E000006"
+    rx_serial_master = "RF3E000002"
     rx_serial_slaves = []
-    rx_gain = "35"
+    rx_gain = "45"
 
 
     main = FakeMain(rx_serial_master,rx_serial_slaves)

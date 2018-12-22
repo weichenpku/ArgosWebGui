@@ -15,8 +15,8 @@ def test():
             print('changedF called')
 
     tx_serial = "RF3E000010"
-    tx_ant = "0"
-    tx_gain = "35"
+    tx_ant = "1"
+    tx_gain = "45"
 
 
     main = FakeMain(tx_serial)

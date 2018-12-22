@@ -9,10 +9,11 @@ import scipy.io as sio
 def test():
     class FakeMain:
         def __init__(self):
-            self.IrisSerialNums = ["RF3E000006-2-Tx-1", "RF3E000022-1-Rx-0"] # serial-chan-TX/RX-trigger
+            self.IrisSerialNums = ["RF3E000006-1-Tx-1", "RF3E000006-1-Rx-0"] # serial-chan-TX/RX-trigger
             self.userTrig = True
         def changedF(self):
             print('changedF called')
+    
     main = FakeMain()
     obj = LTE_OneRepeator_SyncWatcher_DevFE_RevB_180902(main)
 
@@ -22,9 +23,9 @@ def test():
         "parameters-numSamples":"1920",
         "parameters-txSelect": "RF3E000006-0",
         "RF3E000006-0-tx-txGain": "40",
-        "RF3E000006-1-tx-txGain": "40",
-        "RF3E000022-0-rx-rxGain": "30",
-        "RF3E000022-1-rx-rxGain": "40"
+        # "RF3E000006-1-tx-txGain": "35"
+        # "RF3E000006-0-rx-rxGain": "35",
+        "RF3E000006-1-rx-rxGain": "40"
     })
 
     print()
