@@ -8,19 +8,31 @@ import scipy.io as sio
 
 def test():
     class FakeMain:
-        def __init__(self):
-            self.IrisSerialNums = ["RF3E000022-2-Rx-1"] # serial-chan-TX/RX-trigger
+        def __init__(self,master,slaves):
+            self.IrisSerialNums = [master+"-2-Rx-1"] # serial-chan-TX/RX-trigger
+            for serial in slaves:
+                self.IrisSerialNums.append(serial+"-2-Rx-0")
             self.userTrig = True
         def changedF(self):
             print('changedF called')
-    main = FakeMain()
+    
+    rx_serial_master = "RF3E000006"
+    rx_serial_slaves = []
+    rx_gain = "35"
+
+
+    main = FakeMain(rx_serial_master,rx_serial_slaves)
     obj = LTE_Receiver(main)
-    obj.setGains({
-        "parameters-showSamples": "30000",
-        "parameters-numSamples":"19200",  # should be less than 60928
-        "RF3E000022-0-rx-rxGain": "40",
-        "RF3E000022-1-rx-rxGain": "40"
-    })
+    gain_dict = {
+        "parameters-showSamples": "60000",
+        "parameters-numSamples":"38400",  # recvNum (should be less than 60928)
+        rx_serial_master+"-0-rx-rxGain": rx_gain,
+        rx_serial_master+"-1-rx-rxGain": rx_gain
+    }
+    for serial in rx_serial_slaves:
+        gain_dict[serial+"-0-rx-rxGain"] = rx_gain
+        gain_dict[serial+"-1-rx-rxGain"] = rx_gain
+    obj.setGains(gain_dict)
     
     print()
     print('[SOAR] parameters : value')

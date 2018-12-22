@@ -16,7 +16,7 @@ sig_f = csvread([savedir 'sig_f.csv']);
 
 %% load transmit signal
 tx_dir = '../../rxdata/';
-tx_port = 'RF3E000010-0'; 
+tx_port = 'RF3E000006-0'; 
 load([tx_dir 'I-' tx_port '.mat'])
 tx_i=wave;
 load([tx_dir 'Q-' tx_port '.mat'])
@@ -27,7 +27,7 @@ figure; plot(real(tx_t));
 
 %% load receive signal
 rx_dir = '../../rxdata/';
-rx_port = 'RF3E000006-1';
+rx_port = 'RF3E000022-1';
 load([rx_dir 'I-' rx_port '.mat'])
 rx_i=wave;
 load([rx_dir 'Q-' rx_port '.mat'])

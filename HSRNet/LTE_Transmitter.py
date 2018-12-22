@@ -8,18 +8,24 @@ import scipy.io as sio
 
 def test():
     class FakeMain:
-        def __init__(self):
-            self.IrisSerialNums = ["RF3E000006-2-Tx-1"] # serial-chan-TX/RX-trigger
+        def __init__(self,tx_serial):
+            self.IrisSerialNums = [tx_serial+"-2-Tx-1"] # serial-chan-TX/RX-trigger
             self.userTrig = True
         def changedF(self):
             print('changedF called')
-    main = FakeMain()
+
+    tx_serial = "RF3E000010"
+    tx_ant = "0"
+    tx_gain = "40"
+
+
+    main = FakeMain(tx_serial)
     obj = LTE_Transmitter(main,data_file='tone2400.csv',scale=0.9)
     
     obj.setGains({
-        "parameters-txSelect": "RF3E000006-1",
-        "RF3E000006-0-tx-txGain": "40",
-        "RF3E000006-1-tx-txGain": "40",
+        "parameters-txSelect": tx_serial+"-"+tx_ant,
+        tx_serial+"-0-tx-txGain": tx_gain,
+        tx_serial+"-1-tx-txGain": tx_gain,
     })
     
     print()
