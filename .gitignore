@@ -3,3 +3,4 @@
 .vscode/settings.json
 data/*
 !data/README.md
+HSRNet/rxdata/*
