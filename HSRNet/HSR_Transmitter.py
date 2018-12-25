@@ -16,7 +16,7 @@ def test():
 
     tx_serial = "RF3E000006"
     tx_ant = "0"
-    tx_gain = "40"
+    tx_gain = "45"
     tx_rb = 6  # 1.4MHz
     tx_repeat_time = 1000 # number of frames(10ms)
 

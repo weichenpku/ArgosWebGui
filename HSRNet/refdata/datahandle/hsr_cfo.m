@@ -1,4 +1,6 @@
 fileidx = 1;
+rxdevice = ['RF3E000003'];
+rxdir = '../../rxdata/';
 sfidx = 7; % 1-10
 hsr_csi; % get est(12*nb_rb,num_symbols_frame,antnum)
 

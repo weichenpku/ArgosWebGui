@@ -1,9 +1,11 @@
 fileidx = 1;
+rxdevice = ['RF3E000003'];
+rxdir = '../../rxdata/hsr_1/';
 
 num_refsig_frame = num_symbols_frame - 1;
 hsr_csi; % get est(12*nb_rb,num_refsig_frame,antnum)
 
-% weight scale
+% weight scale8i9o
 h_abs = zeros(12*nb_rb,num_refsig_frame);
 % weight calculate
 h_weight = zeros(12*nb_rb,num_refsig_frame,antnum);

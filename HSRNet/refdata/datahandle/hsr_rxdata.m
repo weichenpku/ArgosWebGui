@@ -1,7 +1,7 @@
 fileidx % read fileidx
 nb_rb = 6; %this can be 6,15,25,50,75 or 100
-rxdir = '../../rxdata/hsr_1/';
-rxdevice = ['RF3E000022'];
+
+
 
 %% load reference signal
 % nb_rb

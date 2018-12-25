@@ -16,7 +16,7 @@ sig_f = csvread([savedir 'sig_f.csv']);
 
 %% load transmit signal
 tx_dir = '../../rxdata/';
-tx_port = 'RF3E000010-1'; 
+tx_port = 'RF3E000003-1'; 
 load([tx_dir 'I-' tx_port '.mat'])
 tx_i=wave;
 load([tx_dir 'Q-' tx_port '.mat'])
@@ -27,7 +27,7 @@ figure; plot(real(tx_t));
 
 %% load receive signal
 rx_dir = '../../rxdata/';
-rx_port = 'RF3E000002-1';
+rx_port = 'RF3E000006-1';
 load([rx_dir 'I-' rx_port '.mat'])
 rx_i=wave;
 load([rx_dir 'Q-' rx_port '.mat'])
@@ -35,7 +35,7 @@ rx_q=wave;
 rx_t=rx_i+1i*rx_q;
 figure; plot(imag(rx_t));
 
-save(['../../rxdata/trx_test/tx_test_clk12.22/' tx_port '_test1.mat'],'rx_t');
+% save(['../../rxdata/trx_test/tx_test_clk12.22/' tx_port '_test1.mat'],'rx_t');
 
 % rx_t=tx_t;
 % sig_len = size(sig,2);

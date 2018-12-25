@@ -6,7 +6,7 @@ hsr_rxdata; % get rx_sig
 %% cfo correction
 cfo = 0;
 cfo_phase = -2*pi*cfo*(1:samplenum)/samplenum*(20/1000);
-rx_sig = rx_sig .* (cos(cfo_phase) +1i*sin(cfo_phase));
+rx_all_sig = rx_all_sig .* (cos(cfo_phase) +1i*sin(cfo_phase));
 
 %% correlation for sync
 offset = 0;
