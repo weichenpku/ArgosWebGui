@@ -1,5 +1,5 @@
 % fileidx from hsr_cfo
-hsr_rxdata; % get rx_sig
+hsr_rxdata; % get rx_all_sig
 
 [antnum, samplenum]= size(rx_all_sig);
 

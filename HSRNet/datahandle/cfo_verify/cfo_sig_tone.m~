@@ -1,0 +1,7 @@
+close all;
+clear all;
+
+cd ..;
+fileidx=1;
+hsr_rxdata;
+rx_dir='../rxdata/cfo_t'

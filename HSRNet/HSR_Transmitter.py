@@ -14,9 +14,9 @@ def test():
         def changedF(self):
             print('changedF called')
 
-    tx_serial = "RF3E000006"
-    tx_ant = "0"
-    tx_gain = "45"
+    tx_serial = "RF3E000022"
+    tx_ant = "1"
+    tx_gain = "40"
     tx_rb = 6  # 1.4MHz
     tx_repeat_time = 1000 # number of frames(10ms)
 
@@ -55,14 +55,15 @@ class LTE_Transmitter:
         # import waveform file
         # IrisUtil.Format_LoadWaveFormFile(self, '../modes/LTE_OneRepeator_SyncWatcher_DevFE_RevB_180902_Waveform.csv')
         IrisUtil.Format_DataDir(self, nb_rb=nb_rb)
-        IrisUtil.Format_LoadTimeWaveForm(self, self.data_dir+data_file,scale)
+        # IrisUtil.Format_LoadTimeWaveForm(self, self.data_dir+data_file, scale)
+        IrisUtil.Format_LoadTimeWaveForm(self, './refdata/generation/test_data/sig_tone_3m.csv', scale)
 
         # init sdr object
         IrisUtil.Init_CollectSDRInstantNeeded(self, clockRate=80e6)
 
         # create gains and set them
         IrisUtil.Init_CreateDefaultGain_WithDevFE(self)
-        self.rate = 1.92e6
+        self.rate = 1.92e6*2
         IrisUtil.Init_CreateBasicGainSettings(self, rate=self.rate, bw=5e6, freq=3.5e9, dcoffset=True)
 
          # create streams (but not activate them)
@@ -73,8 +74,8 @@ class LTE_Transmitter:
         # sync trigger and clock
         IrisUtil.Init_SynchronizeTriggerClock(self)
 
-        self.numSamples = 19200 # 1024  # could be changed during runtime
-        self.showSamples = 30000 # 8192  # init max show samples
+        self.numSamples = 38400 # 1024  # could be changed during runtime
+        self.showSamples = 60928 # 8192  # init max show samples
         serial, ant = IrisUtil.Format_SplitSerialAnt(self.tx_serials_ant[0])
         if ant == 2: self.txSelect = "%s-0" % serial  # select one to send, other set 0
         else: self.txSelect = "%s-%d" % (serial, ant)

@@ -17,9 +17,9 @@ sig_f = csvread([savedir 'sig_f.csv']);
 %% load transmit signal
 tx_dir = '../../rxdata/';
 tx_port = 'RF3E000010-0';
-load([tx_dir 'I-' tx_port '.mat'])
+load([tx_dir 'I-' tx_port '.mat']);
 tx_i=wave;
-load([tx_dir 'Q-' tx_port '.mat'])
+load([tx_dir 'Q-' tx_port '.mat']);
 tx_q=wave;
 tx_t=tx_i+1i*tx_q;
 figure; plot(real(tx_t));

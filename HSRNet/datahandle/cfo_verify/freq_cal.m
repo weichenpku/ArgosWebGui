@@ -1,6 +1,4 @@
 function [ f_test ] = freq_cal(sig_f, srate, neighbor)
-%FREQ_CAL 此处显示有关此函数的摘要
-%   此处显示详细说明
 
 %% frequency calculation
 [value,idx] = max(sig_f);
@@ -15,7 +13,7 @@ mask(idx-neighbor:idx+neighbor) = ones(1,neighbor*2+1);
 rx_f_new = sig_f.*mask;
 rx_t_new = ifft(fftshift(rx_f_new));
 
-ang = angle(conj(rx_t_new'));  % ' 表示转置共轭
+ang = angle(conj(rx_t_new'));  % ' represent transpose & conjugate 
 offset=0;
 [size1,size2]=size(ang);
 for i=(2:size1)

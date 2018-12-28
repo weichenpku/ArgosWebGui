@@ -16,7 +16,7 @@ def test():
         def changedF(self):
             print('changedF called')
     
-    rx_serial_master = "RF3E000003"
+    rx_serial_master = "RF3E000010"
     rx_serial_slaves = []
     rx_gain = "45"
     rx_repeat_time = 10 # number of frames
@@ -25,8 +25,8 @@ def test():
     main = FakeMain(rx_serial_master,rx_serial_slaves)
     obj = LTE_Receiver(main)
     gain_dict = {
-        "parameters-showSamples": "30000",
-        "parameters-numSamples":"38400",  # recvNum (should be less than 60928)
+        "parameters-showSamples": "60928",
+        "parameters-numSamples":"60000", # recvNum (should be less than 60928)
         rx_serial_master+"-0-rx-rxGain": rx_gain,
         rx_serial_master+"-1-rx-rxGain": rx_gain
     }
@@ -62,7 +62,8 @@ class LTE_Receiver:
 
         # create gains and set them
         IrisUtil.Init_CreateDefaultGain_WithDevFE(self)
-        IrisUtil.Init_CreateBasicGainSettings(self, bw=5e6, freq=3.5e9, dcoffset=True, txrate=1.92e6, rxrate=1.92e6)
+        self.rate = 1.92e6*2
+        IrisUtil.Init_CreateBasicGainSettings(self, bw=5e6, freq=3.5e9, dcoffset=True, txrate=self.rate, rxrate=self.rate)
 
         # create streams (but not activate them)
         IrisUtil.Init_CreateRxStreams_RevB(self)

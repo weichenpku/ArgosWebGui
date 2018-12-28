@@ -710,9 +710,10 @@ def Process_TxActivate_WriteFlagAndMultiFrameToTxStream_UseHasTime(self,repeat_t
             sdr = self.sdrs[serial]
             numsent = 0
             ts=self.ts+(turn-1)*round(frame_len*1000000000/self.rate+1) # 1ms per subframe
-            print("turn ",turn)
-            print("current,ts",sdr.getHardwareTime())
-            print("tx_ts is ",ts)
+            if (turn%10==0):
+                print("turn ",turn)
+            # print("current,ts",sdr.getHardwareTime())
+            # print("tx_ts is ",ts)
             while numsent < frame_len:
                 numtosent = frame_len - numsent
                 #if numtosent > replay_len:
@@ -723,7 +724,7 @@ def Process_TxActivate_WriteFlagAndMultiFrameToTxStream_UseHasTime(self,repeat_t
                     print("sending error!!!")
                 else: 
                     numsent += sr.ret
-                    print("sending ...",sr.ret)  
+                    # print("sending ...",sr.ret)  
 
 def Process_TxActivate_WriteFlagAndDataToTxStream_UseHasTime(self):  # Tx burst
     flags = SOAPY_SDR_HAS_TIME | SOAPY_SDR_END_BURST

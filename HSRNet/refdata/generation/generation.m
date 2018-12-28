@@ -10,7 +10,7 @@ primary_synch;   %PSS
 % primary_synch0_time: ifft(primary_synch0_mod2)
 
 %% # of resource block
-nb_rb = 6; %this can be 6,15,25,50,75 or 100
+nb_rb = 15; %this can be 6,15,25,50,75 or 100
 
 num_carriers = 2048/100*nb_rb; % fft size
 if nb_rb==15
@@ -49,7 +49,8 @@ sig=sig*scale_down;
 pss_t=pss0_up;
 plot(abs(conv(pss_t,conj(pss_t)))); %time domain feature of pss_t
 figure; plot(fft(pss_t).*conj(fft(pss_t)))              % frequency domain feature of pss_t
-sig(1:num_carriers+prefix_length) = pss0_up_cp;
+scale_down = 0.95/max(max(abs(real(pss0_up_cp))),max(abs(imag(pss0_up_cp))));
+sig(1:num_carriers+prefix_length) = pss0_up_cp*scale_down;
 
 if nb_rb<10
     savedir='1.4m/';

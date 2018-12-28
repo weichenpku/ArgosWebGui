@@ -1,18 +1,18 @@
 fileidx % read fileidx
-nb_rb = 6; %this can be 6,15,25,50,75 or 100
+nb_rb = 15; %this can be 6,15,25,50,75 or 100
 
 
 
 %% load reference signal
 % nb_rb
 if nb_rb<10
-    savedir='../generation/1.4m/';
+    savedir='../refdata/generation/1.4m/';
 else
-    savedir=['../generation/',int2str(nb_rb/5),'m/'];
+    savedir=['../refdata/generation/',int2str(nb_rb/5),'m/'];
 end
 
 load([savedir 'paras.mat']);
-pss_t = csvread([savedir 'pss.csv']);
+pss = csvread([savedir 'pss.csv']);
 sig = csvread([savedir 'sig.csv']);
 sig_f = csvread([savedir 'sig_f.csv']);
 
@@ -24,7 +24,7 @@ rxnum = size(rxfile,1);
 for file = 1:rxnum
     filename = rxfile(rxnum).name;
 end
-filename = rxfile(fileidx).name;
+filename = rxfile(fileidx).name
 
 %% load transmit signal
 % load([rxdir,filename])
