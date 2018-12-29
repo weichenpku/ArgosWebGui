@@ -4,7 +4,7 @@ hsr_rxdata; % get rx_all_sig
 [antnum, samplenum]= size(rx_all_sig);
 
 %% cfo correction
-cfo = 0;
+cfo
 cfo_phase = -2*pi*cfo*(1:samplenum)/samplenum*(20/1000);
 rx_all_sig = rx_all_sig .* (cos(cfo_phase) +1i*sin(cfo_phase));
 
@@ -12,7 +12,7 @@ rx_all_sig = rx_all_sig .* (cos(cfo_phase) +1i*sin(cfo_phase));
 offset = 0;
 for idx = 1:antnum
     rx_one_sig = rx_all_sig(idx,:);
-    corr_t = conv(rx_one_sig,conj(pss_t)); % xcorr is similar with conv
+    corr_t = conv(rx_one_sig,conj(pss)); % xcorr is similar with conv
     figure; plot(abs(corr_t));
     [peak, index] = max(abs(corr_t(1:round(end/2))));
     offset = offset + index;
@@ -27,7 +27,7 @@ rx_all_frame = rx_all_sig(:,frame_start:frame_start+round(samplenum/2)-1);
 
 %% CSI
 symbol_len = prefix_length + num_carriers;
-num_symbols_frame = 120; % samplenum/2/symbol_len
+num_symbols_frame = 60; % samplenum/2/symbol_len
 est = zeros(12*nb_rb,num_symbols_frame,antnum);
 for idx = 1:antnum
     for k = 2:num_symbols_frame

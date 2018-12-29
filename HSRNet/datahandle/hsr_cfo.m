@@ -1,7 +1,8 @@
 fileidx = 1;
-rxdevice = ['RF3E000003'];
-rxdir = '../../rxdata/';
-sfidx = 7; % 1-10
+rxdevice = 'RF3E000010';
+rxdir = '../rxdata/cfo_t5/';
+sfidx = 3; % 1-10
+cfo = -7; % (Hz) CFO from PSS
 hsr_csi; % get est(12*nb_rb,num_symbols_frame,antnum)
 
 % CIR and doppler spread

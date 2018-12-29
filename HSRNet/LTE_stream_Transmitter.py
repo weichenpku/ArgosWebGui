@@ -14,9 +14,9 @@ def test():
         def changedF(self):
             print('changedF called')
 
-    tx_serial = "RF3E000010"
+    tx_serial = "RF3E000003"
     tx_ant = "0"
-    tx_gain = "40"
+    tx_gain = "35"
 
 
     main = FakeMain(tx_serial)
@@ -57,14 +57,15 @@ class LTE_Transmitter:
         # import waveform file
         # IrisUtil.Format_LoadWaveFormFile(self, '../modes/LTE_OneRepeator_SyncWatcher_DevFE_RevB_180902_Waveform.csv')
         IrisUtil.Format_DataDir(self, nb_rb=6)
-        IrisUtil.Format_LoadTimeWaveForm(self, self.data_dir+data_file,scale)
+        # IrisUtil.Format_LoadTimeWaveForm(self, self.data_dir+data_file,scale)
+        IrisUtil.Format_LoadTimeWaveForm(self, './refdata/generation/test_data/tone.csv', scale)
 
         # init sdr object
         IrisUtil.Init_CollectSDRInstantNeeded(self, clockRate=80e6)
 
         # create gains and set them
         IrisUtil.Init_CreateDefaultGain_WithDevFE(self)
-        self.rate = 1.92e6*2
+        self.rate = 1.92e6
         IrisUtil.Init_CreateBasicGainSettings(self, rate=self.rate, bw=5e6, freq=3e9, dcoffset=True)
 
          # create streams (but not activate them)

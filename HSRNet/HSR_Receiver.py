@@ -16,9 +16,9 @@ def test():
         def changedF(self):
             print('changedF called')
     
-    rx_serial_master = "RF3E000010"
+    rx_serial_master = "RF3E000002"
     rx_serial_slaves = []
-    rx_gain = "45"
+    rx_gain = "40"
     rx_repeat_time = 10 # number of frames
     rx_repeat_duration = 0 # seconds
     

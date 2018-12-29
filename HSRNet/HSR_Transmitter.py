@@ -14,14 +14,14 @@ def test():
         def changedF(self):
             print('changedF called')
 
-    tx_serial = "RF3E000022"
-    tx_ant = "1"
-    tx_gain = "40"
+    tx_serial = "RF3E000021"
+    tx_ant = "0"
+    tx_gain = "45"
     tx_rb = 6  # 1.4MHz
     tx_repeat_time = 1000 # number of frames(10ms)
 
     main = FakeMain(tx_serial)
-    obj = LTE_Transmitter(main, nb_rb=tx_rb, data_file='sig.csv', scale=1)
+    obj = LTE_Transmitter(main, nb_rb=tx_rb, data_file='sig.csv', scale=0.9)
     obj.setGains({
         "parameters-txSelect": tx_serial+"-"+tx_ant,
         tx_serial+"-0-tx-txGain": tx_gain,
@@ -56,7 +56,7 @@ class LTE_Transmitter:
         # IrisUtil.Format_LoadWaveFormFile(self, '../modes/LTE_OneRepeator_SyncWatcher_DevFE_RevB_180902_Waveform.csv')
         IrisUtil.Format_DataDir(self, nb_rb=nb_rb)
         # IrisUtil.Format_LoadTimeWaveForm(self, self.data_dir+data_file, scale)
-        IrisUtil.Format_LoadTimeWaveForm(self, './refdata/generation/test_data/sig_tone_3m.csv', scale)
+        IrisUtil.Format_LoadTimeWaveForm(self, './refdata/generation/test_data/tone.csv', scale)
 
         # init sdr object
         IrisUtil.Init_CollectSDRInstantNeeded(self, clockRate=80e6)

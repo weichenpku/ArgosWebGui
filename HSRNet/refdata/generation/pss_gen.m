@@ -17,7 +17,7 @@ csvwrite([data_dir 'sig_pss.csv'],sig_tx);
 
 
 ns=srate/100
-phase = 2*pi*32*(1:ns)/(ns);
+phase = 2*pi*15000*2*(1:ns)/srate;
 tone = (cos(phase)+1i*sin(phase));
 % tone(end-1920*5+1:end)=0*tone(end-1920*5+1:end);
 csvwrite([data_dir '../test_data/tone.csv'],tone);
