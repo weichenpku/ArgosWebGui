@@ -9,7 +9,8 @@ if size2==1
 end
 mask = zeros(1,size2);
 mask(idx-neighbor:idx+neighbor) = ones(1,neighbor*2+1);
-%mask(idx)=1;
+%mask(19202-idx-neighbor:19202-idx+neighbor) = ones(1,neighbor*2+1);
+
 rx_f_new = sig_f.*mask;
 rx_t_new = ifft(fftshift(rx_f_new));
 
