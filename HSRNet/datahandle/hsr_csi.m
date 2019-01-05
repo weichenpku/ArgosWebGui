@@ -5,7 +5,8 @@ hsr_rxdata; % get rx_all_sig
 
 %% cfo correction
 cfo
-cfo_phase = -2*pi*cfo*(1:samplenum)/samplenum*(20/1000);
+srate
+cfo_phase = -2*pi*cfo*(1:samplenum)/srate;
 rx_all_sig = rx_all_sig .* (cos(cfo_phase) +1i*sin(cfo_phase));
 
 %% correlation for sync
@@ -23,7 +24,7 @@ offset = round(offset / antnum);
 prefix_length = num_carriers/4;
 if (offset<=prefix_length + num_carriers) offset=offset+samplenum/2; end
 frame_start = offset - prefix_length - num_carriers;
-rx_all_frame = rx_all_sig(:,frame_start:frame_start+round(samplenum/2)-1);
+rx_all_frame = rx_all_sig(:,frame_start:frame_start+19200-1);
 
 %% CSI
 symbol_len = prefix_length + num_carriers;

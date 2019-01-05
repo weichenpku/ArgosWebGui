@@ -1,7 +1,6 @@
-function [ f_test ] = freq_cal(sig_f, srate, neighbor)
+function [ f_test ] = freq_cal(sig_f, srate, idx, neighbor)
 
 %% frequency calculation
-[value,idx] = max(sig_f);
 [size1, size2] = size(sig_f);
 if size2==1
     sig_f = sig_f';
@@ -13,6 +12,7 @@ mask(idx-neighbor:idx+neighbor) = ones(1,neighbor*2+1);
 
 rx_f_new = sig_f.*mask;
 rx_t_new = ifft(fftshift(rx_f_new));
+figure; plot(real(rx_t_new)); hold on; plot(imag(rx_t_new));
 
 ang = angle(conj(rx_t_new'));  % ' represent transpose & conjugate 
 offset=0;

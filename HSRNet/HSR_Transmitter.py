@@ -14,9 +14,9 @@ def test():
         def changedF(self):
             print('changedF called')
 
-    tx_serial = "RF3E000021"
+    tx_serial = "RF3E000003"
     tx_ant = "0"
-    tx_gain = "45"
+    tx_gain = "40"
     tx_rb = 6  # 1.4MHz
     tx_repeat_time = 1000 # number of frames(10ms)
 

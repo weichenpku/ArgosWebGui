@@ -160,7 +160,7 @@ def Format_LoadTimeWaveForm(self, filename, scale=1):
         buffer = list(reader)[0]
         self.WaveFormData = np.array([complex(s[0:-1]+'j') if s[-1]=='i' else complex(s) for s in buffer], dtype=np.complex64)
         self.WaveFormData = self.WaveFormData * scale
-                
+        self.WaveFormData = np.real(self.WaveFormData)/1.1+1j*np.imag(self.WaveFormData)
         
       
 
@@ -295,6 +295,7 @@ def Init_CreateBasicGainSettings(self, rate=None, bw=None, freq=None, dcoffset=N
             if freq is not None: sdr.setFrequency(SOAPY_SDR_TX, chan, "RF", freq)
             sdr.setAntenna(SOAPY_SDR_TX, chan, "TRX")
             sdr.setFrequency(SOAPY_SDR_TX, chan, "BB", 0)  # don't use cordic
+            #try to balance iq: sdr.setIQBalance(SOAPY_SDR_TX, chan, 0.691955)
             for key in self.default_tx_gains:
                 if key == "txGain":  # this is a special gain value for Iris, just one parameter
                     sdr.setGain(SOAPY_SDR_TX, chan, self.default_tx_gains[key])
@@ -328,7 +329,8 @@ def Init_CreateTxStreams_RevB(self):
         serial, ant = Format_SplitSerialAnt(serial_ant)
         chans = [0, 1] if ant == 2 else [ant]
         sdr = self.sdrs[serial]
-        sdr.writeSetting(SOAPY_SDR_TX, 0, 'CALIBRATE', 'SKLK')  # this is from sklk-demos/python/SISO.py wy@180823
+        #for ant in chans:
+        #    sdr.writeSetting(SOAPY_SDR_TX, ant, 'CALIBRATE', 'SKLK')  # this is from sklk-demos/python/SISO.py wy@180823
         stream = sdr.setupStream(SOAPY_SDR_TX, SOAPY_SDR_CF32, chans, {"remote:prot": "tcp", "remote:mtu": "1024"})
         self.txStreams.append(stream)
 
@@ -338,7 +340,8 @@ def Init_CreateRxStreams_RevB(self):
         serial, ant = Format_SplitSerialAnt(serial_ant)
         chans = [0, 1] if ant == 2 else [ant]
         sdr = self.sdrs[serial]
-        sdr.writeSetting(SOAPY_SDR_RX, 0, 'CALIBRATE', 'SKLK')  # this is from sklk-demos/python/SISO.py wy@180823
+        #for ant in chans:
+        #    sdr.writeSetting(SOAPY_SDR_RX, ant, 'CALIBRATE', 'SKLK')  # this is from sklk-demos/python/SISO.py wy@180823
         stream = sdr.setupStream(SOAPY_SDR_RX, SOAPY_SDR_CF32, chans, {"remote:prot": "tcp", "remote:mtu": "1024"})
         self.rxStreams.append(stream) 
 

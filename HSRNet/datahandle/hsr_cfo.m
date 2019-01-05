@@ -7,8 +7,13 @@ hsr_csi; % get est(12*nb_rb,num_symbols_frame,antnum)
 
 % CIR and doppler spread
 CIR =ifft(est,[],1); % CIR time, symbol time
+mesh(abs(fftshift(CIR(:,:,1),1)));
+
 PDP = mean(CIR.^2,2); % CIR time
+plot(fftshift((abs(PDP(:,:)))));
+
 DS = fft(CIR,[],2); % CIR time, spead freq
+mesh(abs(fftshift(fftshift(DS(:,:,1),1),2)));
 
 if (sfidx==1)
     est_sf = est(:,1:11,:);
@@ -28,6 +33,6 @@ for idx = 1: cfo_turn
     vec_change = est_sf(:,2:end,:)./est_sf(:,1:end-1,:);
     vec_angle = angle(vec_change);
     vec_amp= abs(vec_change);
-    doppler_freq = mean(mean(vec_angle))/(2*pi*(1/1000/12));
+    doppler_freq = mean(mean(vec_angle))/(2*pi*(1/1000/12)); 
     
 end

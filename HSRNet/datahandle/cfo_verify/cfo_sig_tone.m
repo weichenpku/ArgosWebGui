@@ -2,9 +2,9 @@ close all;
 clear all;
 
 fileidx=10;
-rxdir='../rxdata/';
+rxdir='../rxdata/cfo_t3/';
 txdevice = 'RF3E000021';
-rxdevice = 'RF3E000002';
+rxdevice = 'RF3E000022';
 cd ..; hsr_rxdata; cd cfo_verify; % rx_all_sig
 
 symbol_len = 256;
@@ -33,8 +33,10 @@ srate = 3.84e6;
 fx = linspace(0,srate, 19200); fx=fx-fx(end/2+1);
 figure; plot(fx,log(abs(tx_f))); hold on; plot(fx,log(abs(rx_f)));
 
-tx_freq = freq_cal(tx_f, srate, 1);
-rx_freq = freq_cal(rx_f, srate, 1);
+[~, idx] = max(abs(tx_f));
+tx_freq = freq_cal(tx_f, srate, idx, 1);
+[~, idx] = max(abs(rx_f));
+rx_freq = freq_cal(rx_f, srate, idx, 1);
 
 delta_f = tx_freq - rx_freq;
 delta_p = 2*pi*delta_f*linspace(0,19200/srate,19200);
@@ -43,8 +45,8 @@ delta_s = cos(delta_p)+1i*sin(delta_p);
 rx_cfo = rx_tone_t.*delta_s;
 rx_cfo_f = fftshift(fft(rx_cfo));
 figure; plot(fx,log(abs(tx_f))); hold on; plot(fx,log(abs(rx_cfo_f)));
-display(['Ground frequency shift is ', int2str(round(delta_f)),'Hz']);
-figure; plot(rx); hold on; plot((rx_cfo));
+display(['Ground frequency shift is ', int2str(rx_freq-tx_freq),'Hz']);
+figure; plot(rx_tone_t); hold on; plot((rx_cfo));
 
 
 %% rx_pss_t
@@ -99,7 +101,5 @@ phase = 2*pi*df*(1:320)/srate;
 ch = cos(phase)+1i*sin(phase);
 rx_pss3 = ch.*rx_pss2;
 
-cfo=ifo+ffo+ffo2;
+cfo=ifo+ffo;
 display(['CFO is ',int2str(cfo),'Hz']);
-
-f=fft(rt);

@@ -14,7 +14,7 @@ def test():
         def changedF(self):
             print('changedF called')
 
-    tx_serial = "RF3E000003"
+    tx_serial = "RF3E000002"
     tx_ant = "0"
     tx_gain = "35"
 
@@ -65,7 +65,7 @@ class LTE_Transmitter:
 
         # create gains and set them
         IrisUtil.Init_CreateDefaultGain_WithDevFE(self)
-        self.rate = 1.92e6
+        self.rate = 1.92e6*2
         IrisUtil.Init_CreateBasicGainSettings(self, rate=self.rate, bw=5e6, freq=3e9, dcoffset=True)
 
          # create streams (but not activate them)
