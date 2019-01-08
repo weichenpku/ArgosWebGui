@@ -20,13 +20,13 @@ clear all;
 
 fileidx=7;
 rxdir='../rxdata/';
-txdevice = 'RF3E000003';
-rxdevice = 'RF3E000002'; %['RF3E000003';'RF3E000002';'RF3E000021'];
+txdevice = 'RF3E000021';
+rxdevice = 'RF3E000022'; %['RF3E000003';'RF3E000002';'RF3E000021'];
 cd ..; hsr_rxdata; cd cfo_verify; % rx_all_sig
 
 tx_t = csvread('../../refdata/generation/test_data/tone.csv');
 tx = tx_t;
-rx_ant = 2;
+rx_ant = 1;
 rx = rx_all_sig(rx_ant,1:19200);
 tx_f = fftshift(fft(tx));
 rx_f = fftshift(fft(rx));

@@ -14,11 +14,11 @@ def test():
         def changedF(self):
             print('changedF called')
 
-    tx_serial = "RF3E000003"
-    tx_ant = "0"
-    tx_gain = "40"
+    tx_serial = "RF3E000021"
+    tx_ant = "1"
+    tx_gain = "50"
     tx_rb = 6  # 1.4MHz
-    tx_repeat_time = 1000 # number of frames(10ms)
+    tx_repeat_time = 10000 # number of frames(10ms)
 
     main = FakeMain(tx_serial)
     obj = LTE_Transmitter(main, nb_rb=tx_rb, data_file='sig.csv', scale=0.9)
@@ -65,6 +65,7 @@ class LTE_Transmitter:
         IrisUtil.Init_CreateDefaultGain_WithDevFE(self)
         self.rate = 1.92e6*2
         IrisUtil.Init_CreateBasicGainSettings(self, rate=self.rate, bw=5e6, freq=3.5e9, dcoffset=True)
+        #IrisUtil.Setting_ChangeIQBalance(self,txangle=-0.2,txscale=1.2)
 
          # create streams (but not activate them)
         IrisUtil.Init_CreateTxStreams_RevB(self)

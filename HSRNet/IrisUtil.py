@@ -29,6 +29,8 @@ except:
 
 import numpy as np
 import time, threading, csv, os
+import scipy as sp
+import scipy.io as sio
 
 # LTE frame
 def Format_DataDir(self,nb_rb=25):
@@ -160,7 +162,7 @@ def Format_LoadTimeWaveForm(self, filename, scale=1):
         buffer = list(reader)[0]
         self.WaveFormData = np.array([complex(s[0:-1]+'j') if s[-1]=='i' else complex(s) for s in buffer], dtype=np.complex64)
         self.WaveFormData = self.WaveFormData * scale
-        self.WaveFormData = np.real(self.WaveFormData)/1.1+1j*np.imag(self.WaveFormData)
+        #self.WaveFormData = np.real(self.WaveFormData)/1.1+1j*np.imag(self.WaveFormData)
         
       
 
@@ -245,7 +247,34 @@ def Init_CollectSDRInstantNeeded(self, clockRate=80e6):
         sdr = SoapySDR.Device(dict(driver="iris", serial=serial))
         self.sdrs[serial] = sdr
         if clockRate is not None: sdr.setMasterClockRate(clockRate)  # set master clock
-    
+
+def Setting_ChangeIQBalance(self, txscale=None, txangle=None, rxscale=None, rxangle=None):
+    for serial_ant in self.rx_serials_ant:
+        serial, ant = Format_SplitSerialAnt(serial_ant)
+        sdr = self.sdrs[serial]
+        chans = [0, 1] if ant == 2 else [ant]
+        for chan in chans:
+            if rxscale is not None:                     # IQ balance
+                balance = np.exp(rxangle*1j)*rxscale
+                sdr.setIQBalance(SOAPY_SDR_RX, chan, balance)
+    for serial_ant in self.tx_serials_ant:
+        serial, ant = Format_SplitSerialAnt(serial_ant)
+        sdr = self.sdrs[serial]
+        chans = [0, 1] if ant == 2 else [ant]
+        for chan in chans:
+            if txscale is not None:                     # IQ balance
+                balance = np.exp(txangle*1j)*txscale
+                sdr.setIQBalance(SOAPY_SDR_TX, chan, balance)
+
+def  Get_iqbalance(trx,serial,chan):
+    filename = './refdata/calibrate/iqbalance.mat'
+    iqbalance = sio.loadmat(filename)
+    var = trx+'_'+serial+'_'+str(chan)+'_'
+    angle = iqbalance[var+'angle'][0][0]
+    scale = iqbalance[var+'scale'][0][0]
+    balance = np.exp(angle*1j)*scale
+    return balance
+
 def Init_CreateBasicGainSettings(self, rate=None, bw=None, freq=None, dcoffset=None, txrate=None, rxrate=None):
     self.rx_gains = {}  # if rx_serials_ant contains xxx-3-rx-1 then it has "xxx-0-rx" and "xxx-1-rx", they are separate (without trigger option)
     self.tx_gains = {}
@@ -275,6 +304,8 @@ def Init_CreateBasicGainSettings(self, rate=None, bw=None, freq=None, dcoffset=N
             if freq is not None: sdr.setFrequency(SOAPY_SDR_RX, chan, "RF", freq)
             sdr.setAntenna(SOAPY_SDR_RX, chan, "TRX")  # TODO: I assume that in base station given, it only has two TRX antenna but no RX antenna wy@180804
             sdr.setFrequency(SOAPY_SDR_RX, chan, "BB", 0) # don't use cordic
+            balance = Get_iqbalance('rx',serial[-2:],chan)
+            sdr.setIQBalance(SOAPY_SDR_RX, chan, balance)
             if dcoffset is not None: sdr.setDCOffsetMode(SOAPY_SDR_RX, chan, dcoffset) # dc removal on rx
             for key in self.default_rx_gains:
                 if key == "rxGain":  # this is a special gain value for Iris, just one parameter
@@ -295,7 +326,8 @@ def Init_CreateBasicGainSettings(self, rate=None, bw=None, freq=None, dcoffset=N
             if freq is not None: sdr.setFrequency(SOAPY_SDR_TX, chan, "RF", freq)
             sdr.setAntenna(SOAPY_SDR_TX, chan, "TRX")
             sdr.setFrequency(SOAPY_SDR_TX, chan, "BB", 0)  # don't use cordic
-            #try to balance iq: sdr.setIQBalance(SOAPY_SDR_TX, chan, 0.691955)
+            balance = Get_iqbalance('tx',serial[-2:],chan)
+            sdr.setIQBalance(SOAPY_SDR_TX, chan, balance)
             for key in self.default_tx_gains:
                 if key == "txGain":  # this is a special gain value for Iris, just one parameter
                     sdr.setGain(SOAPY_SDR_TX, chan, self.default_tx_gains[key])
