@@ -29,7 +29,7 @@ def test():
     tx_repeat_time = int(conf_dict['tx_repeat_time']) # number of frames(10ms)
 
     main = FakeMain(tx_serial)
-    obj = LTE_Transmitter(main, nb_rb=tx_rb, data_file='sig1.csv', scale=0.9)
+    obj = LTE_Transmitter(main, nb_rb=tx_rb,  conf_dict=conf_dict)
     obj.setGains({
         "parameters-txSelect": tx_serial+"-"+tx_ant,
         tx_serial+"-0-tx-txGain": tx_gain,
@@ -54,7 +54,7 @@ def test():
     # End
 
 class LTE_Transmitter:
-    def __init__(self, main, nb_rb, data_file, scale):
+    def __init__(self, main, nb_rb, conf_dict):
         self.main = main
         IrisUtil.Assert_ZeroSerialNotAllowed(self)
         IrisUtil.Format_UserInputSerialAnts(self)
@@ -62,9 +62,14 @@ class LTE_Transmitter:
         
         # import waveform file
         # IrisUtil.Format_LoadWaveFormFile(self, '../modes/LTE_OneRepeator_SyncWatcher_DevFE_RevB_180902_Waveform.csv')
-        IrisUtil.Format_DataDir(self, nb_rb=nb_rb)
-        #IrisUtil.Format_LoadTimeWaveForm(self, self.data_dir+data_file, scale)
-        IrisUtil.Format_LoadTimeWaveForm(self, './refdata/generation/test_data/tone.csv', scale)
+        scale = float(conf_dict['scale'])
+        if (conf_dict['filesource']=='LTE'):
+            IrisUtil.Format_DataDir(self, nb_rb=nb_rb)
+            data_file = self.data_dir+conf_dict['sig_type']
+            IrisUtil.Format_LoadTimeWaveForm(self, data_file, scale)
+        else: # selfdefine
+            data_file = conf_dict['file']
+            IrisUtil.Format_LoadTimeWaveForm(self, data_file, scale)
 
         # init sdr object
         IrisUtil.Init_CollectSDRInstantNeeded(self, clockRate=80e6)
@@ -142,21 +147,3 @@ class LTE_Transmitter:
 if __name__ == "__main__":
     test()
 
-
-#{'list': 
-#   [['parameters', ['txSelect', 'numSamples', 'showSamples', 'alignOffset']], 
-#    ['RF3E000002-0-tx', ['txGain']], 
-#    ['RF3E000002-1-tx', ['txGain']], 
-#    ['RF3E000010-0-rx', ['postcode', 'rxGain']], 
-#    ['RF3E000010-1-rx', ['postcode', 'rxGain']]], 
-# 'data': 
-#   {'RF3E000010-1-rx-rxGain': '20', 
-#    'parameters-txSelect': 'RF3E000002-1', 
-#    'RF3E000002-0-tx-txGain': '40', 
-#    'RF3E000010-1-rx-postcode': '(1+0j)', 
-#    'RF3E000010-0-rx-postcode': '(1+0j)', 
-#    'parameters-numSamples': '1024', 
-#    'RF3E000002-1-tx-txGain': '40', 
-#    'RF3E000010-0-rx-rxGain': '20', 
-#    'parameters-alignOffset': '0', 
-#    'parameters-showSamples': '1600'}}

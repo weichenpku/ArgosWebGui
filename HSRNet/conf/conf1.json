@@ -30,9 +30,10 @@
 	"tx_gain": "60",
 	"rx_gain": "50",
 	"srate": "3.84e9",
-	
+		
+	"scale":"0.9",
 	"filesource": "LTE",
 	"_comment": "LTE or selfdefine",
-	"nrb": "6",	
+	"nrb": "6", "sig_type":"sig_rbrr.csv",	
 	"file": "./refdata/generation/test_data/tone.csv"	
 }

@@ -10,7 +10,7 @@ primary_synch;   %PSS
 % primary_synch0_time: ifft(primary_synch0_mod2)
 
 %% # of resource block
-nb_rb = 100; %this can be 6,15,25,50,75 or 100
+nb_rb = 25; %this can be 6,15,25,50,75 or 100
 
 num_carriers = 2048/100*nb_rb; % fft size
 if nb_rb==15
@@ -32,25 +32,38 @@ figure; plot(QAM_MOD(4,0:4));
 figure; plot(QAM_MOD(16,0:16));
 %% frequency and time wave generate
 sig_f = zeros(num_symbols_frame,12*nb_rb);
-sig = zeros(1,(num_carriers+prefix_length)*num_symbols_frame);
-for k=1:2:num_symbols_frame
+sig_r = zeros(1,(num_carriers+prefix_length)*num_symbols_frame);
+sig_rb = zeros(1,(num_carriers+prefix_length)*num_symbols_frame);
+sig_rbrr = zeros(1,(num_carriers+prefix_length)*num_symbols_frame);
+for k=1:num_symbols_frame
     QAM_list = QAM_MOD(4,floor(4*rand(1,12*nb_rb)));
     sig_f(k,:) = QAM_list;
     symbol_f = [0 QAM_list(1:12*nb_rb/2) zeros(1,num_zeros) QAM_list(12*nb_rb/2+1:12*nb_rb)];
     symbol_t = ifft(symbol_f);
     assert(size(symbol_t,2)==num_carriers);
-    sig(1+(k-1)*(num_carriers+prefix_length):k*(num_carriers+prefix_length))=[symbol_t(num_carriers-prefix_length+1:end) symbol_t];
+    l=1+(k-1)*(num_carriers+prefix_length);
+    r=k*(num_carriers+prefix_length);
+    sig_r(l:r)=[symbol_t(num_carriers-prefix_length+1:end) symbol_t];
+    sig_rb(l:r)=[symbol_t(num_carriers-prefix_length+1:end) symbol_t];
+    sig_rbrr(l:r)=[symbol_t(num_carriers-prefix_length+1:end) symbol_t];
+    if (mod(k,2)==0) sig_rb(l:r)=0; end
+    if (mod(k,4)==2) sig_rbrr(l:r)=0; end
 end
-sig=sig*sqrt(num_carriers);
-scale_down = 0.95/max(max(abs(real(sig))),max(abs(imag(sig))));
-sig=sig*scale_down;
+
+scale_down = 0.95/max(max(abs(real(sig_r))),max(abs(imag(sig_r))));
+sig_r=sig_r*scale_down;
+sig_rb=sig_rb*scale_down;
+sig_rbrr=sig_rbrr*scale_down;
 
 %% add PSS
 pss_t=pss0_up;
 plot(abs(conv(pss_t,conj(pss_t)))); %time domain feature of pss_t
 figure; plot(fft(pss_t).*conj(fft(pss_t)))              % frequency domain feature of pss_t
 scale_down = 0.95/max(max(abs(real(pss0_up_cp))),max(abs(imag(pss0_up_cp))));
-sig(1:num_carriers+prefix_length) = pss0_up_cp*scale_down;
+
+sig_r(1:num_carriers+prefix_length) = pss0_up_cp*scale_down;
+sig_rb(1:num_carriers+prefix_length) = pss0_up_cp*scale_down;
+sig_rbrr(1:num_carriers+prefix_length) = pss0_up_cp*scale_down;
 
 if nb_rb<10
     savedir='1.4m/';
@@ -58,10 +71,12 @@ else
     savedir=[int2str(nb_rb/5),'m/'];
 end
 
-csvwrite([savedir 'sig1_f.csv'],sig_f);
-csvwrite([savedir 'sig1.csv'],sig);
-%csvwrite([savedir 'pss.csv'],pss_t);
-%save([savedir 'paras.mat'],'nb_rb','num_carriers','srate');
+csvwrite([savedir 'sig_f.csv'],sig_f);
+csvwrite([savedir 'sig_r.csv'],sig_r);
+csvwrite([savedir 'sig_rb.csv'],sig_rb);
+csvwrite([savedir 'sig_rbrr.csv'],sig_rbrr);
+csvwrite([savedir 'pss.csv'],pss_t);
+save([savedir 'paras.mat'],'nb_rb','num_carriers','srate');
 
-display(max(abs(real(sig))))
-display(max(abs(imag(sig))))
+display(max(abs(real(sig_r))))
+display(max(abs(imag(sig_r))))
