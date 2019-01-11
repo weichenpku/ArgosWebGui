@@ -1,0 +1,38 @@
+{
+	"transmitter": {
+		"serial": "RF3E000002",
+		"port": "1"
+	},
+	
+
+	"receivernum": "4",
+	"receiver_master": {
+		"serial": "RF3E000010",
+		"port": "2"
+	},
+	"receiver": [{
+			"serial": "RF3E000006",
+			"port": "2"
+		},
+		{
+			"serial": "RF3E000021",
+			"port": "2"
+		},
+		{
+			"serial": "RF3E000022",
+			"port": "2"
+		}
+	],
+
+	"tx_repeat_time": "10000",
+	"rx_repeat_time": "10",
+	"rx_repeat_duration": "0",
+	"tx_gain": "60",
+	"rx_gain": "50",
+	"srate": "3.84e9",
+	
+	"filesource": "LTE",
+	"_comment": "LTE or selfdefine",
+	"nrb": "6",	
+	"file": "./refdata/generation/test_data/tone.csv"	
+}

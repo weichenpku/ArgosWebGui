@@ -5,23 +5,31 @@ import time
 import numpy as np
 import scipy as sp
 import scipy.io as sio
+import sys
+import json
+
 
 def test():
     class FakeMain:
         def __init__(self,tx_serial):
-            self.IrisSerialNums = [tx_serial+"-2-Tx-1"] # serial-chan-TX/RX-trigger
+            self.IrisSerialNums = [tx_serial+ "-2-Tx-1"] #serial-chan-TX/RX-trigger
             self.userTrig = True
         def changedF(self):
             print('changedF called')
 
-    tx_serial = "RF3E000021"
-    tx_ant = "1"
-    tx_gain = "50"
-    tx_rb = 6  # 1.4MHz
-    tx_repeat_time = 10000 # number of frames(10ms)
+    conf_dict={}
+    with open(sys.argv[1],"r") as f:
+        conf_dict = json.load(f)
+    print(conf_dict)
+
+    tx_serial = conf_dict['transmitter']['serial']  #"RF3E000002"
+    tx_ant = conf_dict['transmitter']['port']
+    tx_gain = conf_dict['tx_gain']
+    tx_rb = int(conf_dict['nrb'])  # 1.4MHz
+    tx_repeat_time = int(conf_dict['tx_repeat_time']) # number of frames(10ms)
 
     main = FakeMain(tx_serial)
-    obj = LTE_Transmitter(main, nb_rb=tx_rb, data_file='sig.csv', scale=0.9)
+    obj = LTE_Transmitter(main, nb_rb=tx_rb, data_file='sig1.csv', scale=0.9)
     obj.setGains({
         "parameters-txSelect": tx_serial+"-"+tx_ant,
         tx_serial+"-0-tx-txGain": tx_gain,
@@ -55,7 +63,7 @@ class LTE_Transmitter:
         # import waveform file
         # IrisUtil.Format_LoadWaveFormFile(self, '../modes/LTE_OneRepeator_SyncWatcher_DevFE_RevB_180902_Waveform.csv')
         IrisUtil.Format_DataDir(self, nb_rb=nb_rb)
-        # IrisUtil.Format_LoadTimeWaveForm(self, self.data_dir+data_file, scale)
+        #IrisUtil.Format_LoadTimeWaveForm(self, self.data_dir+data_file, scale)
         IrisUtil.Format_LoadTimeWaveForm(self, './refdata/generation/test_data/tone.csv', scale)
 
         # init sdr object

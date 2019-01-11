@@ -5,34 +5,43 @@ import time
 import numpy as np
 import scipy as sp
 import scipy.io as sio
+import sys
+import json
 
 def test():
     class FakeMain:
         def __init__(self,master,slaves):
-            self.IrisSerialNums = [master+"-2-Rx-1"] # serial-chan-TX/RX-trigger
-            for serial in slaves:
-                self.IrisSerialNums.append(serial+"-2-Rx-0")
+            self.IrisSerialNums = slaves # serial-chan-TX/RX-trigger
+            self.IrisSerialNums.append(master)
             self.userTrig = True
         def changedF(self):
             print('changedF called')
     
-    rx_serial_master = "RF3E000022"
+    conf_dict={}
+    with open(sys.argv[1],"r") as f:
+        conf_dict = json.load(f)
+    print(conf_dict)
+
+    rx_serial_master = conf_dict['receiver_master']['serial'] + "-" + conf_dict['receiver_master']['port'] + "-Rx-1"
     rx_serial_slaves = []
-    rx_gain = "50"
-    rx_repeat_time = 10 # number of frames
-    rx_repeat_duration = 0 # seconds
+    for idx in range(int(conf_dict['receivernum'])-1):
+        rx_serial_slaves.append(conf_dict['receiver'][idx]['serial'] + "-" + conf_dict['receiver_master']['port'] + "-Rx-0")
+
+    rx_gain = conf_dict['rx_gain']
+    rx_repeat_time = int(conf_dict['rx_repeat_time']) # number of frames
+    rx_repeat_duration = int(conf_dict['rx_repeat_duration']) # seconds
     
     main = FakeMain(rx_serial_master,rx_serial_slaves)
     obj = LTE_Receiver(main)
     gain_dict = {
         "parameters-showSamples": "60928",
         "parameters-numSamples":"60000", # recvNum (should be less than 60928)
-        rx_serial_master+"-0-rx-rxGain": rx_gain,
-        rx_serial_master+"-1-rx-rxGain": rx_gain
+        conf_dict['receiver_master']['serial']+"-0-rx-rxGain": rx_gain,
+        conf_dict['receiver_master']['serial']+"-1-rx-rxGain": rx_gain
     }
-    for serial in rx_serial_slaves:
-        gain_dict[serial+"-0-rx-rxGain"] = rx_gain
-        gain_dict[serial+"-1-rx-rxGain"] = rx_gain
+    for idx in range(int(conf_dict['receivernum'])-1):
+        gain_dict[conf_dict['receiver'][idx]['serial']+"-0-rx-rxGain"] = rx_gain
+        gain_dict[conf_dict['receiver'][idx]['serial']+"-1-rx-rxGain"] = rx_gain
     obj.setGains(gain_dict)
     
     print()

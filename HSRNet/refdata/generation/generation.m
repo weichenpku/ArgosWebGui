@@ -10,7 +10,7 @@ primary_synch;   %PSS
 % primary_synch0_time: ifft(primary_synch0_mod2)
 
 %% # of resource block
-nb_rb = 15; %this can be 6,15,25,50,75 or 100
+nb_rb = 100; %this can be 6,15,25,50,75 or 100
 
 num_carriers = 2048/100*nb_rb; % fft size
 if nb_rb==15
@@ -33,7 +33,7 @@ figure; plot(QAM_MOD(16,0:16));
 %% frequency and time wave generate
 sig_f = zeros(num_symbols_frame,12*nb_rb);
 sig = zeros(1,(num_carriers+prefix_length)*num_symbols_frame);
-for k=1:num_symbols_frame
+for k=1:2:num_symbols_frame
     QAM_list = QAM_MOD(4,floor(4*rand(1,12*nb_rb)));
     sig_f(k,:) = QAM_list;
     symbol_f = [0 QAM_list(1:12*nb_rb/2) zeros(1,num_zeros) QAM_list(12*nb_rb/2+1:12*nb_rb)];
@@ -58,10 +58,10 @@ else
     savedir=[int2str(nb_rb/5),'m/'];
 end
 
-csvwrite([savedir 'sig_f.csv'],sig_f);
-csvwrite([savedir 'sig.csv'],sig);
-csvwrite([savedir 'pss.csv'],pss_t);
-save([savedir 'paras.mat'],'nb_rb','num_carriers','srate');
+csvwrite([savedir 'sig1_f.csv'],sig_f);
+csvwrite([savedir 'sig1.csv'],sig);
+%csvwrite([savedir 'pss.csv'],pss_t);
+%save([savedir 'paras.mat'],'nb_rb','num_carriers','srate');
 
 display(max(abs(real(sig))))
 display(max(abs(imag(sig))))
