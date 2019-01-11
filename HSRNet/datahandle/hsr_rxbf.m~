@@ -31,11 +31,7 @@ end
 p_bf_sig=[];
 p_bf_noi=[];
 if type_len > 1
-   for idx=type_len+1:type_len:symbolnum
-       p_bf_sig = [p_bf_sig  mean(abs(h_bf_est(:,idx)).^2)];
-       p_bf_noi = [p_bf_noi  mean(abs(h_bf_est(:,idx+1)).^2)];
-   end
-end
-bf_snr=log(mean(p_bf_sig/p_bf_noi))/log(10)*10;
-display(['snr of bf is ' num2str(bf_snr)]);
-
+        for idx=type_len+1:type_len:symbolnum
+            p_sig = [p_sig  mean(abs(h_rx(:,idx,cur_device)).^2)];
+            p_noi = [p_noi  mean(abs(h_rx(:,idx+1,cur_device)).^2)];
+        end

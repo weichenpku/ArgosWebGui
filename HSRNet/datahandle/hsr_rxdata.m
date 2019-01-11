@@ -1,5 +1,3 @@
-fileidx=1;
-
 fname = "../conf/conf1.json";
 fid = fopen(fname); 
 raw = fread(fid,inf); 
@@ -10,10 +8,11 @@ val = jsondecode(str);
 nb_rb = str2num(val.nrb); %this can be 6,15,25,50,75 or 100
 rxdevicenum = str2num(val.receivernum);
 rxdevice = [];
-for idx=1:rxdevicenum
-    rxdevice(idx,:)=val.receiver(idx).serial;
+rxdevice(1,:)=val.receiver_master.serial;
+for idx=1:rxdevicenum-1
+    rxdevice(idx+1,:)=val.receiver(idx).serial;
 end
-rxdir=['../',val.savefile];
+rxdir=['../rxdata/'];
 
 
 %% load reference signal
@@ -26,7 +25,6 @@ end
 
 load([savedir 'paras.mat']);
 pss = csvread([savedir 'pss.csv']);
-sig = csvread([savedir 'sig.csv']);
 sig_f = csvread([savedir 'sig_f.csv']);
 
 

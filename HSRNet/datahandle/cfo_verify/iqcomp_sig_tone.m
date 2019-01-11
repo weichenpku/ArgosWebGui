@@ -18,7 +18,3 @@ z2=rx_cfo_f(freq_idx);
 rot = (angle(z1)+angle(z2))/2; % rotate angle
 scale = (abs(z1)+abs(z2))/abs(abs(z1)-abs(z2));  % scale of ellipse
 display([rot; scale]);
-
-%% iq compensation
-rx_sig2 = rx_sig1*exp(1i*-rot);
-rx_sig3 = 
