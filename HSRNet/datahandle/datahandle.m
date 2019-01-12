@@ -2,6 +2,8 @@ clear all;
 close all;
 
 fileidx=1;
+rxdir=['../rxdata/'];
+
 hsr_rxdata          % ref_signal & rx_signal read
 % rx_all_sig
 

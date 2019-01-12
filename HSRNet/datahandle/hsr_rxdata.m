@@ -12,7 +12,7 @@ rxdevice(1,:)=val.receiver_master.serial;
 for idx=1:rxdevicenum-1
     rxdevice(idx+1,:)=val.receiver(idx).serial;
 end
-rxdir=['../rxdata/'];
+
 
 
 %% load reference signal
