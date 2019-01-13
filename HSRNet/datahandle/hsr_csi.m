@@ -1,5 +1,5 @@
 % get rx_all_sig
-mean_offset = round(mean(offset_list(find(offset_list>0))))
+mean_offset = round(mean(mod(offset_list(find(offset_list>0)),frame_len)));
 
 portnum = size(rx_all_sig,1);
 samplelen = size(rx_all_sig,2);
@@ -9,7 +9,8 @@ rx_all_frame = zeros(portnum,frame_len);
 h_tx = zeros(12*nb_rb,num_symbols_frame,portnum);
 h_rx = zeros(12*nb_rb,num_symbols_frame,portnum);
 h_est = zeros(12*nb_rb,num_symbols_frame,portnum);
-for cur_device = 1:2:portnum
+for cur_device = 1:portnum
+    if checklist(cur_device)~=1 continue; end
     %% cfo correction
     cfo = cfo_list(cur_device);
     

@@ -8,7 +8,8 @@ portnum = size(rx_all_sig,1);
 samplelen = size(rx_all_sig,2);
 cfo_list=[];
 offset_list=[];
-for cur_device = 1:2:portnum 
+for cur_device = 1:portnum 
+    if checklist(cur_device)~=1 continue; end
     rx_t = rx_all_sig(cur_device,:);
 
     tmp_corr = conv(rx_t,conj(pss));
@@ -43,7 +44,7 @@ for cur_device = 1:2:portnum
     offset = maxcorr_offset; assert(offset==cp_symbol_len+1);
     ifo = ifo_idx(maxcorr_idx)*15000*-1;
     rx_pss1 = rx_pss_ifo(maxcorr_idx,:);
-    display(['IFO is ',int2str(ifo),'Hz']);
+    %display(['IFO is ',int2str(ifo),'Hz']);
 
     %% second: FFO  (CP based)
     rx_pss_cp1 = rx_pss1(offset-cp_symbol_len:offset-symbol_len-1);
@@ -51,7 +52,7 @@ for cur_device = 1:2:portnum
 
     cp_corr=conj(rx_pss_cp1).*rx_pss_cp2;
     ffo = mean(angle(cp_corr))/2/pi*15000;
-    display(['FFO is ',int2str(ffo),'Hz']);
+    %display(['FFO is ',int2str(ffo),'Hz']);
 
     % ffo compensation
     df = -ffo;
@@ -64,7 +65,7 @@ for cur_device = 1:2:portnum
     y1=sum(rx_pss2(offset-symbol_len:offset-symbol_len/2-1).*conj(pss(1:end/2)));
     y2=sum(rx_pss2(offset-symbol_len/2:offset-1).*conj(pss(end/2+1:end)));
     ffo2=angle(y2/y1)/pi*15000;
-    display(['FFO2 is ',int2str(ffo2),'Hz']);
+    %display(['FFO2 is ',int2str(ffo2),'Hz']);
 
     % ffo compensation
     df = -ffo2;
@@ -73,7 +74,8 @@ for cur_device = 1:2:portnum
     rx_pss3 = ch.*rx_pss2;
 
     cfo=ifo+ffo;
-    display(['CFO is ',int2str(cfo),'Hz']);
+    %display(['CFO is ',int2str(cfo),'Hz']);
     
     cfo_list(cur_device) = cfo;
 end
+display(cfo_list);

@@ -12,15 +12,17 @@ end
 type_len=size(type,2);
 % snr calculate => get snr_list
 if type_len > 1
-    snr_list=zeros(1,portnum);
-    p_sig=zeros(carriernum,symbolnum/4-1,portnum);
-    p_noi=zeros(carriernum,symbolnum/4-1,portnum);
+    snr_list=[];
+    p_sig=zeros(symbolnum/4-1,portnum);
+    p_noi=zeros(symbolnum/4-1,portnum);
     for cur_device=1:2:portnum
         for idx=type_len+1:type_len:symbolnum
-            p_sig(:,(idx-1)/type_len,cur_device) = abs(h_rx(:,idx,cur_device)).^2;
-            p_noi(:,(idx-1)/type_len,cur_device) = abs(h_rx(:,idx+1,cur_device)).^2;
+            p_sig(,cur_device) = abs(h_rx(:,idx,cur_device)).^2)];
+            p_noi = [p_noi  mean(abs(h_rx(:,idx+1,cur_device)).^2)];
         end
-        snr_list(cur_device)=log(mean(mean(p_sig(:,:,cur_device),2),1)/mean(mean(p_noi(:,:,cur_device),2),1))/log(10)*10;
+        sig_list(cur_device)=mean(p_sig);
+        noi_list(cur_device)=mean(p_noi);
+        snr_list(cur_device)=log(mean(p_sig)/mean(p_noi))/log(10)*10;
     end
     display(snr_list);
 end
@@ -28,8 +30,7 @@ end
 % ber calculate => get ber_list
 if type_len ~= 2
     ber_list=[];
-    for cur_device=1:portnum
-        if checklist(cur_device)~=1 continue; end
+    for cur_device=1:2:portnum
         total_symbol=0;
         error_symbol=0;
         for idx=type_len+1:type_len:symbolnum
@@ -46,10 +47,7 @@ end
 
 % csi insert
 h_full_est=[];
-for cur_device=1:portnum
-    if checklist(cur_device)~=1 
-        continue; 
-    end
+for cur_device=1:2:portnum
     for idx=type_len+1:type_len:symbolnum
         for k=1:type_len
             cur_idx=idx+k-1;
