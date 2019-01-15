@@ -1,7 +1,9 @@
 clear all;
 close all;
 
-rxdir=['../rxdata/nclk/'];
+rxdir=['../rxdata/'];
+fname = "../conf/conf2.json";
+threshold = 0.01;
 for fileidx=1:10
     hsr_rxdata  % rx_all_sig
     portnum = size(rx_all_sig,1);
@@ -13,7 +15,7 @@ for fileidx=1:10
         if (peak1>0.9)
             checklist(idx)=-1;
         end
-        if (peak2<0.1)
+        if (peak2<threshold)
             checklist(idx)=0;
         end
     end

@@ -29,7 +29,7 @@ for idx = 1 : symbolnum
 end
 figure; hold on; 
 for idx = 1 : portnum
-    plot(real(symbol_t(:,1,idx)));
+    plot(real(symbol_t(:,1,idx))); title('Rx Beamforming');
 end
     
 %snr of receive bf

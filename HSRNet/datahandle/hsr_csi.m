@@ -9,8 +9,10 @@ rx_all_frame = zeros(portnum,frame_len);
 h_tx = zeros(12*nb_rb,num_symbols_frame,portnum);
 h_rx = zeros(12*nb_rb,num_symbols_frame,portnum);
 h_est = zeros(12*nb_rb,num_symbols_frame,portnum);
+
 for cur_device = 1:portnum
     if checklist(cur_device)~=1 continue; end
+    plot_device = cur_device;
     %% cfo correction
     cfo = cfo_list(cur_device);
     
@@ -39,5 +41,6 @@ for cur_device = 1:portnum
     %est=est(:,2:end,:);
 end
 
-figure; plot(h_est(:,3,1)); % frequency
-figure; plot(h_est(1,:,1)); % time
+range=max(max(abs(h_est(:,:,plot_device))));
+figure; plot(h_est(:,100,plot_device)); title('csi vs frequency'); axis([-range range -range range]);
+figure; plot(h_est(1,2:end,plot_device)); title('csi vs time');  axis([-range range -range range]);

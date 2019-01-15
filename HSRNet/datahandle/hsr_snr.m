@@ -15,7 +15,8 @@ if type_len > 1
     snr_list=zeros(1,portnum);
     p_sig=zeros(carriernum,symbolnum/4-1,portnum);
     p_noi=zeros(carriernum,symbolnum/4-1,portnum);
-    for cur_device=1:2:portnum
+    for cur_device=1:portnum
+        if checklist(cur_device)~=1 continue; end
         for idx=type_len+1:type_len:symbolnum
             p_sig(:,(idx-1)/type_len,cur_device) = abs(h_rx(:,idx,cur_device)).^2;
             p_noi(:,(idx-1)/type_len,cur_device) = abs(h_rx(:,idx+1,cur_device)).^2;
@@ -45,11 +46,14 @@ if type_len ~= 2
 end
 
 % csi insert
-h_full_est=[];
+h_full_est = [];
+angle_full_est = [];
+rfo = [];
 for cur_device=1:portnum
     if checklist(cur_device)~=1 
         continue; 
     end
+    plot_device = cur_device;
     for idx=type_len+1:type_len:symbolnum
         for k=1:type_len
             cur_idx=idx+k-1;
@@ -58,19 +62,27 @@ for cur_device=1:portnum
             else
                 h_full_est(:,cur_idx,cur_device) = (h_est(:,cur_idx-1,cur_device)+h_est(:,cur_idx+1,cur_device))/2;
             end
+            angle_full_est(:,cur_idx,cur_device) = angle(h_full_est(:,cur_idx,cur_device))-angle(h_full_est(:,cur_idx-1,cur_device));
         end
     end
+    angle_unwrap = angle_full_est;
+    idxlist=find(angle_unwrap>pi); angle_unwrap(idxlist)=angle_unwrap(idxlist)-pi;
+    idxlist=find(angle_unwrap>pi/2); angle_unwrap(idxlist)=angle_unwrap(idxlist)-pi;
+    idxlist=find(angle_unwrap<-pi); angle_unwrap(idxlist)=angle_unwrap(idxlist)+pi;
+    idxlist=find(angle_unwrap<-pi/2); angle_unwrap(idxlist)=angle_unwrap(idxlist)+pi;
+    
+    rfo(cur_device) = cfo_list(cur_device) + mean(mean(angle_unwrap(:,6:end,cur_device)))*srate/(2*pi*cp_symbol_len);
 end
 
 % CIR and doppler spread
 CIR=ifft(h_full_est,[],1); % CIR time, symbol time
-figure; mesh(abs(fftshift(CIR(:,:,1),1)));
+figure; mesh(abs(fftshift(CIR(:,:,plot_device),1))); title('CIR');
 
 PDP = mean(CIR.^2,2); % CIR time
-figure; plot(fftshift((abs(PDP(:,:)))));
+figure; plot(fftshift((abs(PDP(:,:))))); title('PDP');
 
 DS = fft(CIR,[],2); % CIR time, spead freq
-figure; mesh(abs(fftshift(fftshift(DS(:,:,1),1),2)));
+figure; mesh(abs(fftshift(fftshift(DS(:,:,plot_device),1),2))); title('Doppler Spread')
 
 
 

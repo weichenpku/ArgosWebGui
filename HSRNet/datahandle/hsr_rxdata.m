@@ -1,4 +1,3 @@
-fname = "../conf/conf1.json";
 fid = fopen(fname); 
 raw = fread(fid,inf); 
 str = char(raw'); 
