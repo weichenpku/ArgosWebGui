@@ -18,13 +18,14 @@ clear all;
 % rx = rx0(10001:29200);
 % rx_f = fftshift(fft(rx));
 
-fileidx=1;
-rxdir='../rxdata/tone_clk/';
+fname = "../conf/conf3.json";
+fileidx=2;
+rxdir='../rxdata/';
 cd ..; hsr_rxdata; cd cfo_verify; % rx_all_sig
 
 tx_t = csvread('../../refdata/generation/test_data/tone.csv');
 tx = tx_t;
-rx_ant = 5;
+rx_ant = 1;
 rx = rx_all_sig(rx_ant,1:19200);
 tx_f = fftshift(fft(tx));
 rx_f = fftshift(fft(rx));

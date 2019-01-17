@@ -77,7 +77,7 @@ class LTE_Transmitter:
         # create gains and set them
         IrisUtil.Init_CreateDefaultGain_WithDevFE(self)
         self.rate = 1.92e6*2
-        IrisUtil.Init_CreateBasicGainSettings(self, rate=self.rate, bw=5e6, freq=3.5e9, dcoffset=True)
+        IrisUtil.Init_CreateBasicGainSettings(self, rate=self.rate, bw=10e6, freq=3.495e9, dcoffset=True)
         #IrisUtil.Setting_ChangeIQBalance(self,txangle=-0.2,txscale=1.2)
 
          # create streams (but not activate them)

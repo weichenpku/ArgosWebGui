@@ -1,10 +1,9 @@
 symbol_len = num_carriers;
 cp_len = symbol_len/4;
-cp_symbol_len = symbol_len+cp_len; 
-frame_len = cp_symbol_len*6*20;
+cp_symbol_len = symbol_len+cp_len;
+symbol_num = 6*10;  duration_time=0.005;
+frame_len = cp_symbol_len*symbol_num;
 pss_t = [pss(end-cp_len+1:end) pss];
-
-rx_all_sig=rx_all_sig(:,1:frame_len);
 
 portnum = size(rx_all_sig,1);
 samplelen = size(rx_all_sig,2);
@@ -13,28 +12,15 @@ offset_list=[];
 
 for cur_device = 1:portnum 
     if checklist(cur_device)~=1 continue; end
-    rx_t = rx_all_sig(cur_device,:);
+    rx_tmp = rx_all_sig(cur_device,1:end-frame_len);
 
-    tmp_corr = conv(rx_t,conj(pss));
+    tmp_corr = conv(rx_tmp,conj(pss));
     [tmp_peak,tmp_idx]=max(abs(tmp_corr));
     tmp_idx = tmp_idx - cp_symbol_len;
     
-    if tmp_idx<1  
-        tmp_t = [rx_all_sig(:,tmp_idx+frame_len:frame_len) rx_all_sig(:,1:tmp_idx+frame_len-1)];
-        rx_all_sig = tmp_t;
-        rx_t = rx_all_sig(cur_device,:);
-        tmp_idx = 1;
-    end
-    if tmp_idx+frame_len-1>samplelen
-        tmp_t = [rx_all_sig(:,tmp_idx:end) rx_all_sig(:,1:tmp_idx-1)];
-        rx_all_sig = tmp_t;
-        rx_t = rx_all_sig(cur_device,:);
-        tmp_idx = 1;
-    end
-    
     offset_list(cur_device)=tmp_idx;
     
-    rx_pss_t = rx_t(tmp_idx:tmp_idx+cp_symbol_len-1);
+    rx_pss_t = rx_tmp(tmp_idx:tmp_idx+cp_symbol_len-1);
     rx_pss_t = rx_pss_t - mean(rx_pss_t);
 
     %% first: IFO
@@ -56,7 +42,11 @@ for cur_device = 1:portnum
         end
     end
 
-    offset = maxcorr_offset; assert(offset==cp_symbol_len+1);
+    offset = maxcorr_offset;
+    if (abs(offset-cp_symbol_len-1)<5)
+        offset=cp_symbol_len+1;
+    end
+    assert(offset==cp_symbol_len+1);
     ifo = ifo_idx(maxcorr_idx)*15000*-1;
     rx_pss1 = rx_pss_ifo(maxcorr_idx,:);
     %display(['IFO is ',int2str(ifo),'Hz']);
@@ -83,7 +73,7 @@ for cur_device = 1:portnum
     %% third: FFO (ALL CP based)
     df = -ifo-ffo;
     phase = 2*pi*df*(1:frame_len)/srate;
-    rxframe = rx_t(offset_list(cur_device):offset_list(cur_device)+frame_len-1);
+    rxframe = rx_all_sig(cur_device, offset_list(cur_device):offset_list(cur_device)+frame_len-1);
     rxframe = exp(1i*phase).*(rxframe-mean(rxframe));
     rx_all_cp = zeros(cp_len,frame_len/cp_symbol_len,2);
     corr_all_cp = zeros(cp_len,frame_len/cp_symbol_len);

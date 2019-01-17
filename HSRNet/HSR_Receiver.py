@@ -29,7 +29,7 @@ def test():
 
     rx_gain = conf_dict['rx_gain']
     rx_repeat_time = int(conf_dict['rx_repeat_time']) # number of frames
-    rx_repeat_duration = int(conf_dict['rx_repeat_duration']) # seconds
+    rx_repeat_duration = float(conf_dict['rx_repeat_duration']) # seconds
     
     main = FakeMain(rx_serial_master,rx_serial_slaves)
     obj = LTE_Receiver(main)
@@ -51,7 +51,7 @@ def test():
         print(para,':',value)
     print()
 
-    obj.loop(repeat_time=rx_repeat_time, repeat_duration=rx_repeat_duration)
+    obj.loop(conf_dict['filesource'], repeat_time=rx_repeat_time, repeat_duration=rx_repeat_duration)
 
 
 class LTE_Receiver:
@@ -72,7 +72,7 @@ class LTE_Receiver:
         # create gains and set them
         IrisUtil.Init_CreateDefaultGain_WithDevFE(self)
         self.rate = 1.92e6*2
-        IrisUtil.Init_CreateBasicGainSettings(self, bw=5e6, freq=3.5e9, dcoffset=True, txrate=self.rate, rxrate=self.rate)
+        IrisUtil.Init_CreateBasicGainSettings(self, bw=10e6, freq=3.495e9, dcoffset=True, txrate=self.rate, rxrate=self.rate)
 
         # create streams (but not activate them)
         IrisUtil.Init_CreateRxStreams_RevB(self)
@@ -119,12 +119,13 @@ class LTE_Receiver:
         IrisUtil.Gains_HandleSelfParameters(self, gains)
         IrisUtil.Gains_SetBasicGains(self, gains)
     
-    def doSimpleRx(self,repeat_time,repeat_duration):
+    def doSimpleRx(self,fsrc,repeat_time,repeat_duration):
         # prepare work, create tx rx buffer
         IrisUtil.Process_CreateReceiveBuffer(self)
         IrisUtil.Process_ClearStreamBuffer(self)
         # activate
-        for i in range(repeat_time):
+        i=1
+        while i <= repeat_time:
             IrisUtil.Process_ComputeTimeToDoThings_UseHasTime(self, delay = 10000000, alignment = 0)
             IrisUtil.Process_RxActivate_WriteFlagToRxStream_UseHasTime(self, rx_delay = 0)
 
@@ -132,7 +133,7 @@ class LTE_Receiver:
             IrisUtil.Process_WaitForTime_NoTrigger(self)
 
             # read stream
-            IrisUtil.Process_ReadFromRxStream(self)
+            flag = IrisUtil.Process_ReadFromRxStream(self)
             IrisUtil.Process_HandlePostcode(self)  # postcode is work on received data
 
             recvdata = IrisUtil.Process_SaveData(self)
@@ -140,6 +141,9 @@ class LTE_Receiver:
             sio.savemat("rxdata/rx"+str(i)+".mat",recvdata)
             # sleep before next activation
             time.sleep(repeat_duration)
+            if flag==True:
+                i=i+1
+            
 
         # deactive
         IrisUtil.Process_RxDeactive(self)
@@ -147,11 +151,11 @@ class LTE_Receiver:
         # do correlation
         # IrisUtil.Process_DoCorrelation2FindFirstPFDMSymbol(self)
     
-    def loop(self,repeat_time,repeat_duration):
+    def loop(self,fsrc,repeat_time,repeat_duration):
         if self.main.userTrig:
             self.main.userTrig = False
             self.main.changedF()  # just register set
-            self.doSimpleRx(repeat_time=repeat_time,repeat_duration=repeat_duration)
+            self.doSimpleRx(fsrc=fsrc,repeat_time=repeat_time,repeat_duration=repeat_duration)
             #IrisUtil.Interface_UpdateUserGraph(self, self.correlationSampes)  # update to user graph
             IrisUtil.Interface_UpdateUserGraph(self)
 

@@ -1,7 +1,5 @@
-clear all;
-close all;
 
-fileidx=10;
+%fileidx=2;
 rxdir=['../rxdata/'];
 fname = "../conf/conf2.json";
 
@@ -46,8 +44,16 @@ if (rfo_use)
     cfo_list = rfo;
     hsr_csi
     hsr_snr
+    figure; mesh(angle(h_full_est(:,:,plot_device))); title('csi distribution');
+    figure; plot(mean(h_full_est(:,:,plot_device),1)); title('mean csi vs time');
     figure; plot(mean(h_full_est(:,:,plot_device),2)); title('mean csi vs frequency');
 end
 
 hsr_rxbf            % rxbf employ
 % weight, h_bf_rx, bf_snr
+
+snr_freq = log(mean(p_sig(:,:,:),2)./mean(p_noi(:,:,:),2))/log(10)*10;
+snr_bf_freq_ = log(sum(10.^(snr_freq/10),3))/log(10)*10;
+snr_bf_freq = log(mean(p_bf_sig,2)./mean(p_bf_noi,2))/log(10)*10;
+figure; hold on;
+plot(snr_freq(:,1,1)); plot(snr_freq(:,1,2)); plot(snr_bf_freq); plot(snr_bf_freq_);

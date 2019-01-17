@@ -31,11 +31,12 @@ sig_f = csvread([savedir 'sig_f.csv']);
 % rxdir
 rxfile = dir([rxdir 'rx*']);
 rxnum = size(rxfile,1);
+file_list=[""];
 for file = 1:rxnum
-    filename = rxfile(rxnum).name;
+    tmpname = rxfile(file).name;
+    file_list(file+1)=tmpname;
 end
-filename = rxfile(fileidx).name
-
+filename = ['rx' int2str(fileidx) '.mat'];
 %% load transmit signal
 % load([rxdir,filename])
 % tx_dir = '../../rxdata/';

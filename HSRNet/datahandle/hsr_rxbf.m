@@ -33,8 +33,8 @@ for idx = 1 : portnum
 end
     
 %snr of receive bf
-p_bf_sig=zeros(carriernum, symbolnum);
-p_bf_noi=zeros(carriernum, symbolnum);
+p_bf_sig=zeros(carriernum, symbolnum/type_len-1);
+p_bf_noi=zeros(carriernum, symbolnum/type_len-1);
 if type_len > 1
    for idx=type_len+1:type_len:symbolnum
        p_bf_sig(:,(idx-1)/type_len) = abs(h_bf_est(:,idx)).^2;

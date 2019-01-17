@@ -866,6 +866,7 @@ def Process_WaitForTime_NoTrigger(self):
 def Process_ReadFromRxStream(self):
     max_len = 60928 # 0xee00
     read_len =1920
+    read_success = True
     #print(self.ts)
     if (self.numSamples>max_len):
         print("[SOAR] WARNING: too many recv samples to read, only",max_len,"is avalable")
@@ -883,12 +884,14 @@ def Process_ReadFromRxStream(self):
             if sr.ret == -1:
                 print('Error: Bad Read!!!')
                 # GUI.error('Error: Bad Read!')
+                read_success = False
                 break  # always break because it cannot recover for most of time
             else: 
                 numRecv += sr.ret
                 print('[SOAR] SUCCESS: read',numRecv,'samples')
         print('[SOAR] FINISH reading')
-        print()
+        print()    
+    return read_success
 
 def Process_ReadFromRxStream_Async(self):
     # first determine the streams needed to read

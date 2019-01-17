@@ -1,5 +1,13 @@
 % get rx_all_sig
-mean_offset = round(mean(mod(offset_list(find(offset_list>0)),frame_len)));
+% mean_offset = round(mean(mod(offset_list(find(offset_list>0)),frame_len)));
+offset_list2 = reshape(offset_list,[2,device_num]);
+offset_range = abs(offset_list2(1,:)-offset_list2(2,:));
+if abs(max(abs(offset_range))-srate/100)<5
+    offset_list2 = mod(offset_list2,srate/100);
+    offset_range = offset_list2(1,:)-offset_list2(2,:);
+end
+assert(max(abs(offset_range))<5);
+mean_offset = round(mean(offset_list2,1));
 
 portnum = size(rx_all_sig,1);
 samplelen = size(rx_all_sig,2);
@@ -11,6 +19,7 @@ h_rx = zeros(12*nb_rb,num_symbols_frame,portnum);
 h_est = zeros(12*nb_rb,num_symbols_frame,portnum);
 
 for cur_device = 1:portnum
+    device_no = floor((cur_device+1)/2);
     if checklist(cur_device)~=1 continue; end
     plot_device = cur_device;
     %% cfo correction
@@ -19,12 +28,12 @@ for cur_device = 1:portnum
     df = -cfo;
     phase = 2*pi*df*(1:frame_len)/srate;
     ch = cos(phase)+1i*sin(phase);
-    rxframe = rx_all_sig(cur_device,mean_offset:mean_offset+frame_len-1);
+    rxframe = rx_all_sig(cur_device,mean_offset(device_no):mean_offset(device_no)+frame_len-1);
     rxframe = ch.*(rxframe-mean(rxframe));
     rx_all_frame(cur_device,:)=rxframe;
 
     %% CSI
-    num_symbols_frame = 120; 
+    num_symbols_frame = symbol_num; 
     cp_symbol_len = cp_len + symbol_len; 
     for k = 2:num_symbols_frame
             symbol_start = 1 + (k-1)*cp_symbol_len;
@@ -42,5 +51,5 @@ for cur_device = 1:portnum
 end
 
 range=max(max(abs(h_est(:,:,plot_device))));
-figure; plot(h_est(:,100,plot_device)); title('csi vs frequency'); axis([-range range -range range]);
+figure; plot(h_est(:,51,plot_device)); title('csi vs frequency'); axis([-range range -range range]);
 figure; plot(h_est(1,2:end,plot_device)); title('csi vs time');  axis([-range range -range range]);
