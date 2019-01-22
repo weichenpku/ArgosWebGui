@@ -1,0 +1,561 @@
+[33mcommit dcd2f6e27d6e0f63d629effd4672eb5a6ac56dba[m
+Author: weichen <pkuweichen@gmail.com>
+Date:   Fri Jan 11 20:23:31 2019 +0800
+
+    rxbf
+
+[33mcommit ff15ad3548454aee8eb1f085ab0af5fbfd6deeb1[m
+Author: weichen <pkuweichen@gmail.com>
+Date:   Fri Jan 11 15:16:54 2019 +0800
+
+    filesrc
+
+[33mcommit a95e7a8d038bd9a951c104d66eb378c6f7bc88ee[m
+Author: weichen <pkuweichen@gmail.com>
+Date:   Fri Jan 11 09:31:27 2019 +0800
+
+    json
+
+[33mcommit 9fd24c84354dddf14eeea35ab249428e37674501[m
+Author: weichen <pkuweichen@gmail.com>
+Date:   Tue Jan 8 19:43:20 2019 +0800
+
+    iqbalance
+
+[33mcommit 281158d4203a919ec43af2e640b77f45ae643494[m
+Author: weichen <pkuweichen@gmail.com>
+Date:   Sat Jan 5 09:16:12 2019 +0800
+
+    calibrate
+
+[33mcommit 4145000d8cb99522fa59cd04e1f1d355abbac390[m
+Author: weichen <pkuweichen@gmail.com>
+Date:   Tue Jan 1 15:53:34 2019 +0800
+
+    iq_imbalance
+
+[33mcommit ea5d6388c5ec02c089579747d0f686998c69b7e3[m
+Author: weichen <pkuweichen@gmail.com>
+Date:   Sat Dec 29 15:12:33 2018 +0800
+
+    cfo
+
+[33mcommit 41e29ca87151020cfa7f8d7de1be4e54369439c7[m
+Author: weichen <pkuweichen@gmail.com>
+Date:   Fri Dec 28 20:38:12 2018 +0800
+
+    cfo_verify
+
+[33mcommit d179e2e48b02e8964ceef121f166c0919eff1abb[m
+Author: weichen <pkuweichen@gmail.com>
+Date:   Wed Dec 26 16:16:26 2018 +0800
+
+    organize files
+
+[33mcommit 0d0a478fa94dbe011adaa129d92c2594ec7a49de[m
+Author: weichenpku <pkuweichen@gmail.com>
+Date:   Tue Dec 25 18:55:58 2018 +0800
+
+    Add files via upload
+
+[33mcommit a54b35daa45acfdb9cc4a5701796f47ea60dd9d9[m
+Author: weichen <pkuweichen@gmail.com>
+Date:   Tue Dec 25 18:45:26 2018 +0800
+
+    cfo
+
+[33mcommit 70f06f9c527d229a1fff4ea8c053efc32ac4d10a[m
+Author: weichen <pkuweichen@gmail.com>
+Date:   Mon Dec 24 19:12:28 2018 +0800
+
+    updata .gitignore
+
+[33mcommit 64c6d000c9ece7316793a02d19285128461a3c06[m
+Author: weichen <pkuweichen@gmail.com>
+Date:   Sat Dec 22 18:07:40 2018 +0800
+
+    tx_clk_test
+
+[33mcommit f1942ade4b240ffdb4699ac0f2c6b398431a90b2[m
+Author: weichen <pkuweichen@gmail.com>
+Date:   Sat Dec 22 11:09:04 2018 +0800
+
+    test
+
+[33mcommit 55a663a60ea07870647eb0073c58bd3bba440144[m
+Author: weichenpku <pkuweichen@gmail.com>
+Date:   Sat Dec 22 09:59:53 2018 +0800
+
+    Delete hsr_datahandle.m
+
+[33mcommit a738e8db2e58279cdfb1f9863129238d2887c89a[m
+Author: weichenpku <pkuweichen@gmail.com>
+Date:   Sat Dec 22 09:59:15 2018 +0800
+
+    Add files via upload
+
+[33mcommit 92beaef689d2695a87321e026e5508d82b047cf2[m
+Author: weichen <pkuweichen@gmail.com>
+Date:   Fri Dec 21 20:50:43 2018 +0800
+
+    hsr_tx
+
+[33mcommit b9480c0a25911087e75c616cf58e1f9a89a463c8[m
+Author: weichen <pkuweichen@gmail.com>
+Date:   Fri Dec 21 20:50:22 2018 +0800
+
+    hsr_tx
+
+[33mcommit 3257cf6347d1560183dad6a8f21d8cb2d008f2ee[m
+Author: weichen <pkuweichen@gmail.com>
+Date:   Fri Dec 21 20:44:34 2018 +0800
+
+    hsr_tx
+
+[33mcommit 7a47558f50aa78ee15c48b476f8205f50d04a357[m
+Author: weichen <pkuweichen@gmail.com>
+Date:   Fri Dec 21 20:24:18 2018 +0800
+
+    hsr_tx
+
+[33mcommit f90f2914e9b333e8c26975fbf260a6cb605af1a5[m
+Author: weichen <pkuweichen@gmail.com>
+Date:   Thu Dec 20 19:38:56 2018 +0800
+
+    ts
+
+[33mcommit f6512f5aece15cb8ef85bc9df8225d4b79428b94[m
+Author: weichen <pkuweichen@gmail.com>
+Date:   Thu Dec 20 17:36:49 2018 +0800
+
+    streaming
+
+[33mcommit 61dd5109f045327d2d7db7b46a7a769fc4cc3dac[m
+Author: weichen <pkuweichen@gmail.com>
+Date:   Thu Dec 20 17:32:38 2018 +0800
+
+    ts_correct
+
+[33mcommit 46718f9d17eb5629b0b67d2c2e2a8e6971301bad[m
+Author: weichen <pkuweichen@gmail.com>
+Date:   Wed Dec 19 21:53:40 2018 +0800
+
+    testdata
+
+[33mcommit 7c8d28b7116516c0f6d967d29fb4e269a5e2bb40[m
+Author: weichen <pkuweichen@gmail.com>
+Date:   Wed Dec 19 15:02:20 2018 +0800
+
+    multiframe
+
+[33mcommit 8738fb054e6f3735813a311376ccffd8b8aad383[m
+Author: weichen <pkuweichen@gmail.com>
+Date:   Wed Dec 19 13:45:28 2018 +0800
+
+    LTE_tx_rx
+
+[33mcommit 66d7b7907c3eb3a57ebf1b8cd156a5553b777b23[m
+Author: wuyuepku <wuyue16@pku.edu.cn>
+Date:   Wed Sep 5 18:04:25 2018 -0500
+
+    update
+
+[33mcommit c035434903cccefeeca4ee331c7af8a4762023c5[m
+Author: wuyuepku <wuyue16@pku.edu.cn>
+Date:   Wed Sep 5 17:40:35 2018 -0500
+
+    bug fixed
+
+[33mcommit 6d57b6aa1b7ed9d598adf7a163f53ddd723672da[m
+Author: wuyuepku <wuyue16@pku.edu.cn>
+Date:   Wed Sep 5 17:39:08 2018 -0500
+
+    bug fixed
+
+[33mcommit c048a5ff283cf005b225d85c3f53748b27542c2c[m
+Author: wuyuepku <wuyue16@pku.edu.cn>
+Date:   Wed Sep 5 17:36:26 2018 -0500
+
+    small bug fix
+
+[33mcommit 169d01cda71adbd5ecca742b082e527bb14d8cf5[m
+Author: wuyuepku <wuyue16@pku.edu.cn>
+Date:   Wed Sep 5 17:34:54 2018 -0500
+
+    ready to test continuous receive mode
+
+[33mcommit 72e02605e686082117a12bd12b05dd0d8dc6aa26[m
+Author: wuyuepku <wuyue16@pku.edu.cn>
+Date:   Wed Sep 5 16:33:18 2018 -0500
+
+    add unfinished continuous mode
+
+[33mcommit b7eaad8609ab336afb2a8b735763bb8793c22023[m
+Author: wuyuepku <wuyue16@pku.edu.cn>
+Date:   Mon Sep 3 18:53:43 2018 -0500
+
+    add MATLAB SSS correlation
+
+[33mcommit 37bce124c0a0b5b2767afcf4cfa967d010ceedba[m
+Author: wuyuepku <wuyue16@pku.edu.cn>
+Date:   Mon Sep 3 11:47:14 2018 -0500
+
+    update conjugate on signals
+
+[33mcommit 32b597735e1ddec9c146e452b4d6a7bdfb54a725[m
+Author: wuyuepku <wuyue16@pku.edu.cn>
+Date:   Sun Sep 2 22:45:39 2018 -0500
+
+    update LTE signal strength
+
+[33mcommit e880cf2d70a135b127192f4e8f17d6e4b08cb281[m
+Author: wuyuepku <wuyue16@pku.edu.cn>
+Date:   Sun Sep 2 21:29:50 2018 -0500
+
+    update LF
+
+[33mcommit 083629e270eef9d206d8ed00848497dfa09379ef[m
+Author: wuyuepku <wuyue16@pku.edu.cn>
+Date:   Sun Sep 2 21:29:19 2018 -0500
+
+    add graph data save function
+
+[33mcommit cd92229539a169813e7089a24fbd99b765e379dd[m
+Author: wuyuepku <wuyue16@pku.edu.cn>
+Date:   Sun Sep 2 15:37:05 2018 -0500
+
+    fix correlation upsample bug
+
+[33mcommit 2a6921adfc54317885738eff7f0b6fcef4254392[m
+Author: wuyuepku <wuyue16@pku.edu.cn>
+Date:   Sun Sep 2 15:25:23 2018 -0500
+
+    fix correlation bug
+
+[33mcommit 63ffdbd8b32231a4aafa99bf70b484b12b0b51e7[m
+Author: wuyuepku <wuyue16@pku.edu.cn>
+Date:   Sun Sep 2 15:22:03 2018 -0500
+
+    add correlation plot
+
+[33mcommit a31ed939c45261cf535b0664a669e19969a8457d[m
+Author: wuyuepku <wuyue16@pku.edu.cn>
+Date:   Sun Sep 2 13:19:09 2018 -0500
+
+    add LTE one-repeator mode
+
+[33mcommit c0e7d907d0de7300f6ab2468701112f3dc780ddf[m
+Author: wuyuepku <wuyue16@pku.edu.cn>
+Date:   Sat Sep 1 16:43:17 2018 -0500
+
+    update tooltips
+
+[33mcommit 95b54984db07479455973e68800ca0224efa7eeb[m
+Author: wuyuepku <wuyue16@pku.edu.cn>
+Date:   Sat Sep 1 16:20:54 2018 -0500
+
+    break once bad read
+
+[33mcommit e197fdec7ea84b866370ae282c8be4a9909dc185[m
+Author: wuyuepku <wuyue16@pku.edu.cn>
+Date:   Fri Aug 31 13:31:26 2018 -0500
+
+    update LF
+
+[33mcommit c128de462986240e5b4287e882a1f6c1b8642550[m
+Author: wuyuepku <wuyue16@pku.edu.cn>
+Date:   Fri Aug 31 13:30:36 2018 -0500
+
+    update socket buf size
+
+[33mcommit d03ef16672c18f5737a32d5d53f08fc2a5941185[m
+Author: IrisDev1604 DevFE <IrisDev1604DevFE@37754.vm>
+Date:   Fri Aug 31 08:46:01 2018 -0700
+
+    add linux run utility
+
+[33mcommit fe3e31a85af39858feceab567f28b930cbad6efe[m
+Author: wuyuepku <wuyue16@pku.edu.cn>
+Date:   Thu Aug 30 17:16:59 2018 -0500
+
+    add devFE sin repeator docs
+
+[33mcommit 67f737214f3aee8a92f812d54ab5b018e9746791[m
+Author: wuyuepku <wuyue16@pku.edu.cn>
+Date:   Thu Aug 30 17:10:10 2018 -0500
+
+    small bug fix
+
+[33mcommit 4b9df8d600645a5cb8f41a3fc8b23fd666580ecb[m
+Author: wuyuepku <wuyue16@pku.edu.cn>
+Date:   Thu Aug 30 16:26:48 2018 -0500
+
+    add dev fe repeator support
+
+[33mcommit bd37a653c76258be65ce92584b210a5a81afe3a8[m
+Author: wuyuepku <wuyue16@pku.edu.cn>
+Date:   Thu Aug 30 10:10:09 2018 -0500
+
+    realize repeator
+
+[33mcommit 0cdb961c0432a375d9bfee5e9e434c983667755e[m
+Author: wuyuepku <wuyue16@pku.edu.cn>
+Date:   Wed Aug 29 22:23:57 2018 -0500
+
+    change to single thread
+
+[33mcommit 674d267cc114b1fff3235caa13c6360877737170[m
+Author: wuyuepku <wuyue16@pku.edu.cn>
+Date:   Wed Aug 29 21:40:38 2018 -0500
+
+    add multi-thread receving
+
+[33mcommit c53d242b18e20a9be73b44ca1e19d4ce8c8f78a9[m
+Author: wuyuepku <wuyue16@pku.edu.cn>
+Date:   Wed Aug 29 21:09:22 2018 -0500
+
+    add argument support
+
+[33mcommit c3ace4a75c0bd51a48b14124fc95732c3b978301[m
+Author: wuyuepku <wuyue16@pku.edu.cn>
+Date:   Wed Aug 29 20:31:58 2018 -0500
+
+    small bug fixed
+
+[33mcommit 19cf9c6b193252f19f11ac4df7e77137da46e65a[m
+Author: wuyuepku <wuyue16@pku.edu.cn>
+Date:   Wed Aug 29 20:26:20 2018 -0500
+
+    bug fixed
+
+[33mcommit b1418d8f238fe4fb6ccc752f56ea6544f91779ac[m
+Author: wuyuepku <wuyue16@pku.edu.cn>
+Date:   Wed Aug 29 18:16:47 2018 -0500
+
+    add full error track printing
+
+[33mcommit bf503ef4c407fe190c7eeb416cd7f8afad54c803[m
+Author: wuyuepku <wuyue16@pku.edu.cn>
+Date:   Wed Aug 29 18:12:00 2018 -0500
+
+    create data folder in git
+
+[33mcommit 03dd77dfe23b1414984db772acf7b57b91719ee2[m
+Author: wuyuepku <wuyue16@pku.edu.cn>
+Date:   Wed Aug 29 18:04:40 2018 -0500
+
+    data recorder in burst mode
+
+[33mcommit 43236317aa3f29de30f3a28661c9eab47c687d24[m
+Author: wuyuepku <wuyue16@pku.edu.cn>
+Date:   Wed Aug 29 10:56:14 2018 -0500
+
+    make mode list ordered by name
+
+[33mcommit 97a06b7dbac82cc2f0f09668cecbbe5b6abc231b[m
+Author: wuyuepku <wuyue16@pku.edu.cn>
+Date:   Wed Aug 29 10:53:45 2018 -0500
+
+    small bug fixed
+
+[33mcommit 08c057e1bc315484cea364ad834460ae15696b70[m
+Author: wuyuepku <wuyue16@pku.edu.cn>
+Date:   Wed Aug 29 10:50:47 2018 -0500
+
+    update readme
+
+[33mcommit 487c2ba169f3e38dfbbef6ebbae0d987a318c8e1[m
+Author: wuyuepku <wuyue16@pku.edu.cn>
+Date:   Tue Aug 28 20:43:49 2018 -0500
+
+    delete unused files
+
+[33mcommit ecd6cbc4a0018677a755b7ceaf1c4be97b489908[m
+Author: wuyuepku <wuyue16@pku.edu.cn>
+Date:   Tue Aug 28 20:39:02 2018 -0500
+
+    bug fix
+
+[33mcommit 6bb3ba7118ad19436c6422a513904a8dcde95838[m
+Author: wuyuepku <wuyue16@pku.edu.cn>
+Date:   Tue Aug 28 20:14:49 2018 -0500
+
+    modes of revB and argosv2
+
+[33mcommit be056497fbadcff517490219fd2ceb6019636a76[m
+Author: wuyuepku <wuyue16@pku.edu.cn>
+Date:   Tue Aug 28 16:31:55 2018 -0500
+
+    add trigger and single animation
+
+[33mcommit f2ac4e3e1c57cbf726471501ae506b09139b1b29[m
+Author: wuyuepku <wuyue16@pku.edu.cn>
+Date:   Tue Aug 28 15:22:17 2018 -0500
+
+    realize hot reload for modes functions
+
+[33mcommit 7bf66c6cc8fe2c1308040a54d400b06df81ab207[m
+Author: wuyuepku <wuyue16@pku.edu.cn>
+Date:   Tue Aug 28 14:22:02 2018 -0500
+
+    add mode manager
+
+[33mcommit 7bb0b10b041500cb370abd10b546ae2216fa359c[m
+Author: wuyuepku <wuyue16@pku.edu.cn>
+Date:   Tue Aug 28 11:19:15 2018 -0500
+
+    add mode's instruction for user to see, fixed children bug of html
+
+[33mcommit c8579ed527d910ab63240c777bf8f7dc545702b2[m
+Author: wuyuepku <wuyue16@pku.edu.cn>
+Date:   Mon Aug 27 20:47:06 2018 -0500
+
+    fix bug on dev front-end
+
+[33mcommit 3deb7f5c2c48a274dba8f06db9c49ca4efd5df66[m
+Author: wuyuepku <wuyue16@pku.edu.cn>
+Date:   Mon Aug 27 20:24:13 2018 -0500
+
+    finish bi-channel stream
+
+[33mcommit ee043dfa2ae5c183948d36c405d19d1eb0c5d85f[m
+Author: wuyuepku <wuyue16@pku.edu.cn>
+Date:   Fri Aug 24 16:28:50 2018 -0500
+
+    update dc offset option
+
+[33mcommit c2aee11777b04aa7cdb9696bc0d6e88cad2dc1c7[m
+Author: wuyuepku <wuyue16@pku.edu.cn>
+Date:   Thu Aug 23 19:38:40 2018 -0500
+
+    finish dev font-end
+    
+    next step is to fix a big problem!
+    it's impossible to do tx on one channel while the other rx
+    so have to redesign the UI
+
+[33mcommit 62ccd49909b4c621a8bde2337f67b32fa74ef432[m
+Author: wuyuepku <wuyue16@pku.edu.cn>
+Date:   Thu Aug 23 14:34:29 2018 -0500
+
+    change web page for convenience
+
+[33mcommit d2e234a2a446c7ca729b97f4a9dbcf60b50bb8d1[m
+Author: wuyuepku <wuyue16@pku.edu.cn>
+Date:   Thu Aug 23 13:49:26 2018 -0500
+
+    add dynamic sample number support
+
+[33mcommit e30b7e11ae60ab757f90af559f9805024a514580[m
+Author: wuyuepku <wuyue16@pku.edu.cn>
+Date:   Fri Aug 17 15:59:39 2018 -0500
+
+    slice operation
+
+[33mcommit faf2848195a5848ecbb660fb42b190f325a0bd08[m
+Author: wuyuepku <wuyue16@pku.edu.cn>
+Date:   Fri Aug 17 15:32:55 2018 -0500
+
+    support to select whether query extra data
+
+[33mcommit ab650267cb164097bf1aac0ef102d13fb3b4fe75[m
+Author: Xieyang Xu <ashlippers@gmail.com>
+Date:   Thu Aug 16 17:36:41 2018 -0500
+
+    bug fix
+
+[33mcommit 0832a8a088111b3cade0d3ee201c75f8d9c1c3e0[m
+Author: wuyuepku <wuyue16@pku.edu.cn>
+Date:   Thu Aug 16 15:08:36 2018 -0500
+
+    realize auto trigger
+
+[33mcommit 37ab05a566df1856a3f829c56dc4069353572687[m
+Author: wuyuepku <wuyue16@pku.edu.cn>
+Date:   Thu Aug 16 12:55:00 2018 -0700
+
+    trigger test bug fixed
+
+[33mcommit b63fdf8f0ea8e9bfc0353052ccd2c96174f866bd[m
+Author: wuyuepku <wuyue16@pku.edu.cn>
+Date:   Thu Aug 16 12:32:04 2018 -0700
+
+    bug fixed
+
+[33mcommit 7dea3b57aa4f24af428b5576fdce03f643d8cab8[m
+Author: wuyuepku <wuyue16@pku.edu.cn>
+Date:   Wed Aug 15 18:13:47 2018 -0500
+
+    bug fixed
+
+[33mcommit 90edae59e6a2e52a20e91ab10b8223eb9afbdf16[m
+Author: wuyuepku <wuyue16@pku.edu.cn>
+Date:   Tue Aug 14 10:16:40 2018 -0500
+
+    bug fixed, update to v0.2
+
+[33mcommit 0964aaecf65c2ff9c971fe8b3cfce18a0969f29e[m
+Author: wuyuepku <wuyue16@pku.edu.cn>
+Date:   Tue Aug 14 00:49:59 2018 -0500
+
+    enable simple data analysis on hdf5 file
+
+[33mcommit 5c3a4a5b5d87b9de42c616a906656ce24e579eba[m
+Author: wuyuepku <wuyue16@pku.edu.cn>
+Date:   Tue Aug 7 11:21:19 2018 -0500
+
+    add precode settings
+
+[33mcommit ef7e66587b5ffcde23d900c449a968f040d4f75e[m
+Author: wuyuepku <wuyue16@pku.edu.cn>
+Date:   Mon Aug 6 23:38:14 2018 -0500
+
+    finish gain setting
+
+[33mcommit f75515cc38a685d5d4372d0d2dcc438479b8815d[m
+Author: wuyuepku <wuyue16@pku.edu.cn>
+Date:   Mon Aug 6 15:02:40 2018 -0500
+
+    Implement alert, change initialize format
+
+[33mcommit 5d1888f96c599c33bd886160ebf39ab7f48bed60[m
+Author: wuyuepku <wuyue16@pku.edu.cn>
+Date:   Sun Aug 5 15:13:08 2018 -0700
+
+    bug fixed, run on Argos successfully, but failed on Argos mobile,
+
+[33mcommit cb0757c71c65dfebfe55c2ab4d8e3cdf17ff3c20[m
+Author: wuyuepku <wuyue16@pku.edu.cn>
+Date:   Sun Aug 5 14:01:59 2018 -0700
+
+    bug fixed
+
+[33mcommit 65b18e53dd4e36b02d20f8a9a5ba96689a2d382f[m
+Author: wuyuepku <wuyue16@pku.edu.cn>
+Date:   Sun Aug 5 15:44:06 2018 -0500
+
+    fix serialnum
+
+[33mcommit 968229a7efd914df9b49dd7113d77312ef101617[m
+Author: wuyuepku <wuyue16@pku.edu.cn>
+Date:   Sun Aug 5 12:25:31 2018 -0700
+
+    run and test
+
+[33mcommit 0e228c7ed92d6ec796ef2229adb7dee8e71cc5eb[m
+Author: wuyuepku <wuyue16@pku.edu.cn>
+Date:   Sun Aug 5 14:19:33 2018 -0500
+
+    finish simple control
+
+[33mcommit 04f13afd9318eb5428f7132f2a93bac10802b708[m
+Author: wuyuepku <wuyue16@pku.edu.cn>
+Date:   Fri Aug 3 16:30:41 2018 -0500
+
+    finish simple interaction
+
+[33mcommit fa068e0b442a6776084167e8f72235a3c9beebe8[m
+Author: wuyuepku <32925847+wuyuepku@users.noreply.github.com>
+Date:   Thu Aug 2 13:04:38 2018 -0500
+
+    Initial commit

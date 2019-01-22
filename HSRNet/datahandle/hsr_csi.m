@@ -1,13 +1,15 @@
 % get rx_all_sig
 % mean_offset = round(mean(mod(offset_list(find(offset_list>0)),frame_len)));
 offset_list2 = reshape(offset_list,[2,device_num]);
-offset_range = abs(offset_list2(1,:)-offset_list2(2,:));
+non_zero_idx = find(min(offset_list2)>0);
+offset_range = abs(offset_list2(1,non_zero_idx)-offset_list2(2,non_zero_idx));
 if abs(max(abs(offset_range))-srate/100)<5
     offset_list2 = mod(offset_list2,srate/100);
     offset_range = offset_list2(1,:)-offset_list2(2,:);
 end
 assert(max(abs(offset_range))<5);
-mean_offset = round(mean(offset_list2,1));
+mean_offset(1:device_num) = max(offset_list2);
+mean_offset(non_zero_idx) = round(mean(offset_list2(:,non_zero_idx),1));
 
 portnum = size(rx_all_sig,1);
 samplelen = size(rx_all_sig,2);

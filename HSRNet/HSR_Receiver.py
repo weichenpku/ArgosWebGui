@@ -124,25 +124,34 @@ class LTE_Receiver:
         IrisUtil.Process_CreateReceiveBuffer(self)
         IrisUtil.Process_ClearStreamBuffer(self)
         # activate
-        i=1
-        while i <= repeat_time:
-            IrisUtil.Process_ComputeTimeToDoThings_UseHasTime(self, delay = 10000000, alignment = 0)
-            IrisUtil.Process_RxActivate_WriteFlagToRxStream_UseHasTime(self, rx_delay = 0)
+        epoch = 0
+        while (True):
+            i=1
+            while i <= repeat_time:
+                IrisUtil.Process_ComputeTimeToDoThings_UseHasTime(self, delay = 10000000, alignment = 0)
+                IrisUtil.Process_RxActivate_WriteFlagToRxStream_UseHasTime(self, rx_delay = 0)
 
-            # sleep to wait
-            IrisUtil.Process_WaitForTime_NoTrigger(self)
+                # sleep to wait
+                IrisUtil.Process_WaitForTime_NoTrigger(self)
 
-            # read stream
-            flag = IrisUtil.Process_ReadFromRxStream(self)
-            IrisUtil.Process_HandlePostcode(self)  # postcode is work on received data
+                # read stream
+                flag = IrisUtil.Process_ReadFromRxStream(self)
+                IrisUtil.Process_HandlePostcode(self)  # postcode is work on received data
 
-            recvdata = IrisUtil.Process_SaveData(self)
-            print(type(recvdata))
-            sio.savemat("rxdata/rx"+str(i)+".mat",recvdata)
-            # sleep before next activation
-            time.sleep(repeat_duration)
-            if flag==True:
-                i=i+1
+                recvdata = IrisUtil.Process_SaveData(self)
+                print(type(recvdata))
+                sio.savemat("rxdata/rx"+str(epoch*repeat_time+i)+".mat",recvdata)
+                print('repeat_time: ',i)
+                # sleep before next activation
+                time.sleep(repeat_duration)
+                if flag==True:
+                    i=i+1
+            print('epoch finish: ', epoch)
+            nextstep = input()
+            if (nextstep=='q'): #quit
+                break
+            else:
+                epoch = epoch + 1
             
 
         # deactive
