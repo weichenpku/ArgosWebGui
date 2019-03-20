@@ -19,7 +19,7 @@ clear all;
 % rx_f = fftshift(fft(rx));
 
 fname = "../conf/conf3.json";
-fileidx=2;
+fileidx=6;
 rxdir='../rxdata/';
 cd ..; hsr_rxdata; cd cfo_verify; % rx_all_sig
 

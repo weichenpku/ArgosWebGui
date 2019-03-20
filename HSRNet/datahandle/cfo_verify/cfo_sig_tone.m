@@ -2,9 +2,9 @@ close all;
 clear all;
 
 fileidx=10;
-rxdir='../rxdata/cfo_t3/';
-txdevice = 'RF3E000021';
-rxdevice = 'RF3E000022';
+rxdir='../rxdata/';
+txdevice = 'RF3E000006';
+rxdevice = 'RF3E000021';
 cd ..; hsr_rxdata; cd cfo_verify; % rx_all_sig
 
 symbol_len = 256;

@@ -2,7 +2,7 @@ clear all;
 close all;
 
 rxdir=['../rxdata/'];
-fname = "../conf/conf2.json";
+fname = "../conf/conf3.json";
 threshold = 0.01;
 for fileidx=1:10
     hsr_rxdata  % rx_all_sig
