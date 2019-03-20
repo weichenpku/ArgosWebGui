@@ -18,14 +18,16 @@ clear all;
 % rx = rx0(10001:29200);
 % rx_f = fftshift(fft(rx));
 
+%% paras
 fname = "../conf/conf3.json";
-fileidx=6;
+fileidx=8;
+rx_ant = 2;  
+
 rxdir='../rxdata/';
 cd ..; hsr_rxdata; cd cfo_verify; % rx_all_sig
 
 tx_t = csvread('../../refdata/generation/test_data/tone.csv');
 tx = tx_t;
-rx_ant = 1;
 rx = rx_all_sig(rx_ant,1:19200);
 tx_f = fftshift(fft(tx));
 rx_f = fftshift(fft(rx));
