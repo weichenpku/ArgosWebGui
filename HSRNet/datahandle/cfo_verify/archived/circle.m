@@ -7,8 +7,8 @@ a1=6;
 
 
 for a2=(0:16)
-    s1=a1*exp(1i*p)+a2*exp(1i*-p);
-    s2=exp(1i*p0)*s1;
+    s1=a1*exp(1i*p)+a2*exp(1i*-p);   % tuo yuan
+    s2=exp(1i*p0)*s1;       % rotate p0
     s3=s2.*exp(1i*delta_p);
     s4=1*real(s3)+2*1i*imag(s3);
     s5=s4*exp(1i*p0);

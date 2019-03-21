@@ -12,7 +12,7 @@ mask(idx-neighbor:idx+neighbor) = ones(1,neighbor*2+1);
 
 rx_f_new = sig_f.*mask;
 rx_t_new = ifft(fftshift(rx_f_new));
-figure; plot(real(rx_t_new)); hold on; plot(imag(rx_t_new));
+% figure; plot(real(rx_t_new)); hold on; plot(imag(rx_t_new));
 
 ang = angle(conj(rx_t_new'));  % ' represent transpose & conjugate 
 offset=0;

@@ -14,11 +14,11 @@ figure; plot(abs(self_corr));
 
 
 %% receive signal: rx_pss
-df0 = 8000
+df0 = 8000;
 phase0 = pi/3;
-phase = 2*pi*df0*(1:160)/srate + phase0;
+phase = 2*pi*df0*(1:160)/srate + phase0;   
+ch0 = cos(phase)+1i*sin(phase);   % channel simulation
 
-ch0 = cos(phase)+1i*sin(phase);
 rx_pss_t = ch0.*pss_t;
 
 %% first: IFO
@@ -71,3 +71,6 @@ df = -rfo;
 phase = 2*pi*df*(1:160)/srate;
 ch = cos(phase)+1i*sin(phase);
 rx_pss3 = ch.*rx_pss2;
+
+%% result
+% suppose ifo+ffo+rfo =  df0
