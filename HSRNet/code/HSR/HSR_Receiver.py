@@ -1,6 +1,8 @@
 #!/usr/bin/python3
 
-import IrisUtil
+import sys
+sys.path.append("..")
+from utils import IrisUtil
 import time
 import numpy as np
 import scipy as sp
@@ -30,6 +32,7 @@ def test():
     rx_gain = conf_dict['rx_gain']
     rx_repeat_time = int(conf_dict['rx_repeat_time']) # number of frames
     rx_repeat_duration = float(conf_dict['rx_repeat_duration']) # seconds
+    rx_path = conf_dict['rx_path']
     
     main = FakeMain(rx_serial_master,rx_serial_slaves)
     obj = LTE_Receiver(main)
@@ -51,7 +54,7 @@ def test():
         print(para,':',value)
     print()
 
-    obj.loop(conf_dict['filesource'], repeat_time=rx_repeat_time, repeat_duration=rx_repeat_duration)
+    obj.loop(conf_dict['filesource'], repeat_time=rx_repeat_time, repeat_duration=rx_repeat_duration, rx_path=rx_path)
 
 
 class LTE_Receiver:
@@ -119,7 +122,7 @@ class LTE_Receiver:
         IrisUtil.Gains_HandleSelfParameters(self, gains)
         IrisUtil.Gains_SetBasicGains(self, gains)
     
-    def doSimpleRx(self,fsrc,repeat_time,repeat_duration):
+    def doSimpleRx(self,fsrc,repeat_time,repeat_duration, rx_path):
         # prepare work, create tx rx buffer
         IrisUtil.Process_CreateReceiveBuffer(self)
         IrisUtil.Process_ClearStreamBuffer(self)
@@ -140,7 +143,7 @@ class LTE_Receiver:
 
                 recvdata = IrisUtil.Process_SaveData(self)
                 print(type(recvdata))
-                sio.savemat("rxdata/rx"+str(epoch*repeat_time+i)+".mat",recvdata)
+                sio.savemat(rx_path+"rx"+str(epoch*repeat_time+i)+".mat",recvdata)
                 print('repeat_time: ',i)
                 # sleep before next activation
                 time.sleep(repeat_duration)
@@ -164,7 +167,7 @@ class LTE_Receiver:
         if self.main.userTrig:
             self.main.userTrig = False
             self.main.changedF()  # just register set
-            self.doSimpleRx(fsrc=fsrc,repeat_time=repeat_time,repeat_duration=repeat_duration)
+            self.doSimpleRx(fsrc=fsrc,repeat_time=repeat_time,repeat_duration=repeat_duration,rx_path=rx_path)
             #IrisUtil.Interface_UpdateUserGraph(self, self.correlationSampes)  # update to user graph
             IrisUtil.Interface_UpdateUserGraph(self)
 

@@ -13,7 +13,7 @@ DEBUG_WITH_FAKESOAPYSDR = False
 UseFakeSoapy = False
 
 import sys, os
-sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+sys.path.append("../../..")
 import GUI
 from HDF5Worker import HDF5Worker
 
@@ -267,7 +267,7 @@ def Setting_ChangeIQBalance(self, txscale=None, txangle=None, rxscale=None, rxan
                 sdr.setIQBalance(SOAPY_SDR_TX, chan, balance)
 
 def  Get_iqbalance(trx,serial,chan):
-    filename = './refdata/calibrate/iqbalance.mat'
+    filename = '../../refdata/calibrate/iqbalance.mat'
     iqbalance = sio.loadmat(filename)
     var = trx+'_'+serial+'_'+str(chan)+'_'
     angle = iqbalance[var+'angle'][0][0]

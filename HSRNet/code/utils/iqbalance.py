@@ -10,17 +10,21 @@ import threading
 import SoapySDR
 
 tx_serial = "RF3E000021"
-tx_port = "1"
-rx_serial = "RF3E000003"
-rx_port = "0"
+tx_port = "0"
+rx_serial = "RF3E000010"
+rx_port = "1"
 
-tx_gain = "50"
-rx_gain = "50"
+tx_gain = "40"
+rx_gain = "40"
 
+verify=  True #  False #    
+# if verify is False
 test_tx = True # test_rx = not test_tx
 
-verify=False
-#verify=True
+tx_amp =   1.2438
+tx_angle =   -0.1383
+rx_amp = 0.9639
+rx_angle = -0.1335
 
 class Singletone_tx:
     def __init__(self):
@@ -33,7 +37,7 @@ class Singletone_tx:
         IrisUtil.Assert_ZeroSerialNotAllowed(self)
         IrisUtil.Format_UserInputSerialAnts(self)
         IrisUtil.Assert_Tx_Required(self)
-        IrisUtil.Format_LoadTimeWaveForm(self, './refdata/generation/test_data/tone.csv', 0.9)
+        IrisUtil.Format_LoadTimeWaveForm(self, '../../refdata/generation/test_data/tone.csv', 0.9)
         IrisUtil.Init_CollectSDRInstantNeeded(self, clockRate=80e6)
         IrisUtil.Init_CreateDefaultGain_WithDevFE(self)
         self.rate = 1.92e6*2
@@ -134,7 +138,7 @@ class Singletone_rx:
             IrisUtil.Process_HandlePostcode(self)  # postcode is work on received data
             recvdata = IrisUtil.Process_SaveData(self)
             print(type(recvdata))
-            sio.savemat("rxdata/rx"+str(i)+".mat",recvdata)
+            sio.savemat("../../rxdata/rx"+str(i)+".mat",recvdata)
             time.sleep(0.02)
         # deactive
         IrisUtil.Process_RxDeactive(self)
@@ -170,7 +174,7 @@ def test():
     mean_sinr=0
     filenum=0
     for idx in range(10):
-        datafile = './rxdata/rx'+str(idx)+'.mat'
+        datafile = '../../rxdata/rx'+str(idx)+'.mat'
         print('file is ',datafile)
         rx_sig = DSPUtil.Singletone_loadmat(datafile,rx_serial,rx_port)
         sinr = DSPUtil.Singletone_verify(rx_sig,int(60000/200))
@@ -202,12 +206,6 @@ if __name__ == "__main__":
     total_step = 50
     ans_data = []
     ans = dict()
-
-
-    tx_amp =    0.9258   
-    tx_angle =   0.1987
-    rx_amp =   1.0381
-    rx_angle = 0.1028
 
     
 
@@ -311,4 +309,6 @@ if __name__ == "__main__":
             value0=value
             para0=para
     print(para0,value0)
-    sio.savemat("rxdata/iqbalance.mat",{'data':ans_data})
+
+    #print(ans_data)
+    sio.savemat("../../rxdata/iqbalance_result.mat",{'data':ans_data})

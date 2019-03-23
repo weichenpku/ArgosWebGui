@@ -1,6 +1,8 @@
 #!/usr/bin/python3
 
-import IrisUtil
+import sys
+sys.path.append("..")
+from utils import IrisUtil
 import time
 import numpy as np
 import scipy as sp

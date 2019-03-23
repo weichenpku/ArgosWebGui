@@ -15,11 +15,12 @@ end
 
 
 %% load reference signal
+path='../../refdata/generation/';
 % nb_rb
 if nb_rb<10
-    savedir='../refdata/generation/1.4m/';
+    savedir=[path '1.4m/'];
 else
-    savedir=['../refdata/generation/',int2str(nb_rb/5),'m/'];
+    savedir=[path int2str(nb_rb/5) 'm/'];
 end
 
 load([savedir 'paras.mat']);

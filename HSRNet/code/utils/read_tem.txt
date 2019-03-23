@@ -1,0 +1,5 @@
+SoapyUtil --find  =>  remote = tcp://[fe80::3a3a:21ff:fe90:41b%9]:55132
+
+ssh sklk@fe80::3a3a:21ff:fe90:41b%9  => psw: sklk
+
+sklk_read_zynq_temp  => temp
