@@ -1,8 +1,8 @@
-%fileidx=5;
+%fileidx=2;
 rxdir=['../rxdata/'];
-fname = "../conf/conf2.json";
+fname = "../conf/conf1.json";
 
-
+addpath('csi');
 check = true;
 rfo_use = true;
 threshold = 0.01;
@@ -11,7 +11,7 @@ hsr_rxdata          % ref_signal & rx_signal read
 % rx_all_sig
 
 portnum = size(rx_all_sig,1);
-if check
+if check % check the signal power
     checklist=ones(1,portnum);
     for idx=1:portnum
         sig=rx_all_sig(idx,:);

@@ -1,39 +1,27 @@
 {
 	"transmitter": {
-		"serial": "RF3E000002",
+		"serial": "RF3E000021",
 		"port": "1"
 	},
 	
 
-	"receivernum": "4",
+	"receivernum": "1",
 	"receiver_master": {
 		"serial": "RF3E000010",
 		"port": "2"
 	},
-	"receiver": [{
-			"serial": "RF3E000006",
-			"port": "2"
-		},
-		{
-			"serial": "RF3E000021",
-			"port": "2"
-		},
-		{
-			"serial": "RF3E000022",
-			"port": "2"
-		}
-	],
 
 	"tx_repeat_time": "10000",
-	"rx_repeat_time": "10",
-	"rx_repeat_duration": "0",
-	"tx_gain": "60",
-	"rx_gain": "50",
+	"rx_repeat_time": "60",
+	"rx_repeat_duration": "0.1",
+	"tx_gain": "50",
+	"rx_gain": "40",   "_comment1": "max_gain is 50",	
 	"srate": "3.84e9",
 		
 	"scale":"0.9",
-	"filesource": "LTE",
-	"_comment": "LTE or selfdefine",
-	"nrb": "6", "sig_type":"sig_rbrr.csv",	
-	"file": "./refdata/generation/test_data/tone.csv"	
+	"filesource": "LTE", 	"_comment2": "LTE or selfdefine",
+	"nrb": "15", "sig_type":"sig_r.csv",	"_comment3": "if filesource == LTE",
+	"file": "./refdata/generation/test_data/tone.csv",   "_comment4": "if filesource == slefdefine",
+
+	"rx_path": "../../rxdata/"
 }

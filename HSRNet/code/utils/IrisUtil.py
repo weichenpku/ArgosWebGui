@@ -35,10 +35,11 @@ import scipy.io as sio
 # LTE frame
 def Format_DataDir(self,nb_rb=25):
     self.nb_rb = nb_rb
+    dir_path = "../../refdata/generation/"
     if nb_rb<10:
-        self.data_dir = "refdata/generation/1.4m/"
+        self.data_dir = dir_path+"1.4m/"
     else:
-        self.data_dir = "refdata/generation/"+str(int(nb_rb/5))+"m/"
+        self.data_dir = dir_path+str(int(nb_rb/5))+"m/"
 
 # GUI.log('IrisUtil is loaded')
 

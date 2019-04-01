@@ -163,7 +163,7 @@ class LTE_Receiver:
         # do correlation
         # IrisUtil.Process_DoCorrelation2FindFirstPFDMSymbol(self)
     
-    def loop(self,fsrc,repeat_time,repeat_duration):
+    def loop(self,fsrc,repeat_time,repeat_duration,rx_path):
         if self.main.userTrig:
             self.main.userTrig = False
             self.main.changedF()  # just register set

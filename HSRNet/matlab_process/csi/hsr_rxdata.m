@@ -15,7 +15,7 @@ end
 
 
 %% load reference signal
-path='../../refdata/generation/';
+path='../refdata/generation/';
 % nb_rb
 if nb_rb<10
     savedir=[path '1.4m/'];

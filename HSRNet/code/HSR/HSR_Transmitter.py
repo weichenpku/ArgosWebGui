@@ -68,6 +68,7 @@ class LTE_Transmitter:
         if (conf_dict['filesource']=='LTE'):
             IrisUtil.Format_DataDir(self, nb_rb=nb_rb)
             data_file = self.data_dir+conf_dict['sig_type']
+            print(data_file)
             IrisUtil.Format_LoadTimeWaveForm(self, data_file, scale)
         else: # selfdefine
             data_file = conf_dict['file']
