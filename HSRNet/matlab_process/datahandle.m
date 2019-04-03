@@ -1,6 +1,5 @@
 %fileidx=2;
-rxdir=['../rxdata/'];
-fname = "../conf/conf1.json";
+
 
 addpath('csi');
 check = true;

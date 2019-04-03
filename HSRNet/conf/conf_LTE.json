@@ -1,7 +1,7 @@
 {
 	"transmitter": {
-		"serial": "RF3E000002",
-		"port": "1"
+		"serial": "RF3E000021",
+		"port": "0"
 	},
 	
 
@@ -11,10 +11,11 @@
 		"port": "2"
 	},
 	"receiver": [{
-		"serial": "RF3E000006",
-		"port": "2"
-	},{
 		"serial": "RF3E000022",
+		"port": "2"
+	},
+	{
+		"serial": "RF3E000187",
 		"port": "2"
 	}
 	],
@@ -29,7 +30,7 @@
 	"scale":"0.9",
 	"filesource": "LTE", 	"_comment2": "LTE or selfdefine",
 	"nrb": "15", "sig_type":"sig_r.csv",	"_comment3": "if filesource == LTE",
-	"file": "./refdata/generation/test_data/tone.csv",   "_comment4": "if filesource == slefdefine",
+	"file": "./refdata/generation/test_data/tone.csv",   "_comment4": "if filesource == selfdefine",
 
 	"rx_path": "../../rxdata/"
 }
