@@ -9,6 +9,7 @@ import scipy as sp
 import scipy.io as sio
 import sys
 import json
+import os
 
 def test():
     class FakeMain:
@@ -129,6 +130,10 @@ class LTE_Receiver:
         # activate
         epoch = 0
         while (True):
+            rx_dir = rx_path+'epoch'+str(epoch)
+            if os.path.exists(rx_dir)==False:
+                os.makedirs(rx_dir)
+                
             i=1
             while i <= repeat_time:
                 IrisUtil.Process_ComputeTimeToDoThings_UseHasTime(self, delay = 10000000, alignment = 0)
@@ -143,7 +148,7 @@ class LTE_Receiver:
 
                 recvdata = IrisUtil.Process_SaveData(self)
                 print(type(recvdata))
-                sio.savemat(rx_path+"rx"+str(epoch*repeat_time+i)+".mat",recvdata)
+                sio.savemat(rx_path+"epoch"+str(epoch)+"/rx"+str(i)+".mat",recvdata)
                 print('repeat_time: ',i)
                 # sleep before next activation
                 time.sleep(repeat_duration)

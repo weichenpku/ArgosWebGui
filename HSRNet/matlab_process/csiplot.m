@@ -1,6 +1,6 @@
-rxdir=['../rxdata/7/'];
-unwrap_able = 0;
-ref_port = 4;
+rxdir=['../rxdata/4.3.2/3/'];
+unwrap_able = 1;
+ref_port = 3;
 
 
 load([rxdir 'csi.mat']);
@@ -15,6 +15,7 @@ if unwrap_able
     disp('unwrap_able');
     angle_unwrap=unwrap(h_all_angle,[],1);
     angle_unwrap=unwrap(angle_unwrap,[],2);
+    angle_unwrap=unwrap(angle_unwrap,[],1);
 else
     disp('unwrap_disable');
     angle_unwrap=h_all_angle;
@@ -28,5 +29,5 @@ end
 figure;
 for i=1:h_shape(3)
     if i==ref_port continue; end
-     mesh(angle_unwrap(:,:,i)-angle_unwrap(:,:,ref_port)); hold on;
+     mesh(angle_unwrap(:,:,i)-angle_unwrap(:,:,ref_port));  hold on; figure;
 end

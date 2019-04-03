@@ -15,8 +15,7 @@ for cur_device = 1:portnum
     rx_tmp = rx_all_sig(cur_device,1:end-frame_len);
 
     tmp_corr = conv(rx_tmp,conj(pss));
-    [tmp_peak,tmp_idx]=max(abs(tmp_corr));
-    tmp_idx = tmp_idx - cp_symbol_len;
+    [tmp_peak,tmp_idx]=max(abs(tmp_corr(cp_symbol_len+1:end-cp_symbol_len)));
     
     offset_list(cur_device)=tmp_idx;
     

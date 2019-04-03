@@ -1,0 +1,2 @@
+./HSR_Transmitter.py ../../conf/conf_LTE.json
+./HSR_Receiver.py ../../conf/conf_LTE.json
