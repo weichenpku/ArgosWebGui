@@ -37,6 +37,7 @@ def test():
     
     main = FakeMain(rx_serial_master,rx_serial_slaves)
     obj = LTE_Receiver(main)
+    
     gain_dict = {
         "parameters-showSamples": "60928",
         "parameters-numSamples":"60000", # recvNum (should be less than 60928)
