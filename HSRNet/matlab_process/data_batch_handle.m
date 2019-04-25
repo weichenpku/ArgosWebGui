@@ -1,11 +1,11 @@
 %rxdir=['../rxdata/'];
-rxdir=['../rxdata/4.3.2/3/'];
+rxdir=['../rxdata/4.25.3/epoch0/'];
 fname = "../conf/conf_LTE.json";
 filenum=15;
 
 h_all_est = [];
 
-for fileidx=1+30:filenum+30
+for fileidx=1:filenum
     %if (fileidx==1) continue; end
     datahandle  %data handle
     close all;

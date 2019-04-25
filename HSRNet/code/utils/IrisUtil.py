@@ -587,7 +587,9 @@ def Gains_ChangeBasicGains(self, serial_ant, txrx, gainObj, gainKey, gainNewValu
         if gk=="LNA2" or gk=="LNA1" or gk=="ATTN" or gk=="LNA" or gk=="TIA" or gk=="PGA" or gk == "rxGain":
             try:
                 gainObj[gainKey] = int(gainNewValue)
-                if gk == "rxGain": sdr.setGain(SOAPY_SDR_RX, chan, gainObj[gainKey])  # this is special, only one parameter
+                if gk == "rxGain":
+                    print('[SOAR] set rx gain', chan, gainObj[gainKey]) 
+                    sdr.setGain(SOAPY_SDR_RX, chan, gainObj[gainKey])  # this is special, only one parameter
                 else: sdr.setGain(SOAPY_SDR_RX, chan, gainKey, gainObj[gainKey])
             except Exception as e:
                 GUI.error(str(e))
@@ -891,7 +893,6 @@ def Process_ReadFromRxStream(self):
                 numRecv += sr.ret
                 print('[SOAR] SUCCESS: read',numRecv,'samples')
         print('[SOAR] FINISH reading')
-        print()    
     return read_success
 
 def Process_ReadFromRxStream_Async(self):
