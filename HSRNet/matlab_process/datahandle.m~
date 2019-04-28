@@ -4,8 +4,7 @@ check = true;
 rfo_use = true;
 threshold = 0.01;
 
-disp(filename);
-rx_all_sig = hsr_rxdata(filename,fconf);          % ref_signal & rx_signal read
+hsr_rxdata(rxdir,fname,fileidx);          % ref_signal & rx_signal read
 % rx_all_sig
 
 portnum = size(rx_all_sig,1);

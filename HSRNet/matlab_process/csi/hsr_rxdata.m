@@ -1,4 +1,6 @@
-fid = fopen(fname); 
+function [rx_all_sig] = hsr_rxdata(filename,fconf)
+%% read configure
+fid = fopen(fconf); 
 raw = fread(fid,inf); 
 str = char(raw'); 
 fclose(fid); 
@@ -28,36 +30,16 @@ pss = csvread([savedir 'pss.csv']);
 sig_f = csvread([savedir 'sig_f.csv']);
 
 
-%% load recv signal
-% rxdir
-rxfile = dir([rxdir 'rx*']);
-rxnum = size(rxfile,1);
-file_list=[""];
-for file = 1:rxnum
-    tmpname = rxfile(file).name;
-    file_list(file+1)=tmpname;
-end
-filename = ['rx' int2str(fileidx) '.mat'];
-%% load transmit signal
-% load([rxdir,filename])
-% tx_dir = '../../rxdata/';
-% tx_port = 'RF3E000006-1'; 
-% load([tx_dir 'I-' tx_port '.mat'])
-% tx_i=wave;
-% load([tx_dir 'Q-' tx_port '.mat'])
-% tx_q=wave;
-% tx_t=tx_i+1i*tx_q;
-% figure; plot(real(tx_t));
-
-
 %% load receive signal
-load([rxdir filename]);
+load(filename);
 device_num = size(rxdevice,1);
 rx_all_sig=[];
 for idx = 1:device_num
     devicestr=char(rxdevice(idx,:));
     rx_all_sig(2*idx-1,:) = eval([devicestr '_0_I'])+1i*eval([devicestr '_0_Q']);
     rx_all_sig(2*idx,:) = eval([devicestr '_1_I'])+1i*eval([devicestr '_1_Q']);
+end
+
 end
 
 
