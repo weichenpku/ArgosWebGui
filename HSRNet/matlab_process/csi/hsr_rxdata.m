@@ -1,4 +1,4 @@
-function [rx_all_sig] = hsr_rxdata(filename,fconf)
+function [rx_all_sig,device_num,refdir] = hsr_rxdata(filename,fconf)
 %% read configure
 fid = fopen(fconf); 
 raw = fread(fid,inf); 
@@ -6,7 +6,7 @@ str = char(raw');
 fclose(fid); 
 val = jsondecode(str);
 
-nb_rb = str2num(val.nrb); %this can be 6,15,25,50,75 or 100
+nb_rb = str2num(val.nrb);   %this can be 6,15,25,50,75 or 100
 rxdevicenum = str2num(val.receivernum);
 rxdevice = [];
 rxdevice(1,:)=val.receiver_master.serial;
@@ -20,14 +20,10 @@ end
 path='../refdata/generation/';
 % nb_rb
 if nb_rb<10
-    savedir=[path '1.4m/'];
+    refdir=[path '1.4m/'];
 else
-    savedir=[path int2str(nb_rb/5) 'm/'];
+    refdir=[path int2str(nb_rb/5) 'm/'];
 end
-
-load([savedir 'paras.mat']);
-pss = csvread([savedir 'pss.csv']);
-sig_f = csvread([savedir 'sig_f.csv']);
 
 
 %% load receive signal

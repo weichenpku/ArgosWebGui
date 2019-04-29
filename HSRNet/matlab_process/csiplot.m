@@ -1,3 +1,8 @@
+rxdir=['../rxdata/4.25/4.25.3/epoch0/'];
+fconf = '../conf/conf_LTE.json';
+
+data_batch_handle;
+
 rxdir=['../rxdata/4.3.2/3/'];
 unwrap_able = 1;
 ref_port = 3;

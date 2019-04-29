@@ -23,10 +23,10 @@ h_est = zeros(12*nb_rb,num_symbols_frame,portnum);
 
 for cur_device = 1:portnum
     device_no = floor((cur_device+1)/2);
-    if checklist(cur_device)~=1 continue; end
+    if checklist(fileidx,cur_device)~=1 continue; end
     plot_device = cur_device;
     %% cfo correction
-    cfo = cfo_list(cur_device);
+    cfo = cfo_list(fileidx,cur_device);
     
     df = -cfo;
     phase = 2*pi*df*(1:frame_len)/srate;

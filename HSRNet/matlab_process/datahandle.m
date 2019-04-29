@@ -1,28 +1,29 @@
-function [] = datahandle(filename,fconf)
+%input: filename, fconf, fileidx
 addpath('csi');
 check = true;
 rfo_use = true;
 threshold = 0.01;
 
 disp(filename);
-rx_all_sig = hsr_rxdata(filename,fconf);          % ref_signal & rx_signal read
-% rx_all_sig
+[rx_all_sig, device_num, refdir] = hsr_rxdata(filename,fconf);          % ref_signal & rx_signal read
+load([refdir 'paras.mat']);
+pss = csvread([refdir 'pss.csv']);
+sig_f = csvread([refdir 'sig_f.csv']);
 
 portnum = size(rx_all_sig,1);
 if check % check the signal power
-    checklist=ones(1,portnum);
     for idx=1:portnum
         sig=rx_all_sig(idx,:);
         peak1=max([abs(real(sig)) abs(imag(sig))]);
         peak2=max([abs(real(sig-mean(sig))) abs(imag(sig-mean(sig)))]);
+        checklist(fileidx,idx) = 1;
         if (peak1>0.9)
-            checklist(idx)=-1;
+            checklist(fileidx,idx) = -1; % gain is too large
         end
         if (peak2<threshold)
-            checklist(idx)=0;
+            checklist(fileidx,idx) = 0; % rx signal power is too small 
         end
     end
-    display(checklist);
 end
     
 
@@ -52,4 +53,4 @@ end
 hsr_rxbf            % rxbf employ
 % weight, h_bf_rx, bf_snr
 
-end
+disp('****************************');

@@ -92,6 +92,6 @@ for cur_device = 1:portnum
 
     % ffo compensation
     cfo=ifo+ffo_all_cp;
-    cfo_list(cur_device) = cfo;
+    cfo_list(fileidx,cur_device) = cfo;
 end
-display(cfo_list);
+%display(cfo_list);

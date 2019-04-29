@@ -34,10 +34,13 @@ p_bf_sig = abs(h_bf_sig).^2;
 h_bf_noi = h_bf_est-h_bf_sig;
 p_bf_noi = mean(abs(h_bf_noi(:,2:end)).^2,2);
 bf_snr=log(mean(p_bf_sig)/mean(p_bf_noi))/log(10)*10;
-display(['snr of bf is ' num2str(bf_snr)]);
+bf_snr_list(fileidx) = bf_snr;
+%display(['snr of bf is ' num2str(bf_snr)]);
 
 bf_snr_ = log(sum(10.^(snr_list/10)))/log(10)*10;
-display(['Upper bound of snr is ' num2str(bf_snr_)]);
+max_snr_list(fileidx) = bf_snr_;
+%display(['Upper bound of snr is ' num2str(bf_snr_)]);
+
 
 % snr vs freq
 snr_freq = log(p_sig./p_noi)/log(10)*10;
