@@ -7,7 +7,6 @@ pss_t = [pss(end-cp_len+1:end) pss];
 
 portnum = size(rx_all_sig,1);
 samplelen = size(rx_all_sig,2);
-cfo_list=[];
 offset_list=[];
 
 for cur_device = 1:portnum 

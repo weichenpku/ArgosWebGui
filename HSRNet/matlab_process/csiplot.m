@@ -1,6 +1,7 @@
+clear;
 rxdir=['../rxdata/4.25/4.25.3/epoch0/'];
 fconf = '../conf/conf_LTE.json';
-
+quit;
 data_batch_handle;
 
 rxdir=['../rxdata/4.3.2/3/'];
@@ -20,7 +21,7 @@ if unwrap_able
     disp('unwrap_able');
     angle_unwrap=unwrap(h_all_angle,[],1);
     angle_unwrap=unwrap(angle_unwrap,[],2);
-    angle_unwrap=unwrap(angle_unwrap,[],1);
+    angle_unwrap=unwrap(angle_unwrap,[],1); 
 else
     disp('unwrap_disable');
     angle_unwrap=h_all_angle;

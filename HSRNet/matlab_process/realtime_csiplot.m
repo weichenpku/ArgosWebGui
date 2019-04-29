@@ -5,6 +5,7 @@
 rxdir=['../rxdata/4.25/4.25.3/epoch0/'];
 fconf = '../conf/conf_LTE.json';
 outfile = '../rxdata/log.txt';
+outfigure = '../rxdata/log.jpg';
 
 diary(outfile);
 diary on;

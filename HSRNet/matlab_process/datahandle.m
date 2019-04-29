@@ -1,4 +1,4 @@
-%input: filename, fconf, fileidx
+%input: filename, fconf, fileidx, plot_device
 addpath('csi');
 check = true;
 rfo_use = true;
@@ -39,18 +39,17 @@ hsr_snr             % snr calculate & (ber, cir, pdp, ds)     <= ofdm_judge.m
 
 
 if (rfo_use)
-    cfo_list = rfo;
+    cfo_list(fileidx,:) = rfo_list(fileidx,:);
     hsr_csi
     hsr_snr
-    display(ber_list);
-    display(snr_list);
+    %display(ber_list);
+    %display(snr_list);
     
     figure; mesh(angle(h_full_est(:,:,plot_device))); title('csi distribution');
-    figure; plot(mean(h_full_est(:,:,plot_device),1)); title('mean csi vs time');
-    figure; plot(mean(h_full_est(:,:,plot_device),2)); title('mean csi vs frequency');
+    range=max(max(abs(h_est(:,:,plot_device))));
+    figure; plot(mean(h_full_est(:,:,plot_device),1)); title('mean csi vs time'); axis([-range range -range range]);
+    figure; plot(mean(h_full_est(:,:,plot_device),2)); title('mean csi vs frequency'); axis([-range range -range range]);
 end
 
 hsr_rxbf            % rxbf employ
 % weight, h_bf_rx, bf_snr
-
-disp('****************************');

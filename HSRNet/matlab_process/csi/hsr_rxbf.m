@@ -37,7 +37,7 @@ bf_snr=log(mean(p_bf_sig)/mean(p_bf_noi))/log(10)*10;
 bf_snr_list(fileidx) = bf_snr;
 %display(['snr of bf is ' num2str(bf_snr)]);
 
-bf_snr_ = log(sum(10.^(snr_list/10)))/log(10)*10;
+bf_snr_ = log(sum(10.^(snr_list(fileidx,:)/10)))/log(10)*10;
 max_snr_list(fileidx) = bf_snr_;
 %display(['Upper bound of snr is ' num2str(bf_snr_)]);
 

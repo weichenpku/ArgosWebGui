@@ -36,24 +36,24 @@ end
 
 
 
-% csi insert
+% csi insert and unwrap
 h_full_est = [];
 angle_full_est = [];
-rfo = [];
 for cur_device=1:portnum
     if checklist(fileidx,cur_device)~=1 
         continue; 
     end
-    plot_device = cur_device;
-    h_full_est = h_est;
+    % h_est => h_full_est
+    h_full_est = fftshift(h_est,1);
+    h_full_est(:,1) = (h_full_est(:,2).^2)./h_full_est(:,3);
     angle_full_est(:,3:symbolnum,cur_device) = angle(h_full_est(:,3:end,cur_device))-angle(h_full_est(:,2:end-1,cur_device));
     angle_unwrap = angle_full_est;
-    idx=find(angle_unwrap>pi); angle_unwrap(idxlist)=angle_unwrap(idxlist)-pi;
+    idxlist=find(angle_unwrap>pi); angle_unwrap(idxlist)=angle_unwrap(idxlist)-pi;
     idxlist=find(angle_unwrap>pi/2); angle_unwrap(idxlist)=angle_unwrap(idxlist)-pi;
     idxlist=find(angle_unwrap<-pi); angle_unwrap(idxlist)=angle_unwrap(idxlist)+pi;
     idxlist=find(angle_unwrap<-pi/2); angle_unwrap(idxlist)=angle_unwrap(idxlist)+pi;
     
-    rfo(fileidx,cur_device) = cfo_list(fileidx,cur_device) + mean(mean(angle_unwrap(:,6:end,cur_device)))*srate/(2*pi*cp_symbol_len);
+    rfo_list(fileidx,cur_device) = cfo_list(fileidx,cur_device) + mean(mean(angle_unwrap(:,3:end,cur_device)))*srate/(2*pi*cp_symbol_len);
 end
 
 % CIR and doppler spread

@@ -24,7 +24,6 @@ h_est = zeros(12*nb_rb,num_symbols_frame,portnum);
 for cur_device = 1:portnum
     device_no = floor((cur_device+1)/2);
     if checklist(fileidx,cur_device)~=1 continue; end
-    plot_device = cur_device;
     %% cfo correction
     cfo = cfo_list(fileidx,cur_device);
     
