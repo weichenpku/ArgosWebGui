@@ -14,13 +14,12 @@ for fileidx=1:filenum
     filename = [rxdir 'rx' int2str(fileidx) '.mat'];
     datahandle  %data handle
     close all;
-    h_all_est(:,1+60*(fileidx-1):60*fileidx,:)=h_full_est;
+    h_all_est(:,1+59*(fileidx-1):59*fileidx,:)=h_full_est(:,2:end,:);
 end
 
-plot_device = 2;
 figure; mesh(angle(h_all_est(:,:,plot_device))); title('all time csi distribution');
 if (exist('outfigure')>0) saveas(gcf,outfigure); end
-    
+
 display(checklist);
 display(cfo_list);
 display(ber_list);

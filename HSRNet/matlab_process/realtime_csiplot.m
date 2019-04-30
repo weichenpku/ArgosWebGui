@@ -1,9 +1,9 @@
-%function [] = realtime_csiplot(rxdir,fname)
+function [] = realtime_csiplot(rxdir,fconf)
 %REALTIME_CSIPLOT Summary of this function goes here
 %   Detailed explanation goes here
  
-rxdir=['../rxdata/4.25/4.25.3/epoch0/'];
-fconf = '../conf/conf_LTE.json';
+%rxdir=['../rxdata/4.25/4.25.3/epoch0/'];
+%fconf = '../conf/conf_LTE.json';
 outfile = '../rxdata/log.txt';
 outfigure = '../rxdata/log.jpg';
 

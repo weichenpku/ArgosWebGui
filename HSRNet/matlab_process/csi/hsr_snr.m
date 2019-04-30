@@ -45,7 +45,7 @@ for cur_device=1:portnum
     end
     % h_est => h_full_est
     h_full_est = fftshift(h_est,1);
-    h_full_est(:,1) = (h_full_est(:,2).^2)./h_full_est(:,3);
+    %h_full_est(:,1) = (h_full_est(:,2).^2)./h_full_est(:,3);
     angle_full_est(:,3:symbolnum,cur_device) = angle(h_full_est(:,3:end,cur_device))-angle(h_full_est(:,2:end-1,cur_device));
     angle_unwrap = angle_full_est;
     idxlist=find(angle_unwrap>pi); angle_unwrap(idxlist)=angle_unwrap(idxlist)-pi;

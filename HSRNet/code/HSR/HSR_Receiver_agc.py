@@ -201,11 +201,22 @@ class LTE_Receiver:
                 if flag==True:
                     i=i+1
             print('epoch finish: ', epoch)
-            nextstep = input()
-            if (nextstep=='q'): #quit
+
+            # mini shell
+            while (true):
+                nextstep = input()
+                if (nextstep == 'q'): # quit
+                    break
+                elif (nextstep == 'r'): # repeat
+                    break
+                elif (nextstep == 'n'): # next 
+                    epoch = epoch + 1
+                    break
+                else:
+                    print(' q - quit\n r - repeat\n n - next\n other - help')
+
+            if (nextstep == 'q'):
                 break
-            else:
-                epoch = epoch + 1
             
 
         # deactive
@@ -224,22 +235,3 @@ class LTE_Receiver:
 
 if __name__ == "__main__":
     test()
-
-
-#{'list': 
-#   [['parameters', ['txSelect', 'numSamples', 'showSamples', 'alignOffset']], 
-#    ['RF3E000002-0-tx', ['txGain']], 
-#    ['RF3E000002-1-tx', ['txGain']], 
-#    ['RF3E000010-0-rx', ['postcode', 'rxGain']], 
-#    ['RF3E000010-1-rx', ['postcode', 'rxGain']]], 
-# 'data': 
-#   {'RF3E000010-1-rx-rxGain': '20', 
-#    'parameters-txSelect': 'RF3E000002-1', 
-#    'RF3E000002-0-tx-txGain': '40', 
-#    'RF3E000010-1-rx-postcode': '(1+0j)', 
-#    'RF3E000010-0-rx-postcode': '(1+0j)', 
-#    'parameters-numSamples': '1024', 
-#    'RF3E000002-1-tx-txGain': '40', 
-#    'RF3E000010-0-rx-rxGain': '20', 
-#    'parameters-alignOffset': '0', 
-#    'parameters-showSamples': '1600'}}
