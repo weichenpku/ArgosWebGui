@@ -203,7 +203,7 @@ class LTE_Receiver:
             print('epoch finish: ', epoch)
 
             # mini shell
-            while (true):
+            while (True):
                 nextstep = input()
                 if (nextstep == 'q'): # quit
                     break

@@ -1,3 +1,6 @@
+sig_detect_threshold = 0.05;
+sig_sat_threshold = 0.9;
+
 h_all_est = [];
 checklist = [];
 cfo_list = [];
@@ -14,10 +17,12 @@ for fileidx=1:filenum
     filename = [rxdir 'rx' int2str(fileidx) '.mat'];
     datahandle  %data handle
     close all;
-    h_all_est(:,1+59*(fileidx-1):59*fileidx,:)=h_full_est(:,2:end,:);
+    if (sum(checklist(fileidx,:))>0)
+        h_all_est(:,1+59*(fileidx-1):59*fileidx,:)=h_full_est(:,2:end,:);
+    end
 end
 
-figure; mesh(angle(h_all_est(:,:,plot_device))); title('all time csi distribution');
+figure; mesh(angle(h_all_est(:,:,1)./h_all_est(:,:,2))); title('all time csi distribution');
 if (exist('outfigure')>0) saveas(gcf,outfigure); end
 
 display(checklist);

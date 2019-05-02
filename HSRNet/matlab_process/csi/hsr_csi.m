@@ -5,7 +5,8 @@ non_zero_idx = find(min(offset_list2)>0);
 offset_range = abs(offset_list2(1,non_zero_idx)-offset_list2(2,non_zero_idx));
 if abs(max(abs(offset_range))-srate/100)<5
     offset_list2 = mod(offset_list2,srate/100);
-    offset_range = offset_list2(1,:)-offset_list2(2,:);
+    non_zero_idx = find(min(offset_list2)>0);
+    offset_range = abs(offset_list2(1,non_zero_idx)-offset_list2(2,non_zero_idx));
 end
 assert(max(abs(offset_range))<5);
 mean_offset(1:device_num) = max(offset_list2);

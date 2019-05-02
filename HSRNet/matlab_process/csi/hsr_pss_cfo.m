@@ -10,7 +10,7 @@ samplelen = size(rx_all_sig,2);
 offset_list=[];
 
 for cur_device = 1:portnum 
-    if checklist(cur_device)~=1 continue; end
+    if checklist(fileidx,cur_device)~=1 continue; end
     rx_tmp = rx_all_sig(cur_device,1:end-frame_len);
 
     tmp_corr = conv(rx_tmp,conj(pss));

@@ -6,7 +6,7 @@ rx_weighted =  zeros(carriernum, symbolnum, portnum);
 
 weight_abs = sqrt(sum(abs(h_sig).^2,2));
 for k = 1 : portnum
-    if checklist(k)~=1 continue; end
+    if checklist(fileidx,k)~=1 continue; end
     weight(:,k) = conj(h_sig(:,k))./weight_abs;
     for sn = 2:symbolnum
         rx_weighted(:,sn,k) = h_rx(:,sn,k).*weight(:,k); 
