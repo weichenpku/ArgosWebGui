@@ -9,10 +9,11 @@ snr_list = [];
 bf_snr_list = [];
 max_snr_list = [];
 rfo_list = [];
+offset_all_list = [];
 
 files = dir([rxdir 'rx*']);
 filenum = size(files,1);
-plot_device = 1;
+plot_device = 2;
 for fileidx=1:filenum
     filename = [rxdir 'rx' int2str(fileidx) '.mat'];
     datahandle  %data handle
@@ -34,4 +35,5 @@ display(max_snr_list);
 
 rfo_list = rfo_list - cfo_list;
 display(rfo_list);
-%save([rxdir 'csi.mat'],'h_all_est');
+
+save([rxdir 'csi.mat'],'h_all_est','checklist','cfo_list','ber_list','snr_list','bf_snr_list','max_snr_list');

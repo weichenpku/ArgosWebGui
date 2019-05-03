@@ -1,29 +1,26 @@
-clear;
-rxdir=['../rxdata/4.30/4.30.0/epoch1/'];
-fconf = '../conf/conf_LTE.json'; 
+rxdir=['../rxdata/4.30/4.30.0/'];
+unwrap_able = 1;
 
-outfile = '../rxdata/log.t';
-outfigure = '../rxdata/log.jpg';
-
-if (exist('outfile')>0)
-    diary(outfile);
-    diary on;
-    data_batch_handle;
-    diary off;
-else
-    data_batch_handle;
+trial_check_list = [];
+trial_port_list = [];
+trial_csi_list = [];
+for i=1:80
+    csifile = [rxdir 'epoch' int2str(i-1) '/csi.mat'];
+    disp(csifile);
+    load(csifile);
+    %'h_all_est','checklist','cfo_list','ber_list','snr_list','bf_snr_list','max_snr_list'
+    
+    % port check 
+    trial_check_list(i,:) = sum(checklist);
+    trial_port_list(i,:) = sum(checklist)+5>max(sum(checklist));
+    port_able = find(trial_port_list(i,:)>0);
+    
+    % csi: h_all_est
+    trial_csi_list(port_)
 end
 
-save([rxdir 'csi.mat'],'h_all_est','checklist','cfo_list','ber_list','snr_list','bf_snr_list','max_snr_list');
 return;
 
-
-rxdir=['../rxdata/4.3.2/3/'];
-unwrap_able = 1;
-ref_port = 3;
-
-
-load([rxdir 'csi.mat']);
 
 % csi insert
 h_all_est(:,1:60:end) = h_all_est(:,2:60:end).^2./h_all_est(:,3:60:end);

@@ -1,54 +1,25 @@
-%rxdir=['../rxdata/4.30/4.30.0/epoch6/'];
-fconf = '../conf/conf_LTE.json'; 
-
-outfile = '../rxdata/log.html';
-outfigure = '../rxdata/log.jpg';
-
-if (exist('outfile')>0)
-    diary(outfile);
-    diary on;
-    data_batch_handle;
-    diary off;
-else
-    data_batch_handle;
-end
-
-save([rxdir 'csi.mat'],'h_all_est','checklist','cfo_list','ber_list','snr_list','bf_snr_list','max_snr_list');
-return;
-
-
-
-
-rxdir=['../rxdata/4.3.2/3/'];
+rxdir=['../rxdata/4.30/4.30.0/'];
 unwrap_able = 1;
-ref_port = 3;
 
-
-load([rxdir 'csi.mat']);
-
-% csi insert
-h_all_est(:,1:60:end) = h_all_est(:,2:60:end).^2./h_all_est(:,3:60:end);
-h_all_angle = angle(h_all_est);
-h_shape=size(h_all_est);
-
-
-if unwrap_able
-    disp('unwrap_able');
-    angle_unwrap=unwrap(h_all_angle,[],1);
-    angle_unwrap=unwrap(angle_unwrap,[],2);
-    angle_unwrap=unwrap(angle_unwrap,[],1); 
-else
-    disp('unwrap_disable');
-    angle_unwrap=h_all_angle;
-end
-
-for i=1:h_shape(3)
-    figure; mesh(angle_unwrap(:,:,i)); title(['angle of port' int2str(i)]);
-end
-
-
-figure;
-for i=1:h_shape(3)
-    if i==ref_port continue; end
-     mesh(angle_unwrap(:,:,i)-angle_unwrap(:,:,ref_port));  hold on; figure;
+trial_check_list = [];
+trial_snr_list = [];
+trial_port_list = [];
+for i=1:80
+    csifile = [rxdir 'epoch' int2str(i-1) '/csi.mat'];
+    disp(csifile);
+    load(csifile);
+    %'h_all_est','checklist','cfo_list','ber_list','snr_list','bf_snr_list','max_snr_list'
+    
+    % port check 
+    trial_check_list(i,:) = sum(checklist);
+    trial_snr_list(i,:) = max(snr_list);
+    trial_port_list(i,:) = sum(checklist)+5>max(sum(checklist));
+    port_able = find(trial_port_list(i,:)>0);
+    
+    % csi: h_all_est
+    csi_list = h_all_est(:,:,port_able);
+    csi_delta_list =  csi_list(:,:,1)./csi_list(:,:,2);
+    unwrapped_angle = unwrap(unwrap(angle(csi_delta_list),1),2);
+    mesh(unwrapped_angle);
+    a=1;
 end

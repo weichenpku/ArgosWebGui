@@ -5,7 +5,7 @@ rfo_use = true;
 
 
 disp(filename);
-[rx_all_sig, device_num, refdir] = hsr_rxdata(filename,fconf);          % ref_signal & rx_signal read
+[rx_all_sig, device_num, refdir,sig_type] = hsr_rxdata(filename,fconf);          % ref_signal & rx_signal read
 load([refdir 'paras.mat']);
 pss = csvread([refdir 'pss.csv']);
 sig_f = csvread([refdir 'sig_f.csv']);
@@ -53,11 +53,13 @@ if (sum(checklist(fileidx,:))>0)
         hsr_snr
         %display(ber_list);
         %display(snr_list);
-
-        figure; mesh(angle(h_full_est(:,:,plot_device))); title('csi distribution');
-        range=max(max(abs(h_est(:,:,plot_device))));
-        figure; plot(mean(h_full_est(:,:,plot_device),1)); title('mean csi vs time'); axis([-range range -range range]);
-        figure; plot(mean(h_full_est(:,:,plot_device),2)); title('mean csi vs frequency'); axis([-range range -range range]);
+        
+        if (checklist(fileidx,plot_device)==1)
+            figure; mesh(angle(h_full_est(:,:,plot_device))); title('csi distribution');
+            range=max(max(abs(h_est(:,:,plot_device))));
+            figure; plot(mean(h_full_est(:,:,plot_device),1)); title('mean csi vs time'); axis([-range range -range range]);
+            figure; plot(mean(h_full_est(:,:,plot_device),2)); title('mean csi vs frequency'); axis([-range range -range range]);
+        end
     end
 
     hsr_rxbf            % rxbf employ

@@ -23,7 +23,7 @@
 	"scale":"0.9",
 	"filesource": "selfdefine",  		"_comment2": "LTE or selfdefine", 
 	"nrb": "15", "sig_type":"sig_rbrr.csv",	  "_comment3": "if filesource == LTE",
-	"file": "../../refdata/generation/test_data/tone.csv",	  "_comment4": "if filesource == slefdefine",
+	"file": "../../refdata/generation/test_data/tone.csv",	  "_comment4": "if filesource == selfdefine",
 
 	"rx_path": "../../rxdata/"
 }

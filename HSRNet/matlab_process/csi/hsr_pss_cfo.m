@@ -7,7 +7,7 @@ pss_t = [pss(end-cp_len+1:end) pss];
 
 portnum = size(rx_all_sig,1);
 samplelen = size(rx_all_sig,2);
-offset_list=[];
+offset_list = zeros(1,portnum);
 
 for cur_device = 1:portnum 
     if checklist(fileidx,cur_device)~=1 continue; end
