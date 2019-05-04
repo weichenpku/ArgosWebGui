@@ -12,7 +12,7 @@ sig_f = csvread([refdir 'sig_f.csv']);
 
 portnum = size(rx_all_sig,1);
 if check % check the signal power
-    window_len = cp_symbol_len*2;
+    window_len = symbol_len;
     window_num = round(size(rx_all_sig,2)/window_len);
     mean_value = zeros(portnum,window_num);
     maxsig_value = zeros(portnum,window_num);
