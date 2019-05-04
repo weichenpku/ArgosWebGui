@@ -145,13 +145,15 @@ class LTE_Receiver:
                 os.makedirs(rx_dir)
             
             # agc for gain set
+            first_try = True
             gain_val = rx_gain
             while (True):
                 IrisUtil.Process_ComputeTimeToDoThings_UseHasTime(self, delay=10000000, alignment=0)
                 IrisUtil.Process_RxActivate_WriteFlagToRxStream_UseHasTime(self, rx_delay=0)
                 IrisUtil.Process_WaitForTime_NoTrigger(self)
                 flag = IrisUtil.Process_ReadFromRxStream(self)
-                if (flag==False):
+                if (flag==False or first_try==True):
+                    first_try = False
                     continue
                 IrisUtil.Process_HandlePostcode(self)  # postcode is work on received data
                 recvdata = IrisUtil.Process_SaveData(self)
@@ -159,7 +161,7 @@ class LTE_Receiver:
                 for chan in recvdata:
                     chanpeak = np.max(np.abs(recvdata[chan]))
                     if (chanpeak > maxpeak): maxpeak = chanpeak
-                print('AGC: chanpeak is', chanpeak,'; rxgain is ',gain_val)
+                print('AGC: chanpeak is', maxpeak,'; rxgain is ',gain_val)
                 print('AGC test')
                 print()
                 if maxpeak > 0.95:

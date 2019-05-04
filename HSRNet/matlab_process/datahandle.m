@@ -39,27 +39,22 @@ if (sum(checklist(fileidx,:))>0)
     hsr_pss_cfo         % cfo calculation
     % cfo_list
 
-    hsr_csi             % cfo compensation & csi calculate
+    hsr_csi             % csi calculate
     % h_tx,h_rx,h_est
-
-    hsr_snr             % snr calculate & (ber, cir, pdp, ds)     <= ofdm_judge.m
-    % snr_list, ber_list, h_full_est
-    % CIR, PDP, DS
-
-
     if (rfo_use)
         cfo_list(fileidx,:) = rfo_list(fileidx,:);
-        hsr_csi
-        hsr_snr
-        %display(ber_list);
-        %display(snr_list);
-        
-        if (checklist(fileidx,plot_device)==1)
+        hsr_csi  %  cfo compensation according to csi change
+    end
+    % cfo_list suppose to be similar; rfo_list suppose to be < 1Hz
+    
+    hsr_snr             % snr calculate & (ber, cir, pdp, ds)     <= ofdm_judge.m
+    % snr_list, ber_list, h_full_est
+    % CIR, PDP, DS    
+    if (checklist(fileidx,plot_device)==1)
             figure; mesh(angle(h_full_est(:,:,plot_device))); title('csi distribution');
             range=max(max(abs(h_est(:,:,plot_device))));
             figure; plot(mean(h_full_est(:,:,plot_device),1)); title('mean csi vs time'); axis([-range range -range range]);
             figure; plot(mean(h_full_est(:,:,plot_device),2)); title('mean csi vs frequency'); axis([-range range -range range]);
-        end
     end
 
     hsr_rxbf            % rxbf employ

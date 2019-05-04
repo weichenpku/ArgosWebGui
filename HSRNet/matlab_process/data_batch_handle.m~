@@ -19,7 +19,7 @@ for fileidx=1:filenum
     datahandle  %data handle
     close all;
     if (sum(checklist(fileidx,:))>0)
-        h_all_est(:,1+29*(fileidx-1):29*fileidx,:)=h_full_est;
+        h_all_est(:,1+*(fileidx-1):59*fileidx,:)=h_full_est;
     end
 end
 

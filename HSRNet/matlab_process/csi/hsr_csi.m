@@ -61,3 +61,23 @@ if (checklist(fileidx,plot_device)==1)
     figure; plot(h_est(:,51,plot_device)); title('csi vs frequency'); axis([-range range -range range]);
     figure; plot(h_est(1,2:end,plot_device)); title('csi vs time');  axis([-range range -range range]);
 end
+
+
+% csi change => rfo
+h_sig_est = h_est(:,3:2:end,:);
+angle_est = [];
+for cur_device=1:portnum
+    if checklist(fileidx,cur_device)~=1 
+        continue; 
+    end
+    angle_est(:,:,cur_device) = angle(h_sig_est(:,2:end,cur_device))-angle(h_sig_est(:,1:end-1,cur_device));
+    angle_unwrap = angle_est(:,:,cur_device);
+    idxlist=find(angle_unwrap>pi); angle_unwrap(idxlist)=angle_unwrap(idxlist)-pi;
+    idxlist=find(angle_unwrap>pi/2); angle_unwrap(idxlist)=angle_unwrap(idxlist)-pi;
+    idxlist=find(angle_unwrap<-pi); angle_unwrap(idxlist)=angle_unwrap(idxlist)+pi;
+    idxlist=find(angle_unwrap<-pi/2); angle_unwrap(idxlist)=angle_unwrap(idxlist)+pi;
+    %mesh(angle_unwrap);
+    rfo_cfo_delta = mean(mean(angle_unwrap))*srate/(2*pi*2*cp_symbol_len);
+    rfo_list(fileidx,cur_device) = cfo_list(fileidx,cur_device) + rfo_cfo_delta;
+end
+%disp(rfo_list);
