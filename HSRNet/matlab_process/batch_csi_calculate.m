@@ -1,8 +1,7 @@
-for i=1:80
-    rxdir=['../rxdata/4.30/4.30.0/epoch' int2str(i-1) '/']
+for i=1:8
+    fconf = '../conf/conf_LTE_rb.json'; rxdir=['../rxdata/5.3/5.3.0/epoch' int2str(i-1) '/']
+    %fconf = '../conf/conf_LTE_r.json'; rxdir=['../rxdata/4.30/4.30.0/epoch' int2str(i-1) '/']
     
-    fconf = '../conf/conf_LTE.json'; 
-
     outfile = '../rxdata/log.html';
     outfigure = '../rxdata/log.jpg';
 

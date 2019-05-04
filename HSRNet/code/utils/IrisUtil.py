@@ -249,7 +249,7 @@ def Init_CollectSDRInstantNeeded(self, clockRate=80e6):
         self.sdrs[serial] = sdr
         if clockRate is not None: sdr.setMasterClockRate(clockRate)  # set master clock
 
-def Setting_ChangeIQBalance(self, txscale=None, txangle=None, rxscale=None, rxangle=None):
+def Setting_ChangeIQBalance(self, txscale=None, txangle=None, rxscale=None, rxangle=None): # for calibration 
     for serial_ant in self.rx_serials_ant:
         serial, ant = Format_SplitSerialAnt(serial_ant)
         sdr = self.sdrs[serial]
@@ -267,6 +267,25 @@ def Setting_ChangeIQBalance(self, txscale=None, txangle=None, rxscale=None, rxan
                 balance = np.exp(txangle*1j)*txscale
                 sdr.setIQBalance(SOAPY_SDR_TX, chan, balance)
 
+def Setting_ChangeOffset(self, txreal=None, tximag=None, rxreal=None, rximag=None): # for calibration
+    for serial_ant in self.rx_serials_ant:
+        serial, ant = Format_SplitSerialAnt(serial_ant)
+        sdr = self.sdrs[serial]
+        chans = [0, 1] if ant == 2 else [ant]
+        for chan in chans:
+            if rxreal is not None:                     # IQ balance
+                offset = rxreal+1j*rximag
+                print('[SOAR]', serial,chan, 'set offset :',offset)
+                sdr.setDCOffset(SOAPY_SDR_RX, chan, offset)
+    for serial_ant in self.tx_serials_ant:
+        serial, ant = Format_SplitSerialAnt(serial_ant)
+        sdr = self.sdrs[serial]
+        chans = [0, 1] if ant == 2 else [ant]
+        for chan in chans:
+            if txreal is not None:                     # IQ balance
+                offset = txreal+1j*tximag
+                sdr.setDCOffset(SOAPY_SDR_RX, chan, offset)
+
 def  Get_iqbalance(trx,serial,chan):
     filename = '../../refdata/calibrate/iqbalance.mat'
     iqbalance = sio.loadmat(filename)
@@ -275,6 +294,15 @@ def  Get_iqbalance(trx,serial,chan):
     scale = iqbalance[var+'scale'][0][0]
     balance = np.exp(angle*1j)*scale
     return balance
+
+def  Get_dcoffset(trx,serial,chan):
+    filename = '../../refdata/calibrate/dcoffset.mat'
+    dcoffset = sio.loadmat(filename)
+    var = trx+'_'+serial+'_'+str(chan)+'_'
+    real = dcoffset[var+'real'][0][0]
+    imag = dcoffset[var+'imag'][0][0]
+    offset = real+1j*imag
+    return offset
 
 def Init_CreateBasicGainSettings(self, rate=None, bw=None, freq=None, dcoffset=None, txrate=None, rxrate=None):
     self.rx_gains = {}  # if rx_serials_ant contains xxx-3-rx-1 then it has "xxx-0-rx" and "xxx-1-rx", they are separate (without trigger option)
@@ -307,7 +335,12 @@ def Init_CreateBasicGainSettings(self, rate=None, bw=None, freq=None, dcoffset=N
             sdr.setFrequency(SOAPY_SDR_RX, chan, "BB", 0) # don't use cordic
             balance = Get_iqbalance('rx',serial[-2:],chan)
             sdr.setIQBalance(SOAPY_SDR_RX, chan, balance)
-            if dcoffset is not None: sdr.setDCOffsetMode(SOAPY_SDR_RX, chan, dcoffset) # dc removal on rx
+            print('[SOAR] iqbalance: rx', serial[-2:], chan, '=>', balance)
+            if dcoffset is not None: 
+                sdr.setDCOffsetMode(SOAPY_SDR_RX, chan, dcoffset) # dc removal on rx
+                offset = Get_dcoffset('rx',serial[-2:],chan)
+                sdr.setDCOffset(SOAPY_SDR_RX, chan, offset)
+                print('[SOAR] dcoffset: rx', serial[-2:], chan, '=>', offset)
             for key in self.default_rx_gains:
                 if key == "rxGain":  # this is a special gain value for Iris, just one parameter
                     sdr.setGain(SOAPY_SDR_RX, chan, self.default_rx_gains[key])
@@ -329,6 +362,7 @@ def Init_CreateBasicGainSettings(self, rate=None, bw=None, freq=None, dcoffset=N
             sdr.setFrequency(SOAPY_SDR_TX, chan, "BB", 0)  # don't use cordic
             balance = Get_iqbalance('tx',serial[-2:],chan)
             sdr.setIQBalance(SOAPY_SDR_TX, chan, balance)
+            print('[SOAR] iqbalance: tx', serial[-2:], chan, '=>', balance)
             for key in self.default_tx_gains:
                 if key == "txGain":  # this is a special gain value for Iris, just one parameter
                     sdr.setGain(SOAPY_SDR_TX, chan, self.default_tx_gains[key])
@@ -588,8 +622,9 @@ def Gains_ChangeBasicGains(self, serial_ant, txrx, gainObj, gainKey, gainNewValu
             try:
                 gainObj[gainKey] = int(gainNewValue)
                 if gk == "rxGain":
-                    print('[SOAR] set rx gain', chan, gainObj[gainKey]) 
                     sdr.setGain(SOAPY_SDR_RX, chan, gainObj[gainKey])  # this is special, only one parameter
+                    retgain = sdr.getGain(SOAPY_SDR_RX, chan)
+                    print('[SOAR]', serial ,'set rx gain', chan, gainObj[gainKey], ' =>', retgain) 
                 else: sdr.setGain(SOAPY_SDR_RX, chan, gainKey, gainObj[gainKey])
             except Exception as e:
                 GUI.error(str(e))
@@ -600,7 +635,11 @@ def Gains_ChangeBasicGains(self, serial_ant, txrx, gainObj, gainKey, gainNewValu
         if gk=="ATTN" or gk=="PA1" or gk=="PA2" or gk=="PA3" or gk=="IAMP" or gk=="PAD" or gk == "txGain":
             try:
                 gainObj[gainKey] = int(gainNewValue)
-                if gk == "txGain": sdr.setGain(SOAPY_SDR_TX, chan, gainObj[gainKey])  # this is special, only one parameter
+                if gk == "txGain": 
+                    print('[SOAR]', serial ,'set tx gain', chan, gainObj[gainKey]) 
+                    sdr.setGain(SOAPY_SDR_TX, chan, gainObj[gainKey])  # this is special, only one parameter
+                    retgain = sdr.getGain(SOAPY_SDR_TX, chan)
+                    print('[SOAR]', serial ,'set tx gain', chan, gainObj[gainKey], ' =>', retgain) 
                 else: sdr.setGain(SOAPY_SDR_TX, chan, gainKey, gainObj[gainKey])
             except Exception as e:
                 GUI.error(str(e))
@@ -608,6 +647,7 @@ def Gains_ChangeBasicGains(self, serial_ant, txrx, gainObj, gainKey, gainNewValu
             return True
         if hasattr(self, 'txGainKeyException'): return self.txGainKeyException(self, gainKey, newValue=gainNewValue, gainObj=gainObj)
     return None
+
 
 def Gains_NoGainKeyException(self, gainKey, newValue, gainObj):
     return None  # do nothing

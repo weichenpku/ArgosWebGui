@@ -10,7 +10,7 @@ primary_synch;   %PSS
 % primary_synch0_time: ifft(primary_synch0_mod2)
 
 %% # of resource block
-nb_rb = 25; %this can be 6,15,25,50,75 or 100
+nb_rb = 15; %this can be 6,15,25,50,75 or 100
 
 num_carriers = 2048/100*nb_rb; % fft size
 if nb_rb==15
@@ -67,28 +67,21 @@ sig_rbrr(1:num_carriers+prefix_length) = pss0_up_cp*scale_down;
 
 %% add single tone 
 symbol_len = num_carriers + prefix_length;
-tone_len = symbol_len * 12; % one subframe (1ms)
-tone_f = 1.92e6/256;
-tone_t = linspace(0,1/1000,tone_len);
-tone_sig = 0.95 * exp(1i*2*pi*tone_f*tone_t);
+tone_len = symbol_len * 12; % one subframe
+tone_sig = 0.95 * exp(1)
 
-sig_r(120*symbol_len+1:132*symbol_len) = tone_sig;
-sig_rb(120*symbol_len+1:132*symbol_len) = tone_sig;
-sig_rbrr(120*symbol_len+1:132*symbol_len) = tone_sig;
-
-%% save sig
 if nb_rb<10
     savedir='1.4m/';
 else
     savedir=[int2str(nb_rb/5),'m/'];
 end
 
-csvwrite([savedir 'sig_f.csv'],sig_f);
-csvwrite([savedir 'sig_r.csv'],sig_r);
-csvwrite([savedir 'sig_rb.csv'],sig_rb);
-csvwrite([savedir 'sig_rbrr.csv'],sig_rbrr);
-csvwrite([savedir 'pss.csv'],pss_t);
-save([savedir 'paras.mat'],'nb_rb','num_carriers','srate');
+% csvwrite([savedir 'sig_f.csv'],sig_f);
+% csvwrite([savedir 'sig_r.csv'],sig_r);
+% csvwrite([savedir 'sig_rb.csv'],sig_rb);
+% csvwrite([savedir 'sig_rbrr.csv'],sig_rbrr);
+% csvwrite([savedir 'pss.csv'],pss_t);
+% save([savedir 'paras.mat'],'nb_rb','num_carriers','srate');
 
 display(max(abs(real(sig_r))))
 display(max(abs(imag(sig_r))))

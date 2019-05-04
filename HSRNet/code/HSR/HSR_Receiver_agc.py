@@ -189,9 +189,9 @@ class LTE_Receiver:
                 maxpeak = 0
                 for chan in recvdata:
                     chanpeak = np.max(np.abs(recvdata[chan]))
-                    print('AGC: chanpeak is', chanpeak)
+                    print('AGC: chanpeak of',chan,'is', chanpeak)
                     if (chanpeak > maxpeak): maxpeak = chanpeak
-                print('AGC: chanpeak is', maxpeak, '; rxgain is ', gain_val)
+                print('AGC: peak is', maxpeak, '; rxgain is ', gain_val)
 
                 sio.savemat(rx_path+"epoch"+str(epoch)+"/rx"+str(i)+".mat",recvdata)
                 print('repeat_time: ',i)
