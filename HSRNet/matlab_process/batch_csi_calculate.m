@@ -1,5 +1,5 @@
 clear;
-for i=1:1
+for i=4:4
     fconf = '../conf/conf_LTE_rb.json'; rxdir=['../rxdata/5.4/5.4.1/epoch' int2str(i-1) '/']
     %fconf = '../conf/conf_LTE_r.json'; rxdir=['../rxdata/4.30/4.30.0/epoch' int2str(i-1) '/']
     

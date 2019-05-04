@@ -14,6 +14,7 @@ offset_all_list = [];
 files = dir([rxdir 'rx*']);
 filenum = size(files,1);
 plot_device = 2;
+symbolnum = 120;
 refnum = symbolnum/2-1;
 for fileidx=1:filenum
     filename = [rxdir 'rx' int2str(fileidx) '.mat'];

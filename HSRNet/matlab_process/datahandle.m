@@ -6,6 +6,7 @@ rfo_use = true;
 
 disp(filename);
 [rx_all_sig, device_num, refdir,device_list, sig_type] = hsr_rxdata(filename,fconf);          % ref_signal & rx_signal read
+figure; plot(real(rx_all_sig(1,:)));
 load([refdir 'paras.mat']);
 pss = csvread([refdir 'pss.csv']);
 sig_f = csvread([refdir 'sig_f.csv']);

@@ -1,10 +1,10 @@
-rxdir=['../rxdata/4.30/4.30.0/'];
+rxdir=['../rxdata/5.4/5.4.0/'];
 unwrap_able = 1;
 
 trial_check_list = [];
 trial_snr_list = [];
 trial_port_list = [];
-for i=1:80
+for i=1:1
     csifile = [rxdir 'epoch' int2str(i-1) '/csi.mat'];
     disp(csifile);
     load(csifile);

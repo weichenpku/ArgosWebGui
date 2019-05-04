@@ -16,6 +16,8 @@ for cur_device = 1:portnum
     tmp_corr = conv(rx_all_sig(cur_device,:),conj(pss));
     [tmp_peak,tmp_idx]=max(abs(tmp_corr(cp_symbol_len+1:end-cp_symbol_len)));
     
+    frame_tone_len = frame_len + frame_len/10*2;
+    if (tmp_idx-frame_tone_len>0) tmp_idx = tmp_idx-frame_tone_len; end
     if (tmp_idx+frame_len-1>size(rx_all_sig,2))
         frame_broken = true;
         break;
