@@ -1,4 +1,4 @@
-function [rx_all_sig,device_num,refdir,sig_type] = hsr_rxdata(filename,fconf)
+function [rx_all_sig,device_num,refdir,device_list,sig_type] = hsr_rxdata(filename,fconf)
 %% read configure
 fid = fopen(fconf); 
 raw = fread(fid,inf); 
@@ -13,6 +13,7 @@ rxdevice(1,:)=val.receiver_master.serial;
 for idx=1:rxdevicenum-1
     rxdevice(idx+1,:)=val.receiver(idx).serial;
 end
+device_list = char(rxdevice);
 
 sig_type = '';
 if (strcmp(val.sig_type,'sig_r.csv')==1) sig_type = 'r'; end

@@ -5,7 +5,7 @@ rfo_use = true;
 
 
 disp(filename);
-[rx_all_sig, device_num, refdir,sig_type] = hsr_rxdata(filename,fconf);          % ref_signal & rx_signal read
+[rx_all_sig, device_num, refdir,device_list, sig_type] = hsr_rxdata(filename,fconf);          % ref_signal & rx_signal read
 load([refdir 'paras.mat']);
 pss = csvread([refdir 'pss.csv']);
 sig_f = csvread([refdir 'sig_f.csv']);
@@ -38,7 +38,8 @@ end
 if (sum(checklist(fileidx,:))>0)
     hsr_pss_cfo         % cfo calculation
     % cfo_list
-
+    if (sum(checklist(fileidx,:))<=0) return; end
+    
     hsr_csi             % csi calculate
     % h_tx,h_rx,h_est
     if (rfo_use)

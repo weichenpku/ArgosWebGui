@@ -37,5 +37,5 @@
 	"nrb": "15", "sig_type":"sig_rb.csv",	"_comment3": "if filesource == LTE",
 	"file": "./refdata/generation/test_data/tone.csv",   "_comment4": "if filesource == selfdefine",
 
-	"rx_path": "../../rxdata/5.4/5.4.0/"
+	"rx_path": "../../rxdata/5.4/5.4.1/"
 }
