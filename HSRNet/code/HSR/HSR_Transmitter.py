@@ -75,12 +75,16 @@ class LTE_Transmitter:
             IrisUtil.Format_LoadTimeWaveForm(self, data_file, scale)
 
         # init sdr object
-        IrisUtil.Init_CollectSDRInstantNeeded(self, clockRate=80e6)
+        clockRate = 80e6
+        IrisUtil.Init_CollectSDRInstantNeeded(self, clockRate=clockRate)
 
         # create gains and set them
         IrisUtil.Init_CreateDefaultGain_WithDevFE(self)
         self.rate = 1.92e6*2
-        IrisUtil.Init_CreateBasicGainSettings(self, rate=self.rate, bw=10e6, freq=3.495e9, dcoffset=True)
+        tx_freq_correct = int(conf_dict['tx_freq_correct'])
+        fcorrect = tx_freq_correct
+        #fcorrect = tx_freq_correct/clockRate*1e6
+        IrisUtil.Init_CreateBasicGainSettings(self, rate=self.rate, bw=10e6, freq=3.495e9, dcoffset=True, fcorrect=fcorrect)
         #IrisUtil.Setting_ChangeIQBalance(self,txangle=-0.2,txscale=1.2)
 
          # create streams (but not activate them)

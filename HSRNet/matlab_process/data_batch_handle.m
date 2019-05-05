@@ -10,6 +10,7 @@ bf_snr_list = [];
 max_snr_list = [];
 rfo_list = [];
 offset_all_list = [];
+rss_list = [];
 
 files = dir([rxdir 'rx*']);
 filenum = size(files,1);
@@ -26,7 +27,7 @@ for fileidx=1:filenum
 end
 
 figure; mesh(angle(h_all_est(:,:,1)./h_all_est(:,:,2))); title('all time csi distribution');
-if (exist('outfigure')>0) saveas(gcf,outfigure); end
+if (exist('outdir')>0) saveas(gcf,[outdir 'log.jpg']); end
 
 display(checklist);
 display(cfo_list);
@@ -38,4 +39,5 @@ display(max_snr_list);
 rfo_list = rfo_list - cfo_list;
 display(rfo_list);
 
-save([rxdir 'csi.mat'],'h_all_est','checklist','cfo_list','ber_list','snr_list','bf_snr_list','max_snr_list');
+save([rxdir 'csi.mat'],'h_all_est','checklist','cfo_list','ber_list','snr_list',  ...
+'bf_snr_list','max_snr_list','offset_all_list','rss_list','device_list');

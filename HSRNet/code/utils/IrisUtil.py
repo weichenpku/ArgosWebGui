@@ -304,7 +304,7 @@ def  Get_dcoffset(trx,serial,chan):
     offset = real+1j*imag
     return offset
 
-def Init_CreateBasicGainSettings(self, rate=None, bw=None, freq=None, dcoffset=None, txrate=None, rxrate=None):
+def Init_CreateBasicGainSettings(self, rate=None, bw=None, freq=None, dcoffset=None, txrate=None, rxrate=None, fcorrect=None):
     self.rx_gains = {}  # if rx_serials_ant contains xxx-3-rx-1 then it has "xxx-0-rx" and "xxx-1-rx", they are separate (without trigger option)
     self.tx_gains = {}
     if rate is not None:
@@ -363,6 +363,12 @@ def Init_CreateBasicGainSettings(self, rate=None, bw=None, freq=None, dcoffset=N
             balance = Get_iqbalance('tx',serial[-2:],chan)
             sdr.setIQBalance(SOAPY_SDR_TX, chan, balance)
             print('[SOAR] iqbalance: tx', serial[-2:], chan, '=>', balance)
+            if fcorrect is not None:
+                sdr.setFrequencyCorrection(SOAPY_SDR_TX, chan, fcorrect)
+                flagcorrect = sdr.hasFrequencyCorrection(SOAPY_SDR_TX, chan)
+                retcorrect = sdr.getFrequencyCorrection(SOAPY_SDR_TX, chan)
+                print('[SOAR] freq correct ability:', flagcorrect)   # false
+                print('[SOAR] freq correct: tx',serial[-2:], chan, fcorrect, '=>', retcorrect)
             for key in self.default_tx_gains:
                 if key == "txGain":  # this is a special gain value for Iris, just one parameter
                     sdr.setGain(SOAPY_SDR_TX, chan, self.default_tx_gains[key])

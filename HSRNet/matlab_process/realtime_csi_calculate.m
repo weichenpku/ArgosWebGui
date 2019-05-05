@@ -4,9 +4,10 @@ function [] = realtime_csiplot(rxdir,fconf)
  
 %rxdir=['../rxdata/4.25/4.25.3/epoch0/'];
 %fconf = '../conf/conf_LTE.json';
-outfile = '../rxdata/log.txt';
-outfigure = '../rxdata/log.jpg';
+outdir = '../rxdata/';
+cfo_force = 260;
 
+outfile = [outdir 'log.html'];
 diary(outfile);
 diary on;
 

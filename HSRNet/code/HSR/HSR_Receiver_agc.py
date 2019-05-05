@@ -189,11 +189,14 @@ class LTE_Receiver:
                 recvdata = IrisUtil.Process_SaveData(self)
 
                 maxpeak = 0
+                peak_info = {}
                 for chan in recvdata:
                     chanpeak = np.max(np.abs(recvdata[chan]))
-                    print('AGC: chanpeak of',chan,'is', chanpeak)
+                    peak_info[chan] = chanpeak
                     if (chanpeak > maxpeak): maxpeak = chanpeak
-                print('AGC: peak is', maxpeak, '; rxgain is ', gain_val)
+                for chan in sorted(peak_info.keys()):
+                    print('AGC: peak of', chan, 'is', peak_info[chan])
+                print('AGC: maxpeak is', maxpeak, '; rxgain is ', gain_val)
 
                 sio.savemat(rx_path+"epoch"+str(epoch)+"/rx"+str(i)+".mat",recvdata)
                 print('repeat_time: ',i)

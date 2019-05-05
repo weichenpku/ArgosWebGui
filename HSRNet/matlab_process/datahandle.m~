@@ -3,24 +3,14 @@ addpath('csi');
 check = true;
 rfo_use = true;
 
+
 disp(filename);
 [rx_all_sig, device_num, refdir,device_list, sig_type] = hsr_rxdata(filename,fconf);          % ref_signal & rx_signal read
+rss_list(fileidx,) = 
+figure; plot(real(rx_all_sig(1,:)));
 load([refdir 'paras.mat']);
 pss = csvread([refdir 'pss.csv']);
 sig_f = csvread([refdir 'sig_f.csv']);
-
-figure; plot(real(rx_all_sig(1,:)));
-% cfo_force
-if (exist('cfo_force'))
-    df = -cfo_force;
-    phase = 2*pi*df*(1:size(rx_all_sig,2))/srate;
-    ch = ones(size(rx_all_sig,1),1)*(cos(phase)+1i*sin(phase));
-    rxframe = rx_all_sig.*ch;
-    rx_all_sig = rxframe;
-    hold on; plot(real(rx_all_sig(1,:)));
-end
-%rss_list(fileidx) = ; 
-
 
 portnum = size(rx_all_sig,1);
 if check % check the signal power

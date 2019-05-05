@@ -14,7 +14,7 @@ def test():
     cmd = 'cd ' + path + ';'
     print(cmd) 
     _do(cmd)
-    cmd = "realtime_csiplot(\'%s\',\'%s\');" % (sys.argv[1],sys.argv[2])
+    cmd = "realtime_csi_calculate(\'%s\',\'%s\');" % (sys.argv[1],sys.argv[2])
     print(cmd)
     _do(cmd)
 
