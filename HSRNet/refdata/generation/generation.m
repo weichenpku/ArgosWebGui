@@ -67,15 +67,15 @@ sig_rbrr(1:num_carriers+prefix_length) = pss0_up_cp*scale_down;
 
 %% add single tone 
 cp_symbol_len = num_carriers + prefix_length;
-tone_len = cp_symbol_len * 12; % one subframe (1ms)
+tone_len = cp_symbol_len * 6; % one subframe (1ms)
 tone_f = 1.92e6/256;
 tone_t = linspace(0,1/1000,tone_len);
 tone_sig(1:tone_len) = 0.75 * exp(1i*2*pi*tone_f*tone_t);
 tone_sig(tone_len+1:tone_len*2) = zeros(1,tone_len);
 
-sig_r(120*cp_symbol_len+1:144*cp_symbol_len) = tone_sig;
-sig_rb(120*cp_symbol_len+1:144*cp_symbol_len) = tone_sig;
-sig_rbrr(120*cp_symbol_len+1:144*cp_symbol_len) = tone_sig;
+sig_r(120*cp_symbol_len+1:132*cp_symbol_len) = tone_sig;
+sig_rb(120*cp_symbol_len+1:132*cp_symbol_len) = tone_sig;
+sig_rbrr(120*cp_symbol_len+1:132*cp_symbol_len) = tone_sig;
 
 %% save sig
 if nb_rb<10
@@ -84,12 +84,12 @@ else
     savedir=[int2str(nb_rb/5),'m/'];
 end
 
-% csvwrite([savedir 'sig_f.csv'],sig_f);
-% csvwrite([savedir 'sig_r.csv'],sig_r);
-% csvwrite([savedir 'sig_rb.csv'],sig_rb);
-% csvwrite([savedir 'sig_rbrr.csv'],sig_rbrr);
-% csvwrite([savedir 'pss.csv'],pss_t);
-% save([savedir 'paras.mat'],'nb_rb','num_carriers','srate','cp_symbol_len');
+csvwrite([savedir 'sig_f.csv'],sig_f);
+csvwrite([savedir 'sig_r.csv'],sig_r);
+csvwrite([savedir 'sig_rb.csv'],sig_rb);
+csvwrite([savedir 'sig_rbrr.csv'],sig_rbrr);
+csvwrite([savedir 'pss.csv'],pss_t);
+save([savedir 'paras.mat'],'nb_rb','num_carriers','srate','cp_symbol_len');
 
 display(max(abs(real(sig_r))))
 display(max(abs(imag(sig_r))))
