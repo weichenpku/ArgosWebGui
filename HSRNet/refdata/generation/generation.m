@@ -10,7 +10,7 @@ primary_synch;   %PSS
 % primary_synch0_time: ifft(primary_synch0_mod2)
 
 %% # of resource block
-nb_rb = 25; %this can be 6,15,25,50,75 or 100
+nb_rb = 100; %this can be 6,15,25,50,75 or 100
 
 num_carriers = 2048/100*nb_rb; % fft size
 if nb_rb==15
