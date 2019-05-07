@@ -25,6 +25,7 @@
 	}
 	],
 
+	"tx_freq_correct": "-260",
 	"tx_repeat_time": "10000000",
 	"rx_repeat_time": "30",
 	"rx_repeat_duration": "0.1",

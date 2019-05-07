@@ -1,7 +1,7 @@
 {
 	"transmitter": {
-		"serial": "RF3E000195",
-		"port": "1"
+		"serial": "RF3E000021",
+		"port": "0"
 	},
 	
 
@@ -13,7 +13,8 @@
 	"receiver": [
 	],
 
-	"tx_repeat_time": "10000",
+	"tx_freq_correct": "-260",
+	"tx_repeat_time": "1000000",
 	"rx_repeat_time": "10",
 	"rx_repeat_duration": "0",
 	"tx_gain": "40",

@@ -9,22 +9,22 @@ import scipy.io as sio
 import threading
 import SoapySDR
 
-tx_serial = "RF3E000187"
+tx_serial = "RF3E000021"
 tx_port = "0"
-rx_serial = "RF3E000195"
-rx_port = "1"
+rx_serial = "RF3E000187"
+rx_port = "0"
 
-tx_gain = "35"
-rx_gain = "60"
+tx_gain = "30"
+rx_gain = "40"
 
 verify =  True #        False #   
 # if verify is False
 test_tx = True   # False #test_rx = not test_tx
 
-tx_real_offset =   0
-tx_imag_offset =   0
-rx_real_offset =   -0.5
-rx_imag_offset =   0.8
+tx_real_offset =   1
+tx_imag_offset =   1
+rx_real_offset =   0
+rx_imag_offset =   0
 
 class Singletone_tx:
     def __init__(self):
@@ -156,7 +156,7 @@ class tx_thread(threading.Thread):
         self.tx_imag_offset = tx_imag_offset
     def run(self):
         self.obj.setoffset(self.tx_real_offset,self.tx_imag_offset)
-        self.obj.loop(repeat_time=500)
+        self.obj.loop(repeat_time=5000000)
         print('tx finish')
 
 class rx_thread(threading.Thread):
@@ -226,7 +226,7 @@ if __name__ == "__main__":
     obj2 = Singletone_rx()
     obj2.setGains({
             "parameters-showSamples": "60928",
-            "parameters-numSamples":"60000", # recvNum (should be less than 60928)
+            "parameters-numSamples":"65536", # recvNum (should be less than 60928)
             rx_serial+"-0-rx-rxGain": rx_gain,
             rx_serial+"-1-rx-rxGain": rx_gain
     })

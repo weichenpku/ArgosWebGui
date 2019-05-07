@@ -84,7 +84,7 @@ class LTE_Transmitter:
         tx_freq_correct = int(conf_dict['tx_freq_correct'])
         fcorrect = tx_freq_correct
         #fcorrect = tx_freq_correct/clockRate*1e6
-        IrisUtil.Init_CreateBasicGainSettings(self, rate=self.rate, bw=10e6, freq=3.495e9, dcoffset=True, fcorrect=fcorrect)
+        IrisUtil.Init_CreateBasicGainSettings(self, rate=self.rate, bw=10e6, freq=3.5e9, dcoffset=True, fcorrect=fcorrect)
         #IrisUtil.Setting_ChangeIQBalance(self,txangle=-0.2,txscale=1.2)
 
          # create streams (but not activate them)

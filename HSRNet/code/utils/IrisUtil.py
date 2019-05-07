@@ -284,7 +284,8 @@ def Setting_ChangeOffset(self, txreal=None, tximag=None, rxreal=None, rximag=Non
         for chan in chans:
             if txreal is not None:                     # IQ balance
                 offset = txreal+1j*tximag
-                sdr.setDCOffset(SOAPY_SDR_RX, chan, offset)
+                print('[SOAR]', serial,chan, 'set offset :',offset)
+                sdr.setDCOffset(SOAPY_SDR_TX, chan, offset)
 
 def  Get_iqbalance(trx,serial,chan):
     filename = '../../refdata/calibrate/iqbalance.mat'
@@ -913,7 +914,7 @@ def Process_WaitForTime_NoTrigger(self):
     # print('4 ts after awake',self.tswk)
 
 def Process_ReadFromRxStream(self):
-    max_len = 60928 # 0xee00
+    max_len = 65536 # 0xee00 => 0x10000
     read_len =1920
     read_success = True
     #print(self.ts)
