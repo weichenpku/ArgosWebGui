@@ -122,7 +122,7 @@ for cur_device = 1:portnum
         rx_all_cp(:,idx,1) = rxframe((idx-1)*cp_symbol_len+1:(idx-1)*cp_symbol_len+cp_len);
         rx_all_cp(:,idx,2) = rxframe(idx*cp_symbol_len+1-cp_len:idx*cp_symbol_len);
         sim=mean(rx_all_cp(:,idx,1)./rx_all_cp(:,idx,2))-1;
-        if abs(sim)<0.25  % noise is deleted
+        if abs(sim)<0.25  % noise is d
             corr_all_cp(:,idx)=conj(rx_all_cp(:,idx,1)).*rx_all_cp(:,idx,2);          
             angle_all_cp = [angle_all_cp  mean(angle(corr_all_cp(:,idx)))/2/pi*15000];
         end

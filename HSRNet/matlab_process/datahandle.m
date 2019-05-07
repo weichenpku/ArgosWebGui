@@ -19,7 +19,8 @@ if (exist('cfo_force'))
     rx_all_sig = rxframe;
     hold on; plot(real(rx_all_sig(1,:)));
 end
-%rss_list(fileidx) = ; 
+figure; plot(rx_all_sig(1,:)); axis([-1 1 -1 1]);
+
 
 
 portnum = size(rx_all_sig,1);

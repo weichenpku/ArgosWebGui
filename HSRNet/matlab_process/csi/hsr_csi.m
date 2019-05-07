@@ -3,11 +3,11 @@
 offset_list2 = reshape(offset_list,[2,device_num]);
 non_zero_idx = find(min(offset_list2)>0);
 offset_range = abs(offset_list2(1,non_zero_idx)-offset_list2(2,non_zero_idx));
-if abs(max(abs(offset_range))-srate/100)<5
-    offset_list2 = mod(offset_list2,srate/100);
-    non_zero_idx = find(min(offset_list2)>0);
-    offset_range = abs(offset_list2(1,non_zero_idx)-offset_list2(2,non_zero_idx));
-end
+% if abs(max(abs(offset_range))-srate/100)<5
+%     offset_list2 = mod(offset_list2,srate/100);
+%     non_zero_idx = find(min(offset_list2)>0);
+%     offset_range = abs(offset_list2(1,non_zero_idx)-offset_list2(2,non_zero_idx));
+% end
 
 if (min(size(offset_range))>0)
     assert(max(abs(offset_range))<5);
@@ -18,9 +18,10 @@ offset_all_list(fileidx,:) = mean_offset;
 
 portnum = size(rx_all_sig,1);
 samplelen = size(rx_all_sig,2);
-num_symbols_frame = frame_len/cp_symbol_len;
+num_symbols_frame = capture_symbolnum; 
+refsig_len = num_symbols_frame*cp_symbol_len;
 
-rx_all_frame = zeros(portnum,frame_len);
+rx_all_frame = zeros(portnum,refsig_len);
 h_tx = zeros(12*nb_rb,num_symbols_frame,portnum);
 h_rx = zeros(12*nb_rb,num_symbols_frame,portnum);
 h_est = zeros(12*nb_rb,num_symbols_frame,portnum);
@@ -32,14 +33,13 @@ for cur_device = 1:portnum
     cfo = cfo_list(fileidx,cur_device);
     
     df = -cfo;
-    phase = 2*pi*df*(1:frame_len)/srate;
+    phase = 2*pi*df*(1:refsig_len)/srate;
     ch = cos(phase)+1i*sin(phase);
-    rxframe = rx_all_sig(cur_device,mean_offset(device_no):mean_offset(device_no)+frame_len-1);
+    rxframe = rx_all_sig(cur_device,mean_offset(device_no):mean_offset(device_no)+refsig_len-1);
     rxframe = ch.*(rxframe-mean(rxframe));
     rx_all_frame(cur_device,:)=rxframe;
 
     %% CSI
-    num_symbols_frame = symbol_num; 
     cp_symbol_len = cp_len + symbol_len; 
     for k = 2:num_symbols_frame
             symbol_start = 1 + (k-1)*cp_symbol_len;
@@ -59,7 +59,7 @@ end
 if (checklist(fileidx,plot_device)==1)
     range=max(max(abs(h_est(:,:,plot_device))));
     figure; plot(h_est(:,51,plot_device)); title('csi vs frequency'); axis([-range range -range range]);
-    figure; plot(h_est(1,2:end,plot_device)); title('csi vs time');  axis([-range range -range range]);
+    figure; plot(h_est(80,2:end,plot_device)); title('csi vs time');  axis([-range range -range range]);
 end
 
 
