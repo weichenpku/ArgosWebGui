@@ -247,7 +247,10 @@ def Init_CollectSDRInstantNeeded(self, clockRate=80e6):
     for serial in self.sdrs:
         sdr = SoapySDR.Device(dict(driver="iris", serial=serial))
         self.sdrs[serial] = sdr
-        if clockRate is not None: sdr.setMasterClockRate(clockRate)  # set master clock
+        if clockRate is not None: 
+            sdr.setMasterClockRate(clockRate)  # set master clock
+            retclock = sdr.getMasterClockRate()
+            print('[SOAR] set',serial,'master',clockRate,'=>',retclock)
 
 def Setting_ChangeIQBalance(self, txscale=None, txangle=None, rxscale=None, rxangle=None): # for calibration 
     for serial_ant in self.rx_serials_ant:
@@ -773,11 +776,13 @@ def Process_ComputeTimeToDoThings_UseHasTime(self, delay = 10000000, alignment =
     # print('hw time',hw_time)
     # print('expected rx time',self.ts)
 
-def Process_TxActivate_WriteFlagAndMultiFrameToTxStream_UseHasTime(self,repeat_time=1000): # Tx multi burst
+def Process_TxActivate_WriteFlagAndMultiFrameToTxStream_UseHasTime(self,repeat_time=1000,frame_len=None): # Tx multi burst
     # Not suitable for writeStream tx
     # max_len = 2816 
     # replay_len = 1920
-    frame_len = len(self.tones[0][0])
+    if frame_len is None:
+        frame_len = len(self.tones[0][0])
+    print(frame_len)
     flags = SOAPY_SDR_HAS_TIME
     for r,txStream in enumerate(self.txStreams):
         serial_ant = self.tx_serials_ant[r]
@@ -794,8 +799,9 @@ def Process_TxActivate_WriteFlagAndMultiFrameToTxStream_UseHasTime(self,repeat_t
             serial, ant = Format_SplitSerialAnt(serial_ant)
             sdr = self.sdrs[serial]
             numsent = 0
-            ts=self.ts+(turn-1)*round(frame_len*1000000000/self.rate+1) # 1ms per subframe
-            if (turn%10==0):
+            ts=self.ts+(turn-1)*int(frame_len*1e9/self.rate)
+            #print(frame_len*1e9/self.rate,ts)
+            if (turn%1000==0):
                 print("turn ",turn)
             # print("current,ts",sdr.getHardwareTime())
             # print("tx_ts is ",ts)
@@ -804,11 +810,12 @@ def Process_TxActivate_WriteFlagAndMultiFrameToTxStream_UseHasTime(self,repeat_t
                 #if numtosent > replay_len:
                 #    numtosent = replay_len
                 # suppose numsent*1e9/self.rate is an integer
-                sr = sdr.writeStream(txStream, [tone[numsent:] for tone in self.tones[r]], numtosent, flags, timeNs=ts+round(numsent*1e9/self.rate)) 
+                sr = sdr.writeStream(txStream, [tone[numsent:frame_len] for tone in self.tones[r]], numtosent, flags, timeNs=ts+int(numsent*1e9/self.rate)) 
                 if sr.ret == -1:
                     print("sending error!!!")
                 else: 
                     numsent += sr.ret
+                #print(numtosent,numsent)
                     # print("sending ...",sr.ret)  
 
 def Process_TxActivate_WriteFlagAndDataToTxStream_UseHasTime(self):  # Tx burst

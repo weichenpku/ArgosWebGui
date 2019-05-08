@@ -1,6 +1,8 @@
 #!/usr/bin/python3
 
-import IrisUtil
+import sys
+sys.path.append("..")
+from utils import IrisUtil
 import time
 import numpy as np
 import scipy as sp
@@ -9,7 +11,7 @@ import scipy.io as sio
 def test():
     class FakeMain:
         def __init__(self):
-            self.IrisSerialNums = ["RF3E000006-0-Tx-1", "RF3E000022-1-Rx-0"]  # serial-chan-TX/RX-trigger
+            self.IrisSerialNums = ["RF3E000021-0-Tx-1", "RF3E000187-0-Rx-0"]  # serial-chan-TX/RX-trigger
             self.userTrig = True
         def changedF(self):
             print('changedF called')
@@ -18,8 +20,8 @@ def test():
     obj.setGains({
         "parameters-txSamples": "512",
         "parameters-numSamples": "51200",
-        "RF3E000006-0-tx-txGain": "35",
-        "RF3E000022-1-rx-rxGain": "35"
+        "RF3E000021-0-tx-txGain": "40",
+        "RF3E000187-0-rx-rxGain": "40"
     })
     
     print()
@@ -35,7 +37,7 @@ def test():
     for key,value in main.sampleData['data'].items():
         # print(type(main.sampleData['data'][key]))
         # print(key+".mat")
-        sio.savemat("rxdata/"+key+".mat", {"wave" : value})
+        sio.savemat("../../rxdata/test/"+key+".mat", {"wave" : value})
 
 class Sinusoid_Transceiver_DevFE_RevB_180828:
     def __init__(self, main):
@@ -86,7 +88,7 @@ class Sinusoid_Transceiver_DevFE_RevB_180828:
     def doSimpleRxTx(self):
         # prepare work, create tx rx buffer
         IrisUtil.Process_BuildTxTones_Sinusoid(self,scale=0.9)
-        sio.savemat("rxdata/tx.mat", {"wave" : self.tones})
+        sio.savemat("../../rxdata/test/tx.mat", {"wave" : self.tones})
         IrisUtil.Process_CreateReceiveBuffer(self)
         IrisUtil.Process_ClearStreamBuffer(self)
         # activate

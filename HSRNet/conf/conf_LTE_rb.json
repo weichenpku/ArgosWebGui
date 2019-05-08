@@ -32,6 +32,7 @@
 	"tx_gain": "50",
 	"rx_gain": "60",   "_comment1": "max_gain is 50",	
 	"srate": "3.84e6",
+	"carrier_freq": "3.5e9",
 		
 	"scale":"0.9",
 	"filesource": "LTE", 	"_comment2": "LTE or selfdefine",

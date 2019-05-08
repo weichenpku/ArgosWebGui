@@ -14,20 +14,20 @@ tx_port = "0"
 rx_serial = "RF3E000187"
 rx_port = "0"
 
-tx_gain = "30"
+tx_gain = "40"
 rx_gain = "40"
 
 verify =  True #        False #   
 # if verify is False
 test_tx = True   # False #test_rx = not test_tx
 
-tx_real_offset =   1
-tx_imag_offset =   1
+tx_real_offset =   0
+tx_imag_offset =   0
 rx_real_offset =   0
 rx_imag_offset =   0
 
 class Singletone_tx:
-    def __init__(self):
+    def __init__(self,srate):
         class FakeMain:
             def __init__(self,tx_serial):
                 self.IrisSerialNums = [tx_serial+"-2-Tx-1"] # serial-chan-TX/RX-trigger
@@ -40,7 +40,7 @@ class Singletone_tx:
         IrisUtil.Format_LoadTimeWaveForm(self, '../../refdata/generation/test_data/tone.csv', 0.9)
         IrisUtil.Init_CollectSDRInstantNeeded(self, clockRate=80e6)
         IrisUtil.Init_CreateDefaultGain_WithDevFE(self)
-        self.rate = 1.92e6*2
+        self.rate = srate
         IrisUtil.Init_CreateBasicGainSettings(self, rate=self.rate, bw=5e6, freq=3.5e9, dcoffset=True)
         IrisUtil.Init_CreateTxStreams_RevB(self)
         IrisUtil.Init_SynchronizeTriggerClock(self)
@@ -85,7 +85,7 @@ class Singletone_tx:
 
 
 class Singletone_rx:
-    def __init__(self):
+    def __init__(self,srate):
         class FakeMain:
             def __init__(self,rx_serial):
                 self.IrisSerialNums = [rx_serial+"-2-Rx-1"] # serial-chan-TX/RX-trigger
@@ -95,7 +95,7 @@ class Singletone_rx:
         IrisUtil.Format_UserInputSerialAnts(self)
         IrisUtil.Init_CollectSDRInstantNeeded(self, clockRate=80e6)
         IrisUtil.Init_CreateDefaultGain_WithDevFE(self)
-        self.rate = 1.92e6*2
+        self.rate = srate
         IrisUtil.Init_CreateBasicGainSettings(self, bw=5e6, freq=3.5e9, dcoffset=True, txrate=self.rate, rxrate=self.rate)
         IrisUtil.Init_CreateRxStreams_RevB(self)
         IrisUtil.Init_SynchronizeTriggerClock(self)
@@ -156,7 +156,7 @@ class tx_thread(threading.Thread):
         self.tx_imag_offset = tx_imag_offset
     def run(self):
         self.obj.setoffset(self.tx_real_offset,self.tx_imag_offset)
-        self.obj.loop(repeat_time=5000000)
+        self.obj.loop(repeat_time=5000)
         print('tx finish')
 
 class rx_thread(threading.Thread):
@@ -208,7 +208,7 @@ if __name__ == "__main__":
     ans = dict()
 
     
-
+    srate = 1.92e6*8
     if not verify:
         if test_tx:
             tx_real_offset = init_real_offset
@@ -217,13 +217,13 @@ if __name__ == "__main__":
             rx_real_offset = init_real_offset
             rx_imag_offset = init_imag_offset
 
-    obj1 = Singletone_tx()
+    obj1 = Singletone_tx(srate=srate)
     obj1.setGains({
             "parameters-txSelect": tx_serial+"-"+tx_port,
             tx_serial+"-0-tx-txGain": tx_gain,
             tx_serial+"-1-tx-txGain": tx_gain,
     })
-    obj2 = Singletone_rx()
+    obj2 = Singletone_rx(srate=srate)
     obj2.setGains({
             "parameters-showSamples": "60928",
             "parameters-numSamples":"65536", # recvNum (should be less than 60928)

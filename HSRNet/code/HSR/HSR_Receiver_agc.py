@@ -36,7 +36,7 @@ def test():
     rx_path = conf_dict['rx_path']
     
     main = FakeMain(rx_serial_master,rx_serial_slaves)
-    obj = LTE_Receiver(main)
+    obj = LTE_Receiver(main, conf_dict=conf_dict)
     
     gain_dict = {
         "parameters-showSamples": "60928",
@@ -60,7 +60,7 @@ def test():
 
 
 class LTE_Receiver:
-    def __init__(self, main):
+    def __init__(self, main, conf_dict):
         self.main = main
         IrisUtil.Assert_ZeroSerialNotAllowed(self)
         IrisUtil.Format_UserInputSerialAnts(self)
@@ -76,8 +76,8 @@ class LTE_Receiver:
 
         # create gains and set them
         IrisUtil.Init_CreateDefaultGain_WithDevFE(self)
-        self.rate = 1.92e6*2
-        IrisUtil.Init_CreateBasicGainSettings(self, bw=10e6, freq=3.5e9, dcoffset=True, txrate=self.rate, rxrate=self.rate)
+        self.rate = eval(conf_dict['srate'])
+        IrisUtil.Init_CreateBasicGainSettings(self, bw=10e6, freq=eval(conf_dict['carrier_freq']), dcoffset=True, txrate=self.rate, rxrate=self.rate)
 
         # create streams (but not activate them)
         IrisUtil.Init_CreateRxStreams_RevB(self)

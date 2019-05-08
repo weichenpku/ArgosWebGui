@@ -31,7 +31,8 @@
 	"rx_repeat_duration": "0.1",
 	"tx_gain": "70",   "_comment0": "max_gain is 50", 	
 	"rx_gain": "60",   "_comment1": "max_gain is 60 = 72-12", 	
-	"srate": "3.84e9",
+	"srate": "3.84e6",
+	"carrier_freq": "3.5e9",
 		
 	"scale":"0.9",
 	"filesource": "LTE", 	"_comment2": "LTE or selfdefine",

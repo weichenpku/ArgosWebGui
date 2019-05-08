@@ -10,7 +10,9 @@ primary_synch;   %PSS
 % primary_synch0_time: ifft(primary_synch0_mod2)
 
 %% # of resource block
-nb_rb = 100; %this can be 6,15,25,50,75 or 100
+nb_rb = 200; 
+%this can be 6,15,25,50,75 or 100 
+%bandwidth  1.08, 2.7               
 
 num_carriers = 2048/100*nb_rb; % fft size
 if nb_rb==15
@@ -21,7 +23,7 @@ if nb_rb==6
 end
 
 srate=num_carriers*15*1000;
-num_zeros = num_carriers-(12*nb_rb+1);
+num_zeros = num_carriers -(12*nb_rb+1);
 prefix_length = num_carriers/4; %this is extended CP (6 symbols_per_slot)  15/12-1=1/4
 num_symbols_frame = 120; % 6*2*10
 
@@ -84,12 +86,12 @@ else
     savedir=[int2str(nb_rb/5),'m/'];
 end
 
-csvwrite([savedir 'sig_f.csv'],sig_f);
-csvwrite([savedir 'sig_r.csv'],sig_r);
-csvwrite([savedir 'sig_rb.csv'],sig_rb);
-csvwrite([savedir 'sig_rbrr.csv'],sig_rbrr);
-csvwrite([savedir 'pss.csv'],pss_t);
-save([savedir 'paras.mat'],'nb_rb','num_carriers','srate','cp_symbol_len');
+% csvwrite([savedir 'sig_f.csv'],sig_f);
+% csvwrite([savedir 'sig_r.csv'],sig_r);
+% csvwrite([savedir 'sig_rb.csv'],sig_rb);
+% csvwrite([savedir 'sig_rbrr.csv'],sig_rbrr);
+% csvwrite([savedir 'pss.csv'],pss_t);
+% save([savedir 'paras.mat'],'nb_rb','num_carriers','srate','cp_symbol_len');
 
 display(max(abs(real(sig_r))))
 display(max(abs(imag(sig_r))))

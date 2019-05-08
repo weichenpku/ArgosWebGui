@@ -7,7 +7,6 @@ import time
 import numpy as np
 import scipy as sp
 import scipy.io as sio
-import sys
 import json
 
 
@@ -27,7 +26,7 @@ def test():
     tx_serial = conf_dict['transmitter']['serial']  #"RF3E000002"
     tx_ant = conf_dict['transmitter']['port']
     tx_gain = conf_dict['tx_gain']
-    tx_rb = int(conf_dict['nrb'])  # 1.4MHz
+    tx_rb = int(conf_dict['nrb']) 
     tx_repeat_time = int(conf_dict['tx_repeat_time']) # number of frames(10ms)
 
     main = FakeMain(tx_serial)
@@ -45,7 +44,12 @@ def test():
         print(para,':',value)
     print()
 
-    obj.loop(repeat_time=tx_repeat_time)
+    para_key = 'frame_len'
+    if (para_key in conf_dict):
+        para_val = int(eval(conf_dict[para_key]))
+        obj.loop(repeat_time=tx_repeat_time,frame_len=para_val)
+    else:      
+        obj.loop(repeat_time=tx_repeat_time)
 
     # print(main.sampleData)
     for key,value in main.sampleData['data'].items():
@@ -80,11 +84,11 @@ class LTE_Transmitter:
 
         # create gains and set them
         IrisUtil.Init_CreateDefaultGain_WithDevFE(self)
-        self.rate = 1.92e6*2
-        tx_freq_correct = int(conf_dict['tx_freq_correct'])
+        self.rate = eval(conf_dict['srate'])
+        tx_freq_correct = eval(conf_dict['tx_freq_correct'])
         fcorrect = tx_freq_correct
         #fcorrect = tx_freq_correct/clockRate*1e6
-        IrisUtil.Init_CreateBasicGainSettings(self, rate=self.rate, bw=10e6, freq=3.5e9, dcoffset=True, fcorrect=fcorrect)
+        IrisUtil.Init_CreateBasicGainSettings(self, rate=self.rate, bw=20e6, freq=eval(conf_dict['carrier_freq']), dcoffset=True, fcorrect=fcorrect)
         #IrisUtil.Setting_ChangeIQBalance(self,txangle=-0.2,txscale=1.2)
 
          # create streams (but not activate them)
@@ -137,17 +141,17 @@ class LTE_Transmitter:
         IrisUtil.Gains_HandleSelfParameters(self, gains)
         IrisUtil.Gains_SetBasicGains(self, gains)
     
-    def doSimpleTx(self,repeat_time):
+    def doSimpleTx(self,repeat_time,frame_len=None):
         # activate
         IrisUtil.Process_ComputeTimeToDoThings_UseHasTime(self, delay = 10000000, alignment = 0)
-        IrisUtil.Process_TxActivate_WriteFlagAndMultiFrameToTxStream_UseHasTime(self,repeat_time=repeat_time)
+        IrisUtil.Process_TxActivate_WriteFlagAndMultiFrameToTxStream_UseHasTime(self,repeat_time=repeat_time,frame_len=frame_len)
 
     
         # deactive
         IrisUtil.Process_TxDeactive(self)
 
-    def loop(self,repeat_time):
-        self.doSimpleTx(repeat_time=repeat_time)
+    def loop(self,repeat_time,frame_len=None):
+        self.doSimpleTx(repeat_time=repeat_time,frame_len=frame_len)
         #IrisUtil.Interface_UpdateUserGraph(self, self.correlationSampes)  # update to user graph
         IrisUtil.Interface_UpdateUserGraph(self)
 

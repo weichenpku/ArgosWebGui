@@ -1,6 +1,8 @@
 #!/usr/bin/python3
 
-import IrisUtil
+import sys
+sys.path.append("..")
+from utils import IrisUtil
 import time
 import numpy as np
 import scipy as sp
@@ -49,7 +51,7 @@ class Sinusoid_Transceiver_DevFE_RevB_180828:
         # create gains and set them
         IrisUtil.Init_CreateDefaultGain_WithDevFE(self)
         self.rate = 10e6  # save this for later build tx tone
-        IrisUtil.Init_CreateBasicGainSettings(self, rate=self.rate, bw=30e6, freq=2.45e9, dcoffset=True)
+        IrisUtil.Init_CreateBasicGainSettings(self, rate=self.rate, bw=30e6, freq=3.5e9, dcoffset=True)
 
         # create streams (but not activate them)
         IrisUtil.Init_CreateTxRxStreams_RevB(self)
