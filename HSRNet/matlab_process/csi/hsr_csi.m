@@ -58,7 +58,7 @@ end
 
 if (checklist(fileidx,plot_device)==1)
     range=max(max(abs(h_est(:,:,plot_device))));
-    figure; plot(h_est(:,51,plot_device)); title('csi vs frequency'); axis([-range range -range range]);
+    figure; plot(h_est(:,11,plot_device)); title('csi vs frequency'); axis([-range range -range range]);
     figure; plot(h_est(80,2:end,plot_device)); title('csi vs time');  axis([-range range -range range]);
 end
 

@@ -10,13 +10,13 @@ primary_synch;   %PSS
 % primary_synch0_time: ifft(primary_synch0_mod2)
 
 %% # of resource block
-result_save=true;%false;% 
-nb_rb = 15; 
-%this can be 6,15,25,50,75 or 100 (150)
+nb_rb = ; 
+result_save = false;
+%this can be 6,15,25,50,75 or 100 
 %bandwidth  1.08, 2.7               
 
-num_carriers = 0; % fft size
-num_symbols_frame = 0; % frame_len < 65536
+num_carriers = 2048/100*nb_rb; % fft size
+num_symbols_frame = 120; % frame_len < 65536
 switch nb_rb
     case 6
         num_carriers = 128;
@@ -55,8 +55,8 @@ figure; plot(QAM_MOD(16,0:16));
 %% frequency and time wave generate
 sig_f = zeros(num_symbols_frame,12*nb_rb);
 sig_r = zeros(1,(num_carriers+prefix_length)*num_symbols_frame);
-sig_br = zeros(1,(num_carriers+prefix_length)*num_symbols_frame);
-sig_brrr = zeros(1,(num_carriers+prefix_length)*num_symbols_frame);
+sig_rb = zeros(1,(num_carriers+prefix_length)*num_symbols_frame);
+sig_rbrr = zeros(1,(num_carriers+prefix_length)*num_symbols_frame);
 for k=1:num_symbols_frame
     QAM_list = QAM_MOD(4,floor(4*rand(1,12*nb_rb)));
     sig_f(k,:) = QAM_list;
@@ -66,16 +66,16 @@ for k=1:num_symbols_frame
     l=1+(k-1)*(num_carriers+prefix_length);
     r=k*(num_carriers+prefix_length);
     sig_r(l:r)=[symbol_t(num_carriers-prefix_length+1:end) symbol_t];
-    sig_br(l:r)=[symbol_t(num_carriers-prefix_length+1:end) symbol_t];
-    sig_brrr(l:r)=[symbol_t(num_carriers-prefix_length+1:end) symbol_t];
-    if (mod(k,2)==1) sig_br(l:r)=0; end
-    if (mod(k,4)==1) sig_brrr(l:r)=0; end
+    sig_rb(l:r)=[symbol_t(num_carriers-prefix_length+1:end) symbol_t];
+    sig_rbrr(l:r)=[symbol_t(num_carriers-prefix_length+1:end) symbol_t];
+    if (mod(k,2)==0) sig_rb(l:r)=0; end
+    if (mod(k,4)==2) sig_rbrr(l:r)=0; end
 end
 
 scale_down = 0.95/max(max(abs(real(sig_r))),max(abs(imag(sig_r))));
 sig_r=sig_r*scale_down;
-sig_br=sig_br*scale_down;
-sig_brrr=sig_brrr*scale_down;
+sig_rb=sig_rb*scale_down;
+sig_rbrr=sig_rbrr*scale_down;
 
 %% add PSS
 pss_t=pss0_up;
@@ -84,8 +84,8 @@ figure; plot(fft(pss_t).*conj(fft(pss_t)))              % frequency domain featu
 scale_down = 0.95/max(max(abs(real(pss0_up_cp))),max(abs(imag(pss0_up_cp))));
 
 sig_r(1:num_carriers+prefix_length) = pss0_up_cp*scale_down;
-sig_br(1:num_carriers+prefix_length) = pss0_up_cp*scale_down;
-sig_brrr(1:num_carriers+prefix_length) = pss0_up_cp*scale_down;
+sig_rb(1:num_carriers+prefix_length) = pss0_up_cp*scale_down;
+sig_rbrr(1:num_carriers+prefix_length) = pss0_up_cp*scale_down;
 
 %% add single tone 
 cp_symbol_len = num_carriers + prefix_length;
@@ -98,8 +98,8 @@ tone_sig(tone_len+1:tone_len*2) = zeros(1,tone_len);
 left=num_symbols_frame*cp_symbol_len+1;
 right=left-1+tone_len*2;
 sig_r(left:right) = tone_sig;
-sig_br(left:right) = tone_sig;
-sig_brrr(left:right) = tone_sig;
+sig_rb(left:right) = tone_sig;
+sig_rbrr(left:right) = tone_sig;
 
 %% save sig
 if (result_save)
@@ -108,15 +108,15 @@ if (result_save)
     else
         savedir=[int2str(nb_rb/5),'m/'];
     end
-%     csvwrite([savedir 'sig_f.csv'],sig_f);
-%     csvwrite([savedir 'sig_r.csv'],sig_r);
-%     csvwrite([savedir 'sig_br.csv'],sig_br);
-%     csvwrite([savedir 'sig_brrr.csv'],sig_brrr);
-%     csvwrite([savedir 'pss.csv'],pss_t);
-    save([savedir 'paras.mat'],'nb_rb','num_carriers','srate','cp_symbol_len','num_symbols_frame');
+    csvwrite([savedir 'sig_f.csv'],sig_f);
+    csvwrite([savedir 'sig_r.csv'],sig_r);
+    csvwrite([savedir 'sig_rb.csv'],sig_rb);
+    csvwrite([savedir 'sig_rbrr.csv'],sig_rbrr);
+    csvwrite([savedir 'pss.csv'],pss_t);
+    save([savedir 'paras.mat'],'nb_rb','num_carriers','srate','cp_symbol_len');
 end
 
 display(max(abs(real(sig_r))))
 display(max(abs(imag(sig_r))))
 
-figure; plot(abs(conv(sig_br,conj(pss_t))));
+figure; plot(abs(conv(sig_rb,conj(pss_t))));

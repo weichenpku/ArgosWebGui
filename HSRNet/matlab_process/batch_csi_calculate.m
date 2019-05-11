@@ -1,8 +1,9 @@
 clear;
-for epoch_num=75:80
-    fconf = '../conf/conf_LTE_rb.json'; rxdir=['../rxdata/5.5/5.5.1/epoch' int2str(epoch_num-1) '/']; cfo_force = 260;
+for epoch_num=1:3
+    %fconf = '../conf/conf_LTE_2.5m.json'; rxdir=['../rxdata/5.5/5.5.1/epoch' int2str(epoch_num-1) '/']; cfo_force = 260;
     %fconf = '../conf/conf_LTE_r.json'; rxdir=['../rxdata/4.30/4.30.0/epoch' int2str(epoch_num-1) '/']
-    
+    %fconf = '../conf/conf_LTE_30m.json'; rxdir=['../rxdata/5.10/5.10.0/epoch' int2str(epoch_num-1) '/']; cfo_force = 260;
+    fconf = '../conf/conf_LTE_30m.json'; rxdir=['../rxdata/5.10/5.10.1/epoch' int2str(epoch_num-1) '/']; cfo_force = 260;
     outdir = '../rxdata/';
     
     outfile = [outdir 'log.html'];

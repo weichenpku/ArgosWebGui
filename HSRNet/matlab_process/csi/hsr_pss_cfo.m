@@ -1,7 +1,7 @@
 symbol_len = num_carriers;
 cp_len = symbol_len/4;
 cp_symbol_len = symbol_len+cp_len;
-symbol_num = 2*6*10;  duration_time=0.01;
+symbol_num = num_symbols_frame;
 frame_len = cp_symbol_len*symbol_num;
 pss_t = [pss(end-cp_len+1:end) pss];
 

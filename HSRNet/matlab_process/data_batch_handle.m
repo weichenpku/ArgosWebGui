@@ -15,13 +15,9 @@ rss_list = [];
 files = dir([rxdir 'rx*']);
 filenum = size(files,1);
 plot_device = 2;
-symbol_num = 120;
-refnum = symbol_num/2-1;
 for fileidx=1:filenum
     filename = [rxdir 'rx' int2str(fileidx) '.mat'];
-    capture_symbolnum = symbol_num;
     datahandle  %data handle
-    capture_refnum = capture_symbolnum/2-1;
     close all;
     if (sum(checklist(fileidx,:))>0)
         h_all_est(:,1+refnum*(fileidx-1):capture_refnum+refnum*(fileidx-1),:)=h_full_est;

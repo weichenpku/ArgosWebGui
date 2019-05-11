@@ -77,7 +77,8 @@ class LTE_Receiver:
         # create gains and set them
         IrisUtil.Init_CreateDefaultGain_WithDevFE(self)
         self.rate = eval(conf_dict['srate'])
-        IrisUtil.Init_CreateBasicGainSettings(self, bw=10e6, freq=eval(conf_dict['carrier_freq']), dcoffset=True, txrate=self.rate, rxrate=self.rate)
+        self.bw = eval(conf_dict['bandwidth'])
+        IrisUtil.Init_CreateBasicGainSettings(self, bw=self.bw, freq=eval(conf_dict['carrier_freq']), dcoffset=True, txrate=self.rate, rxrate=self.rate)
 
         # create streams (but not activate them)
         IrisUtil.Init_CreateRxStreams_RevB(self)
@@ -148,7 +149,17 @@ class LTE_Receiver:
                 IrisUtil.Process_HandlePostcode(self)  # postcode is work on received data
 
                 recvdata = IrisUtil.Process_SaveData(self)
-                print(type(recvdata))
+
+                maxpeak = 0
+                peak_info = {}
+                for chan in recvdata:
+                    chanpeak = np.max(np.abs(recvdata[chan]))
+                    peak_info[chan] = chanpeak
+                    if (chanpeak > maxpeak): maxpeak = chanpeak
+                for chan in sorted(peak_info.keys()):
+                    print('AGC: peak of', chan, 'is', peak_info[chan])
+                print('AGC: maxpeak is', maxpeak)
+
                 sio.savemat(rx_path+"epoch"+str(epoch)+"/rx"+str(i)+".mat",recvdata)
                 print('repeat_time: ',i)
                 # sleep before next activation

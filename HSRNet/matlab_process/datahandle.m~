@@ -49,7 +49,6 @@ if check % check the signal power
 end
     
 if (sum(checklist(fileidx,:))>0)
-    capture_symbolnum = num_symbols_frame;
     hsr_pss_cfo         % cfo calculation
     % cfo_list
     if (sum(checklist(fileidx,:))<=0) return; end

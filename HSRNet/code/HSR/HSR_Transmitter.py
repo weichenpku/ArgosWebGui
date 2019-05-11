@@ -12,8 +12,8 @@ import json
 
 def test():
     class FakeMain:
-        def __init__(self,tx_serial):
-            self.IrisSerialNums = [tx_serial+ "-2-Tx-1"] #serial-chan-TX/RX-trigger
+        def __init__(self,tx_serial,tx_ant):
+            self.IrisSerialNums = [tx_serial+ "-" + tx_ant + "-Tx-1"] #serial-chan-TX/RX-trigger
             self.userTrig = True
         def changedF(self):
             print('changedF called')
@@ -29,13 +29,17 @@ def test():
     tx_rb = int(conf_dict['nrb']) 
     tx_repeat_time = int(conf_dict['tx_repeat_time']) # number of frames(10ms)
 
-    main = FakeMain(tx_serial)
+    main = FakeMain(tx_serial,tx_ant)
     obj = LTE_Transmitter(main, nb_rb=tx_rb,  conf_dict=conf_dict)
-    obj.setGains({
-        "parameters-txSelect": tx_serial+"-"+tx_ant,
-        tx_serial+"-0-tx-txGain": tx_gain,
-        tx_serial+"-1-tx-txGain": tx_gain,
-    })
+
+    gain_para = {}
+    gain_para["parameters-txSelect"] = tx_serial+"-"+tx_ant
+    if (tx_ant!='0'): #['1','2']
+        gain_para[tx_serial+"-1-tx-txGain"] = tx_gain
+    if (tx_ant!='1'): #['0','2']
+        gain_para[tx_serial+"-0-tx-txGain"] = tx_gain
+
+    obj.setGains(gain_para)
     
     print()
     print('[SOAR] parameters : value')
@@ -43,7 +47,7 @@ def test():
     for para,value in paras['data'].items():
         print(para,':',value)
     print()
-
+    
     para_key = 'frame_len'
     if (para_key in conf_dict):
         para_val = int(eval(conf_dict[para_key]))
@@ -85,10 +89,11 @@ class LTE_Transmitter:
         # create gains and set them
         IrisUtil.Init_CreateDefaultGain_WithDevFE(self)
         self.rate = eval(conf_dict['srate'])
+        self.bw = eval(conf_dict['bandwidth'])
         tx_freq_correct = eval(conf_dict['tx_freq_correct'])
         fcorrect = tx_freq_correct
         #fcorrect = tx_freq_correct/clockRate*1e6
-        IrisUtil.Init_CreateBasicGainSettings(self, rate=self.rate, bw=20e6, freq=eval(conf_dict['carrier_freq']), dcoffset=True, fcorrect=fcorrect)
+        IrisUtil.Init_CreateBasicGainSettings(self, rate=self.rate, bw=self.bw, freq=eval(conf_dict['carrier_freq']), dcoffset=True, fcorrect=fcorrect)
         #IrisUtil.Setting_ChangeIQBalance(self,txangle=-0.2,txscale=1.2)
 
          # create streams (but not activate them)

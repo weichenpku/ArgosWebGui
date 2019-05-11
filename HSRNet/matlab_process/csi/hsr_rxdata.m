@@ -17,7 +17,8 @@ device_list = char(rxdevice);
 
 sig_type = '';
 if (strcmp(val.sig_type,'sig_r.csv')==1) sig_type = 'r'; end
-if (strcmp(val.sig_type,'sig_rb.csv')==1) sig_type = 'rb'; end
+if (strcmp(val.sig_type,'sig_br.csv')==1) sig_type = 'br'; end
+if (strcmp(val.sig_type,'sig_brrr.csv')==1) sig_type = 'brrr'; end
 
 
 

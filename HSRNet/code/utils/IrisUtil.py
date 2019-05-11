@@ -409,6 +409,7 @@ def Init_CreateTxStreams_RevB(self):
         #for ant in chans:
         #    sdr.writeSetting(SOAPY_SDR_TX, ant, 'CALIBRATE', 'SKLK')  # this is from sklk-demos/python/SISO.py wy@180823
         stream = sdr.setupStream(SOAPY_SDR_TX, SOAPY_SDR_CF32, chans, {"remote:prot": "tcp", "remote:mtu": "1024"})
+        #stream = sdr.setupStream(SOAPY_SDR_TX, SOAPY_SDR_CS8, chans, {"remote:prot": "tcp", "remote:mtu": "1024"})
         self.txStreams.append(stream)
 
 def Init_CreateRxStreams_RevB(self):
@@ -801,7 +802,7 @@ def Process_TxActivate_WriteFlagAndMultiFrameToTxStream_UseHasTime(self,repeat_t
             numsent = 0
             ts=self.ts+(turn-1)*int(frame_len*1e9/self.rate)
             #print(frame_len*1e9/self.rate,ts)
-            if (turn%1000==0):
+            if (turn%100==0):
                 print("turn ",turn)
             # print("current,ts",sdr.getHardwareTime())
             # print("tx_ts is ",ts)
@@ -810,7 +811,8 @@ def Process_TxActivate_WriteFlagAndMultiFrameToTxStream_UseHasTime(self,repeat_t
                 #if numtosent > replay_len:
                 #    numtosent = replay_len
                 # suppose numsent*1e9/self.rate is an integer
-                sr = sdr.writeStream(txStream, [tone[numsent:frame_len] for tone in self.tones[r]], numtosent, flags, timeNs=ts+int(numsent*1e9/self.rate)) 
+                #sr = sdr.writeStream(txStream, [tone[numsent:frame_len] for tone in self.tones[r]], numtosent, flags, timeNs=ts+int(numsent*1e9/self.rate)) 
+                sr = sdr.writeStream(txStream, [tone[numsent:frame_len] for tone in self.tones[r]], numtosent, 0) 
                 if sr.ret == -1:
                     print("sending error!!!")
                 else: 
