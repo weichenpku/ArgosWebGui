@@ -39,13 +39,14 @@ if (strcmp(sig_type,'r')==1)
     bf_snr=log(mean(p_bf_sig)/mean(p_bf_noi))/log(10)*10;
     bf_snr_list(fileidx) = bf_snr;
 end
-if (strcmp(sig_type,'rb')==1)
-    h_bf_sig = mean(h_bf_est(:,3:2:end),2);
+if (strcmp(sig_type,'r')==0)
+    h_bf_sig = mean(h_bf_est(:,capture_refidx),2);
     p_bf_sig = abs(h_bf_sig).^2;
-    p_bf_noi = mean(abs(h_bf_est(:,2:2:end)).^2,2);
+    p_bf_noi = mean(abs(h_bf_est(:,capture_blankidx)).^2,2);
     bf_snr=log(mean(p_bf_sig./p_bf_noi))/log(10)*10;
     bf_snr_list(fileidx) = bf_snr;
 end
+
 %display(['snr of bf is ' num2str(bf_snr)]);
 
 bf_snr_ = log(sum(10.^(snr_list(fileidx,:)/10)))/log(10)*10;

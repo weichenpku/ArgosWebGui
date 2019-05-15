@@ -1,4 +1,4 @@
-function [rx_all_sig,device_num,refdir,device_list,sig_type] = hsr_rxdata(filename,fconf)
+function [rx_all_sig,device_num,refdir,device_list,sig_type,nb_rb] = hsr_rxdata(filename,fconf)
 %% read configure
 fid = fopen(fconf); 
 raw = fread(fid,inf); 

@@ -39,8 +39,8 @@ def test():
     obj = LTE_Receiver(main,conf_dict=conf_dict)
     
     gain_dict = {
-        "parameters-showSamples": "60928",
-        "parameters-numSamples":"60000", # recvNum (should be less than 60928)
+        "parameters-showSamples": "1000000000",
+        "parameters-numSamples":"7000000", # recvNum (should be less than 60928)
         conf_dict['receiver_master']['serial']+"-0-rx-rxGain": rx_gain,
         conf_dict['receiver_master']['serial']+"-1-rx-rxGain": rx_gain
     }

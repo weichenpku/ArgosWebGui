@@ -886,7 +886,8 @@ def Process_RxActivate_WriteFlagToRxStream(self):
 def Process_RxActivate_WriteFlagToRxStream_UseHasTime(self, rx_delay = 57):
     rx_delay_ns = SoapySDR.ticksToTimeNs(rx_delay, self.rate) if rx_delay != 0 else 0
     ts = self.ts + rx_delay_ns  # rx is a bit after tx
-    flags = SOAPY_SDR_HAS_TIME | SOAPY_SDR_END_BURST
+    #flags = SOAPY_SDR_HAS_TIME | SOAPY_SDR_END_BURST
+    flags = SOAPY_SDR_HAS_TIME
     # activate all receive stream
     for r,rxStream in enumerate(self.rxStreams):
         serial_ant = self.rx_serials_ant[r]
@@ -894,7 +895,9 @@ def Process_RxActivate_WriteFlagToRxStream_UseHasTime(self, rx_delay = 57):
         sdr = self.sdrs[serial]
         # self.tsbf = sdr.getHardwareTime()
         # print('1 ts before activate',self.tsbf)
-        sdr.activateStream(rxStream, flags, ts, len(self.sampsRecv[r][0]))
+        
+        #sdr.activateStream(rxStream, flags, ts, len(self.sampsRecv[r][0]))
+        sdr.activateStream(rxStream, flags, ts)
         # self.tsaf = sdr.getHardwareTime()
         # print('2 ts after activate',self.tsaf)
         # self.tsrx = ts

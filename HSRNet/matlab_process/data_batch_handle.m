@@ -12,6 +12,17 @@ rfo_list = [];
 offset_all_list = [];
 rss_list = [];
 
+num_symbols_frame = 0;
+refnum = 0;
+refidx = [];
+blanknum = 0;
+blankidx = [];
+capture_symbolnum = 0;
+capture_refnum = 0;
+capture_refidx = [];
+capture_blanknum = 0;
+capture_blankidx = [];
+
 files = dir([rxdir 'rx*']);
 filenum = size(files,1);
 plot_device = 2;

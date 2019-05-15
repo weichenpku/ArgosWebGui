@@ -1,16 +1,16 @@
-%input: filename, fconf, fileidx, plot_device
+%% input: filename, fconf, fileidx, plot_device
 addpath('csi');
 check = true;
 rfo_use = true;
 
+%% rxdata lod
 disp(filename);
-[rx_all_sig, device_num, refdir, device_list, sig_type] = hsr_rxdata(filename,fconf);          % ref_signal & rx_signal read
+[rx_all_sig, device_num, refdir, device_list, sig_type, nb_rb] = hsr_rxdata(filename,fconf);          
 load([refdir 'paras.mat']);
 pss = csvread([refdir 'pss.csv']);
 sig_f = csvread([refdir 'sig_f.csv']);
 
 figure; plot(real(rx_all_sig(1,:)));
-% cfo_force
 if (exist('cfo_force'))
     df = -cfo_force;
     phase = 2*pi*df*(1:size(rx_all_sig,2))/srate;
@@ -21,8 +21,10 @@ if (exist('cfo_force'))
 end
 figure; plot(rx_all_sig(1,:)); axis([-1 1 -1 1]);
 
+%% ref & blank idx
+[num_symbols_frame,refnum,refidx,blanknum,blankidx] = ref_blank_idx(sig_type,nb_rb);
 
-
+%% checklist
 portnum = size(rx_all_sig,1);
 if check % check the signal power
     window_len = cp_symbol_len*2;
@@ -49,8 +51,9 @@ if check % check the signal power
 end
     
 if (sum(checklist(fileidx,:))>0)
-    capture_symbolnum = num_symbols_frame;
-    hsr_pss_cfo         % cfo calculation
+    % cfo calculation
+    hsr_pss_cfo
+    
     % cfo_list
     if (sum(checklist(fileidx,:))<=0) return; end
     
@@ -68,6 +71,7 @@ if (sum(checklist(fileidx,:))>0)
     if (checklist(fileidx,plot_device)==1)
             figure; mesh(angle(h_full_est(:,:,plot_device))); title('csi distribution');
             range=max(max(abs(h_est(:,:,plot_device))));
+            if (range==0) range=1; end
             figure; plot(mean(h_full_est(:,:,plot_device),1)); title('mean csi vs time'); axis([-range range -range range]);
             figure; plot(mean(h_full_est(:,:,plot_device),2)); title('mean csi vs frequency'); axis([-range range -range range]);
     end

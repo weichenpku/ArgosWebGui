@@ -39,8 +39,8 @@ def test():
     obj = LTE_Receiver(main, conf_dict=conf_dict)
     
     gain_dict = {
-        "parameters-showSamples": "60928",
-        "parameters-numSamples":"60000", # recvNum (should be less than 60928)
+        "parameters-showSamples": "65536",
+        "parameters-numSamples":"60000", # recvNum (should be less than 65536)
         conf_dict['receiver_master']['serial']+"-0-rx-rxGain": rx_gain,
         conf_dict['receiver_master']['serial']+"-1-rx-rxGain": rx_gain
     }
@@ -185,6 +185,7 @@ class LTE_Receiver:
 
                 # read stream
                 flag = IrisUtil.Process_ReadFromRxStream(self)
+                
                 IrisUtil.Process_HandlePostcode(self)  # postcode is work on received data
 
                 recvdata = IrisUtil.Process_SaveData(self)
@@ -204,6 +205,7 @@ class LTE_Receiver:
                 print()
                 # sleep before next activation
                 time.sleep(repeat_duration)
+                
                 if flag==True:
                     i=i+1
             print('epoch finish: ', epoch)

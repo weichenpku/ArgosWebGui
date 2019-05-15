@@ -108,11 +108,11 @@ if (result_save)
     else
         savedir=[int2str(nb_rb/5),'m/'];
     end
-%     csvwrite([savedir 'sig_f.csv'],sig_f);
-%     csvwrite([savedir 'sig_r.csv'],sig_r);
-%     csvwrite([savedir 'sig_br.csv'],sig_br);
-%     csvwrite([savedir 'sig_brrr.csv'],sig_brrr);
-%     csvwrite([savedir 'pss.csv'],pss_t);
+    csvwrite([savedir 'sig_f.csv'],sig_f);
+    csvwrite([savedir 'sig_r.csv'],sig_r);
+    csvwrite([savedir 'sig_br.csv'],sig_br);
+    csvwrite([savedir 'sig_brrr.csv'],sig_brrr);
+    csvwrite([savedir 'pss.csv'],pss_t);
     save([savedir 'paras.mat'],'nb_rb','num_carriers','srate','cp_symbol_len','num_symbols_frame');
 end
 
