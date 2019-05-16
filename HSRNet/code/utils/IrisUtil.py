@@ -420,7 +420,8 @@ def Init_CreateRxStreams_RevB(self):
         sdr = self.sdrs[serial]
         #for ant in chans:
         #    sdr.writeSetting(SOAPY_SDR_RX, ant, 'CALIBRATE', 'SKLK')  # this is from sklk-demos/python/SISO.py wy@180823
-        stream = sdr.setupStream(SOAPY_SDR_RX, SOAPY_SDR_CF32, chans, {"remote:prot": "tcp", "remote:mtu": "1024"})
+        #stream = sdr.setupStream(SOAPY_SDR_RX, SOAPY_SDR_CF32, chans, {"remote:prot": "tcp", "remote:mtu": "1024"})
+        stream = sdr.setupStream(SOAPY_SDR_RX, SOAPY_SDR_CF32, chans,{})
         self.rxStreams.append(stream) 
 
 def Init_CreateTxRxStreams_RevB(self):
@@ -883,11 +884,10 @@ def Process_RxActivate_WriteFlagToRxStream(self):
         sdr = self.sdrs[serial]
         sdr.activateStream(rxStream, flags, 0, len(self.sampsRecv[r][0]))
 
-def Process_RxActivate_WriteFlagToRxStream_UseHasTime(self, rx_delay = 57):
+def Process_RxActivate_WriteFlagToRxStream_UseHasTime(self, rx_delay = 57): # burst 65536
     rx_delay_ns = SoapySDR.ticksToTimeNs(rx_delay, self.rate) if rx_delay != 0 else 0
     ts = self.ts + rx_delay_ns  # rx is a bit after tx
-    #flags = SOAPY_SDR_HAS_TIME | SOAPY_SDR_END_BURST
-    flags = SOAPY_SDR_HAS_TIME
+    flags = SOAPY_SDR_HAS_TIME | SOAPY_SDR_END_BURST
     # activate all receive stream
     for r,rxStream in enumerate(self.rxStreams):
         serial_ant = self.rx_serials_ant[r]
@@ -896,14 +896,33 @@ def Process_RxActivate_WriteFlagToRxStream_UseHasTime(self, rx_delay = 57):
         # self.tsbf = sdr.getHardwareTime()
         # print('1 ts before activate',self.tsbf)
         
-        #sdr.activateStream(rxStream, flags, ts, len(self.sampsRecv[r][0]))
-        sdr.activateStream(rxStream, flags, ts)
+        sdr.activateStream(rxStream, flags, ts, len(self.sampsRecv[r][0]))
         # self.tsaf = sdr.getHardwareTime()
         # print('2 ts after activate',self.tsaf)
         # self.tsrx = ts
         # print('hw: ts start read',self.tsrx)
         # print('hw: ts finish read',self.tsrx+ round(self.numSamples/self.rxrate*1e9)+1)
         
+
+def Process_RxActivate_WriteFlagToRxStream_UseHasTime_Streaming(self, rx_delay = 57): # stream
+    rx_delay_ns = SoapySDR.ticksToTimeNs(rx_delay, self.rate) if rx_delay != 0 else 0
+    ts = self.ts + rx_delay_ns  # rx is a bit after tx
+    flags = SOAPY_SDR_HAS_TIME
+    # activate all receive stream
+    for r,rxStream in enumerate(self.rxStreams):
+        serial_ant = self.rx_serials_ant[r]
+        serial, ant = Format_SplitSerialAnt(serial_ant)
+        sdr = self.sdrs[serial]
+        
+        #self.tsbf = sdr.getHardwareTime()
+        #print('1 ts before activate',self.tsbf)
+        sdr.activateStream(rxStream, flags, ts)
+        #self.tsaf = sdr.getHardwareTime()
+        #print('2 ts after activate',self.tsaf)
+        self.tsrx = ts
+        #print('hw: ts start read',self.tsrx)
+        #print('hw: ts finish read',self.tsrx+ round(self.numSamples/self.rxrate*1e9)+1)
+
 
 def Process_RxActivate_SetupContinuousReadRxStream(self):
     flags = SOAPY_SDR_HAS_TIME
@@ -927,22 +946,20 @@ def Process_WaitForTime_NoTrigger(self):
 
 def Process_ReadFromRxStream(self):
     max_len = 65536 # 0xee00 => 0x10000
-    read_len =1920
     read_success = True
     #print(self.ts)
-    if (self.numSamples>max_len):
-        print("[SOAR] WARNING: too many recv samples to read, only",max_len,"is avalable")
     for r,rxStream in enumerate(self.rxStreams):
         serial_ant = self.rx_serials_ant[r]
         serial, ant = Format_SplitSerialAnt(serial_ant)
         sdr = self.sdrs[serial]
         numRecv = 0
         while numRecv < len(self.sampsRecv[r][0]):
-            # ts_tmp=self.sdrs[self.trigger_serial].getHardwareTime()
-            # print(self.sdrs[self.trigger_serial].getHardwareTime())
+            ts_tmp=self.sdrs[self.trigger_serial].getHardwareTime()
             sr = sdr.readStream(rxStream, [samps[numRecv:] for samps in self.sampsRecv[r]], len(self.sampsRecv[r][0])-numRecv, timeoutUs=int(1e6))
-            # print('5 ts before read',ts_tmp)
-            # print('6 ts after read',self.sdrs[self.trigger_serial].getHardwareTime())
+            #print('1 ts before read',ts_tmp)
+            #print('2 ts after read',self.sdrs[self.trigger_serial].getHardwareTime())
+            #print('hw: ts start read',self.tsrx, 'delta ts', round(self.numSamples/self.rxrate*1e9)+1)
+            #print(sr.ret)
             if sr.ret == -1:
                 print('Error: Bad Read!!!')
                 # GUI.error('Error: Bad Read!')
@@ -950,8 +967,8 @@ def Process_ReadFromRxStream(self):
                 break  # always break because it cannot recover for most of time
             else: 
                 numRecv += sr.ret
-                print('[SOAR] SUCCESS: read',numRecv,'samples')
-        print('[SOAR] FINISH reading')
+                #print('[SOAR] SUCCESS: read',numRecv,'samples')
+        #print('[SOAR] FINISH reading')
     return read_success
 
 def Process_ReadFromRxStream_Async(self):
@@ -1114,8 +1131,11 @@ def Interface_UpdateUserGraph(self, addition=None, uselast=False):  # addition s
     self.main.sampleData = {"struct": struct, "data": data}
     self.main.sampleDataReady = True
 
-def Process_SaveData(self):
-    data={}
+def Process_SaveData(self,datadest=None):
+    if datadest is None:
+        data={}
+    else:
+        data=datadest
     for r,serial_ant in enumerate(self.rx_serials_ant):
         serial, ant = Format_SplitSerialAnt(serial_ant)
         cdat = [samps for samps in self.sampsRecv[r]]

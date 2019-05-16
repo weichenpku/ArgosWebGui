@@ -27,7 +27,8 @@ files = dir([rxdir 'rx*']);
 filenum = size(files,1);
 plot_device = 2;
 for fileidx=1:filenum
-    filename = [rxdir 'rx' int2str(fileidx) '.mat'];
+    %filename = [rxdir 'rx' int2str(fileidx) '.mat'];
+    filename = [rxdir 'rx0.mat'];
     datahandle  %data handle
     close all;
     if (sum(checklist(fileidx,:))>0)

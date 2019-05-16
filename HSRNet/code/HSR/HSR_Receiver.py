@@ -37,16 +37,17 @@ def test():
     
     main = FakeMain(rx_serial_master,rx_serial_slaves)
     obj = LTE_Receiver(main,conf_dict=conf_dict)
-    
+
     gain_dict = {
-        "parameters-showSamples": "1000000000",
-        "parameters-numSamples":"7000000", # recvNum (should be less than 60928)
-        conf_dict['receiver_master']['serial']+"-0-rx-rxGain": rx_gain,
-        conf_dict['receiver_master']['serial']+"-1-rx-rxGain": rx_gain
+        "parameters-showSamples": "65536",
+        "parameters-numSamples":"60000", # recvNum (should be less than 65536)
     }
+    if (conf_dict['receiver_master']['port']!='0'):  gain_dict[conf_dict['receiver_master']['serial']+"-1-rx-rxGain"] = rx_gain
+    if (conf_dict['receiver_master']['port']!='1'):  gain_dict[conf_dict['receiver_master']['serial']+"-0-rx-rxGain"] = rx_gain
     for idx in range(int(conf_dict['receivernum'])-1):
-        gain_dict[conf_dict['receiver'][idx]['serial']+"-0-rx-rxGain"] = rx_gain
-        gain_dict[conf_dict['receiver'][idx]['serial']+"-1-rx-rxGain"] = rx_gain
+        if (conf_dict['receiver'][idx]['port']!='0'): gain_dict[conf_dict['receiver'][idx]['serial']+"-1-rx-rxGain"] = rx_gain
+        if (conf_dict['receiver'][idx]['port']!='1'): gain_dict[conf_dict['receiver'][idx]['serial']+"-0-rx-rxGain"] = rx_gain
+    print(gain_dict)
     obj.setGains(gain_dict)
     
     print()

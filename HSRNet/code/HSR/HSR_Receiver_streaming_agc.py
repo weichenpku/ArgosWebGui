@@ -10,6 +10,7 @@ import scipy.io as sio
 import sys
 import json
 import os
+import threading
 
 def test():
     class FakeMain:
@@ -38,9 +39,10 @@ def test():
     main = FakeMain(rx_serial_master,rx_serial_slaves)
     obj = LTE_Receiver(main, conf_dict=conf_dict)
     
+    numSamples = conf_dict['numSamples']
     gain_dict = {
         "parameters-showSamples": "65536",
-        "parameters-numSamples":"60000", # recvNum (should be less than 65536)
+        "parameters-numSamples":numSamples, # recvNum (should be less than 65536)
     }
     if (conf_dict['receiver_master']['port']!='0'):  gain_dict[conf_dict['receiver_master']['serial']+"-1-rx-rxGain"] = rx_gain
     if (conf_dict['receiver_master']['port']!='1'):  gain_dict[conf_dict['receiver_master']['serial']+"-0-rx-rxGain"] = rx_gain
@@ -50,6 +52,14 @@ def test():
     print(gain_dict)
     obj.setGains(gain_dict)
     
+    '''
+    buflen = int(numSamples)
+    for idx in range(int(conf_dict['receivernum'])):
+        if (conf_dict['receiver'][idx]['port']!='2'): emptybuf=[np.zeros(buflen, np.complex64)]
+        else: emptybuf=[np.zeros(buflen, np.complex64),np.zeros(buflen, np.complex64)]
+        streamingbuffer[0].append(emptybuf)
+        streamingbuffer[1].append(emptybuf)
+    '''
     print()
     print('[SOAR] parameters : value')
     paras = obj.nowGains()
@@ -59,7 +69,39 @@ def test():
 
     obj.loop(conf_dict['filesource'], repeat_time=rx_repeat_time, repeat_duration=rx_repeat_duration, rx_path=rx_path, rx_gain=rx_gain)
 
+class streamingReceiveThread(threading.Thread):
+    def __init__(self,LTE_Receiver):
+        threading.Thread.__init__(self)
+        self.LTE_Receiver = LTE_Receiver
+    def run(self):
+        global threadlock
+        global producing_ptr
+        global consuming_flag
+        print('start streaming reveiving')
+        epoch=0
+        while (True):
+                # read stream
+                flag = IrisUtil.Process_ReadFromRxStream(self.LTE_Receiver)
+                if (flag==False):
+                    print('(streamingReceiveThread) warning: Process_ReadFromRxStream() return false')
+                    continue
+                #IrisUtil.Process_HandlePostcode(self)  # postcode is work on received data
+                threadlock.acquire()
+                if (consuming_flag==False):
+                    producing_ptr = 1-producing_ptr
+                data_ptr = producing_ptr
+                threadlock.release()
 
+                if (data_ptr==-1):
+                    break
+                print(data_ptr)
+                recvdata = IrisUtil.Process_SaveData(self.LTE_Receiver,datadest=databuffer[data_ptr])
+                epoch=epoch+1
+                
+        # deactive
+        IrisUtil.Process_RxDeactive(self.LTE_Receiver)
+
+        
 class LTE_Receiver:
     def __init__(self, main, conf_dict):
         self.main = main
@@ -131,66 +173,53 @@ class LTE_Receiver:
         IrisUtil.Process_CreateReceiveBuffer(self)
         IrisUtil.Process_ClearStreamBuffer(self)
 
-        # clear buffer
-        IrisUtil.Process_ComputeTimeToDoThings_UseHasTime(self, delay=10000000, alignment=0)
-        IrisUtil.Process_RxActivate_WriteFlagToRxStream_UseHasTime(self, rx_delay=0)
-        IrisUtil.Process_WaitForTime_NoTrigger(self)
-        IrisUtil.Process_ReadFromRxStream(self)
-        IrisUtil.Process_HandlePostcode(self)  # postcode is work on received data
-        IrisUtil.Process_SaveData(self)
 
-        # activate
-        epoch = 0
-        while (True):  # test case
+        IrisUtil.Process_ComputeTimeToDoThings_UseHasTime(self, delay = 10000000, alignment = 0)
+        IrisUtil.Process_RxActivate_WriteFlagToRxStream_UseHasTime_Streaming(self, rx_delay = 0)
+
+
+        receiving_thread = streamingReceiveThread(self)
+        receiving_thread.start() 
+        # sleep to wait
+        #IrisUtil.Process_WaitForTime_NoTrigger(self)
+        
+        global threadlock
+        global producing_ptr
+        global consuming_flag
+
+        epoch=-1
+        while (True):                
+            while (True):
+                print('*********************')
+                print('cmd input:',end=' ')
+                nextstep = input()
+                if (nextstep in ['q','r','n','s']):
+                    break
+                else:
+                    print(' q - quit\n r - repeat this epoch\n n - save and next epoch\n s - show receive signal \n other - help')
+
+            if (nextstep == 'q'):
+                break    
+            if (nextstep == 'n'):
+                epoch=epoch+1
+
             rx_dir = rx_path+'epoch'+str(epoch)
             if os.path.exists(rx_dir)==False:
                 os.makedirs(rx_dir)
             
-            # agc for gain set
-            first_try = True
-            gain_val = rx_gain
-            while (True):
-                IrisUtil.Process_ComputeTimeToDoThings_UseHasTime(self, delay=10000000, alignment=0)
-                IrisUtil.Process_RxActivate_WriteFlagToRxStream_UseHasTime(self, rx_delay=0)
-                IrisUtil.Process_WaitForTime_NoTrigger(self)
-                flag = IrisUtil.Process_ReadFromRxStream(self)
-                if (flag==False or first_try==True):
-                    first_try = False
-                    continue
-                IrisUtil.Process_HandlePostcode(self)  # postcode is work on received data
-                recvdata = IrisUtil.Process_SaveData(self)
-                maxpeak = 0
-                for chan in recvdata:
-                    chanpeak = np.max(np.abs(recvdata[chan]))
-                    if (chanpeak > maxpeak): maxpeak = chanpeak
-                print('AGC: chanpeak is', maxpeak,'; rxgain is ',gain_val)
-                print('AGC test')
-                print()
-                if maxpeak > 0.95:
-                    gain_val = str(int(gain_val)-5)
-                    gain_obj = {}
-                    for key in self.rx_gains:
-                        gain_obj[key+"-rxGain"]=gain_val
-                    self.setGains(gain_obj)
-                else:
-                    break
+            # save data from databuffer to epoch
+            threadlock.acquire()
+            consuming_flag = True
+            data_ptr=1-producing_ptr
+            threadlock.release()
+            
+            recvdata = databuffer[data_ptr]
+            if (nextstep != 's'):
+                print("save data in"+rx_path+"epoch"+str(epoch)+"/rx0.mat")
+                sio.savemat(rx_path+"epoch"+str(epoch)+"/rx0.mat",recvdata)
 
-            #start epoch receiving
-            i=1
-            while i <= repeat_time: 
-                IrisUtil.Process_ComputeTimeToDoThings_UseHasTime(self, delay = 10000000, alignment = 0)
-                IrisUtil.Process_RxActivate_WriteFlagToRxStream_UseHasTime(self, rx_delay = 0)
-
-                # sleep to wait
-                IrisUtil.Process_WaitForTime_NoTrigger(self)
-
-                # read stream
-                flag = IrisUtil.Process_ReadFromRxStream(self)
-                
-                IrisUtil.Process_HandlePostcode(self)  # postcode is work on received data
-
-                recvdata = IrisUtil.Process_SaveData(self)
-
+            show_peak = True
+            if show_peak:
                 maxpeak = 0
                 peak_info = {}
                 for chan in recvdata:
@@ -199,38 +228,19 @@ class LTE_Receiver:
                     if (chanpeak > maxpeak): maxpeak = chanpeak
                 for chan in sorted(peak_info.keys()):
                     print('AGC: peak of', chan, 'is', peak_info[chan])
-                print('AGC: maxpeak is', maxpeak, '; rxgain is ', gain_val)
+                print('AGC: maxpeak is', maxpeak)  
 
-                sio.savemat(rx_path+"epoch"+str(epoch)+"/rx"+str(i)+".mat",recvdata)
-                print('repeat_time: ',i)
-                print()
-                # sleep before next activation
-                time.sleep(repeat_duration)
-                
-                if flag==True:
-                    i=i+1
-            print('epoch finish: ', epoch)
+            threadlock.acquire()
+            consuming_flag = False
+            threadlock.release()
 
-            # mini shell
-            while (True):
-                nextstep = input()
-                if (nextstep == 'q'): # quit
-                    break
-                elif (nextstep == 'r'): # repeat
-                    break
-                elif (nextstep == 'n'): # next 
-                    epoch = epoch + 1
-                    break
-                else:
-                    print(' q - quit\n r - repeat\n n - next\n other - help')
-
-            if (nextstep == 'q'):
-                break
             
 
-        # deactive
-        IrisUtil.Process_RxDeactive(self)
-
+        threadlock.acquire()
+        consuming_flag = True
+        producing_ptr = -1
+        threadlock.release()
+        receiving_thread.join()   
         # do correlation
         # IrisUtil.Process_DoCorrelation2FindFirstPFDMSymbol(self)
     
@@ -243,4 +253,10 @@ class LTE_Receiver:
             IrisUtil.Interface_UpdateUserGraph(self)
 
 if __name__ == "__main__":
+    #global_value
+    threadlock = threading.Lock()
+    producing_ptr = 0
+    consuming_flag = 0
+    databuffer = [{},{}]
+
     test()
