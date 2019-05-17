@@ -32,6 +32,8 @@ import time, threading, csv, os
 import scipy as sp
 import scipy.io as sio
 
+from tempfile import mkdtemp
+
 # LTE frame
 def Format_DataDir(self,nb_rb=25):
     self.nb_rb = nb_rb
@@ -745,6 +747,20 @@ def Process_CreateReceiveBuffer(self):
         else:
             self.sampsRecv.append([np.zeros(self.numSamples, np.complex64)])
 
+def Process_CreateReceiveBufferFromFile(self):
+    for r, serial_ant in enumerate(self.rx_serials_ant):
+        serial, ant = Format_SplitSerialAnt(serial_ant)
+        chans = [0, 1] if ant == 2 else [ant]
+    filename1 = os.path.join(mkdtemp(),'temp1.bin')
+    filename2 = os.path.join(mkdtemp(),'temp2.bin')
+    antnum = 2 if ant == 2 else 1
+    self.sampsRecv = np.memmap(filename1, dtype=np.complex64, mode='w+', shape=(r+1,antnum,self.numSamples))
+    self.sampsRecv_mirror = np.memmap(filename2, dtype=np.complex64, mode='w+', shape=(r+1,antnum,self.numSamples))
+
+def Process_DeleteReceiveBufferFromFile(self):
+    del self.sampsRecv
+    del self.sampsRecv_mirror
+
 def Process_ClearStreamBuffer(self):  # clear out socket buffer from old requests, call after Process_CreateReceiveBuffer
     for r, rxStream in enumerate(self.rxStreams):
         serial_ant = self.rx_serials_ant[r]
@@ -944,7 +960,7 @@ def Process_WaitForTime_NoTrigger(self):
     # self.tswk = self.sdrs[self.trigger_serial].getHardwareTime()
     # print('4 ts after awake',self.tswk)
 
-def Process_ReadFromRxStream(self):
+def Process_ReadFromRxStream(self,epoch=None,bufptr=None):
     max_len = 65536 # 0xee00 => 0x10000
     read_success = True
     #print(self.ts)
@@ -953,12 +969,19 @@ def Process_ReadFromRxStream(self):
         serial, ant = Format_SplitSerialAnt(serial_ant)
         sdr = self.sdrs[serial]
         numRecv = 0
-        while numRecv < len(self.sampsRecv[r][0]):
-            ts_tmp=self.sdrs[self.trigger_serial].getHardwareTime()
-            sr = sdr.readStream(rxStream, [samps[numRecv:] for samps in self.sampsRecv[r]], len(self.sampsRecv[r][0])-numRecv, timeoutUs=int(1e6))
-            #print('1 ts before read',ts_tmp)
-            #print('2 ts after read',self.sdrs[self.trigger_serial].getHardwareTime())
-            #print('hw: ts start read',self.tsrx, 'delta ts', round(self.numSamples/self.rxrate*1e9)+1)
+        if bufptr is None:
+            sampsRecv = self.sampsRecv
+        else:
+            sampsRecv = self.sampsRecv if bufptr==0 else self.sampsRecv_mirror
+        while numRecv < len(sampsRecv[r][0]):
+            if (epoch is not None and epoch%100==0):
+                ts_tmp=self.sdrs[self.trigger_serial].getHardwareTime()
+            sr = sdr.readStream(rxStream, [samps[numRecv:] for samps in sampsRecv[r]], len(sampsRecv[r][0])-numRecv, timeoutUs=int(1e6))
+            if (epoch is not None and epoch%100==0):
+                print('host: ts before read',ts_tmp/1e9)
+                print('host: ts after read',(self.sdrs[self.trigger_serial].getHardwareTime())/1e9)
+                print(self.rxrate,sr.ret)
+                print('FPGA: ts start read',(self.tsrx+epoch*round(self.numSamples/self.rxrate*1e9)+1)/1e9)
             #print(sr.ret)
             if sr.ret == -1:
                 print('Error: Bad Read!!!')
@@ -1131,14 +1154,16 @@ def Interface_UpdateUserGraph(self, addition=None, uselast=False):  # addition s
     self.main.sampleData = {"struct": struct, "data": data}
     self.main.sampleDataReady = True
 
-def Process_SaveData(self,datadest=None):
-    if datadest is None:
-        data={}
+def Process_SaveData(self,datasrc=None):
+    if datasrc is None:
+        sampsRecv = self.sampsRecv
     else:
-        data=datadest
+        sampsRecv = datasrc
+
+    data={}
     for r,serial_ant in enumerate(self.rx_serials_ant):
         serial, ant = Format_SplitSerialAnt(serial_ant)
-        cdat = [samps for samps in self.sampsRecv[r]]
+        cdat = [samps for samps in sampsRecv[r]]
         if ant == 2:
             for antt in [0,1]:
                 data["%s_%d_I" % (serial, antt)] = [float(e.real) for e in cdat[antt]]
@@ -1148,7 +1173,20 @@ def Process_SaveData(self,datadest=None):
             data[serial + "_Q"] = [float(e.imag) for e in cdat[0]]
 
     return data
-            
+
+def Process_SaveDataNpy(self,dir,datasrc=None):
+    if datasrc is None:
+        sampsRecv = self.sampsRecv
+    else:
+        sampsRecv = datasrc
+
+
+    datafile = dir+'data.npy'
+    msgfile = dir+'msg.npy'
+    np.save(datafile,sampsRecv)
+    np.save(msgfile,self.rx_serials_ant)
+
+
 def Analyze_LoadHDF5FileByName(self, filename):
     print("loading %s" % filename)
     return filename

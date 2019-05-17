@@ -80,24 +80,24 @@ class streamingReceiveThread(threading.Thread):
         print('start streaming reveiving')
         epoch=0
         while (True):
+                
                 # read stream
-                flag = IrisUtil.Process_ReadFromRxStream(self.LTE_Receiver)
-                if (flag==False):
-                    print('(streamingReceiveThread) warning: Process_ReadFromRxStream() return false')
-                    continue
-                #IrisUtil.Process_HandlePostcode(self)  # postcode is work on received data
                 threadlock.acquire()
+                if (producing_ptr==-1):
+                    threadlock.release()
+                    break
                 if (consuming_flag==False):
                     producing_ptr = 1-producing_ptr
-                data_ptr = producing_ptr
+                bufptr = producing_ptr
                 threadlock.release()
 
-                if (data_ptr==-1):
-                    break
-                print(data_ptr)
-                recvdata = IrisUtil.Process_SaveData(self.LTE_Receiver,datadest=databuffer[data_ptr])
+                flag = IrisUtil.Process_ReadFromRxStream(self.LTE_Receiver,epoch=epoch,bufptr=bufptr)
+                if (flag==False):
+                    print('(streamingReceiveThread) warning: Thread_ReadFromRxStream() return false')
+                    continue
+                #IrisUtil.Process_HandlePostcode(self)  # postcode is work on received data                
+                print(bufptr,end=' ')
                 epoch=epoch+1
-                
         # deactive
         IrisUtil.Process_RxDeactive(self.LTE_Receiver)
 
@@ -170,7 +170,10 @@ class LTE_Receiver:
     
     def doSimpleRx(self,fsrc,repeat_time,repeat_duration, rx_path, rx_gain):
         # prepare work, create tx rx buffer
-        IrisUtil.Process_CreateReceiveBuffer(self)
+        if memmap_able:
+            IrisUtil.Process_CreateReceiveBufferFromFile(self)
+        else:
+            IrisUtil.Process_CreateReceiveBuffer(self)
         IrisUtil.Process_ClearStreamBuffer(self)
 
 
@@ -207,28 +210,31 @@ class LTE_Receiver:
             if os.path.exists(rx_dir)==False:
                 os.makedirs(rx_dir)
             
-            # save data from databuffer to epoch
+            # save data
             threadlock.acquire()
             consuming_flag = True
-            data_ptr=1-producing_ptr
+            bufptr=1-producing_ptr
             threadlock.release()
             
-            recvdata = databuffer[data_ptr]
-            if (nextstep != 's'):
-                print("save data in"+rx_path+"epoch"+str(epoch)+"/rx0.mat")
-                sio.savemat(rx_path+"epoch"+str(epoch)+"/rx0.mat",recvdata)
 
-            show_peak = True
-            if show_peak:
-                maxpeak = 0
-                peak_info = {}
-                for chan in recvdata:
-                    chanpeak = np.max(np.abs(recvdata[chan]))
-                    peak_info[chan] = chanpeak
-                    if (chanpeak > maxpeak): maxpeak = chanpeak
-                for chan in sorted(peak_info.keys()):
-                    print('AGC: peak of', chan, 'is', peak_info[chan])
-                print('AGC: maxpeak is', maxpeak)  
+            if (nextstep != 's'):
+                filedir = rx_path+"epoch"+str(epoch)+"/"
+                if bufptr==0:
+                    IrisUtil.Process_SaveDataNpy(self,dir=filedir,datasrc=self.sampsRecv)
+                else:
+                    IrisUtil.Process_SaveDataNpy(self,dir=filedir,datasrc=self.sampsRecv_mirror)
+
+            # show_peak = False
+            # if show_peak:
+            #     maxpeak = 0
+            #     peak_info = {}
+            #     for chan in recvdata:
+            #         chanpeak = np.max(np.abs(recvdata[chan]))
+            #         peak_info[chan] = chanpeak
+            #         if (chanpeak > maxpeak): maxpeak = chanpeak
+            #     for chan in sorted(peak_info.keys()):
+            #         print('AGC: peak of', chan, 'is', peak_info[chan])
+            #     print('AGC: maxpeak is', maxpeak)  
 
             threadlock.acquire()
             consuming_flag = False
@@ -240,7 +246,10 @@ class LTE_Receiver:
         consuming_flag = True
         producing_ptr = -1
         threadlock.release()
+        print('main thread: wait for receiving thread to stop')
         receiving_thread.join()   
+
+        if memmap_able: IrisUtil.Process_DeleteReceiveBufferFromFile(self)
         # do correlation
         # IrisUtil.Process_DoCorrelation2FindFirstPFDMSymbol(self)
     
@@ -250,13 +259,13 @@ class LTE_Receiver:
             self.main.changedF()  # just register set
             self.doSimpleRx(fsrc=fsrc,repeat_time=repeat_time,repeat_duration=repeat_duration,rx_path=rx_path, rx_gain=rx_gain)
             #IrisUtil.Interface_UpdateUserGraph(self, self.correlationSampes)  # update to user graph
-            IrisUtil.Interface_UpdateUserGraph(self)
+            #IrisUtil.Interface_UpdateUserGraph(self)
 
 if __name__ == "__main__":
     #global_value
     threadlock = threading.Lock()
     producing_ptr = 0
     consuming_flag = 0
-    databuffer = [{},{}]
+    memmap_able = True
 
     test()
