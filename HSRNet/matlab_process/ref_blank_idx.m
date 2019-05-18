@@ -24,6 +24,14 @@ if (strcmp(sig_type,'rb') && nb_rb==15)
     blankidx = (2:2:120);
 end
 
+if (strcmp(sig_type,'br') && nb_rb==75)
+    num_symbols_frame = 120;
+    refnum = 59;
+    refidx = (3:2:120);
+    blanknum = 60;
+    blankidx = (2:2:120);
+end
+
 assert(num_symbols_frame == refnum+blanknum+1);
 assert(refnum==size(refidx,2));
 assert(blanknum==size(blankidx,2));

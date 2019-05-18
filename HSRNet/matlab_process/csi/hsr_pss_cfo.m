@@ -51,7 +51,6 @@ for cur_device = 1:portnum
     corr_peak_list(cur_device) = tmp_peak/mean(abs(tmp_corr));
 end
 
-
 if (frame_broken == false)
     if (max(offset_list)-min(offset_list)>100)
         frame_broken = true;

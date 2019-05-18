@@ -800,7 +800,7 @@ def Process_TxActivate_WriteFlagAndMultiFrameToTxStream_UseHasTime(self,repeat_t
     # replay_len = 1920
     if frame_len is None:
         frame_len = len(self.tones[0][0])
-    print(frame_len)
+    print('frame len is',frame_len)
     flags = SOAPY_SDR_HAS_TIME
     for r,txStream in enumerate(self.txStreams):
         serial_ant = self.tx_serials_ant[r]
@@ -959,6 +959,15 @@ def Process_WaitForTime_NoTrigger(self):
     if ts > hw_time:  time.sleep((ts - hw_time) / 1e9)  # otherwise do not sleep
     # self.tswk = self.sdrs[self.trigger_serial].getHardwareTime()
     # print('4 ts after awake',self.tswk)
+
+def Process_ReadTimeStamp(self,epoch):
+    ts_tmp=self.sdrs[self.trigger_serial].getHardwareTime()
+    print()
+    print('HOST: ts now is',ts_tmp/1e9)
+    print('FPGA: ts start read is',(self.tsrx+epoch*round(self.numSamples/self.rxrate*1e9)+1)/1e9)
+
+def Process_TimestampCal(self,epoch):
+    return epoch*self.numSamples/self.rxrate*1e9
 
 def Process_ReadFromRxStream(self,epoch=None,bufptr=None):
     max_len = 65536 # 0xee00 => 0x10000
@@ -1174,18 +1183,43 @@ def Process_SaveData(self,datasrc=None):
 
     return data
 
-def Process_SaveDataNpy(self,dir,datasrc=None):
+def Process_SaveDataNpy(self,dir,datasrc=None,ts=None):
     if datasrc is None:
         sampsRecv = self.sampsRecv
     else:
         sampsRecv = datasrc
-
 
     datafile = dir+'data.npy'
     msgfile = dir+'msg.npy'
     np.save(datafile,sampsRecv)
     np.save(msgfile,self.rx_serials_ant)
 
+    if ts is not None:
+        tsfile = dir+'ts.npy'
+        np.save(tsfile,ts)
+
+def Process_CalculateAmp(self,datasrc=None):
+    if datasrc is None:
+        sampsRecv = self.sampsRecv
+    else:
+        sampsRecv = datasrc
+
+    maxrange = 0
+    peak_info = {}
+    for devidx in range(sampsRecv.shape[0]):
+        for antidx in range(sampsRecv.shape[1]):
+            imax = np.max(np.real(sampsRecv[devidx][antidx]))
+            imin = np.min(np.real(sampsRecv[devidx][antidx]))
+            qmax = np.max(np.imag(sampsRecv[devidx][antidx]))
+            qmin = np.min(np.imag(sampsRecv[devidx][antidx]))           
+            peak_info[self.rx_serials_ant[devidx]+'-'+str(antidx)+'-I'] = (imax-imin)/2
+            peak_info[self.rx_serials_ant[devidx]+'-'+str(antidx)+'-Q'] = (qmax-qmin)/2
+            if ((imax-imin)/2 > maxrange): maxrange = (imax-imin)/2
+            if ((qmax-qmin)/2 > maxrange): maxrange = (qmax-qmin)/2
+    print()
+    for devs in peak_info.keys():
+        print('AGC: peak of', devs, 'is', peak_info[devs])
+    print('AGC: maxpeak is', maxrange)  
 
 def Analyze_LoadHDF5FileByName(self, filename):
     print("loading %s" % filename)

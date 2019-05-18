@@ -77,8 +77,10 @@ class streamingReceiveThread(threading.Thread):
         global threadlock
         global producing_ptr
         global consuming_flag
+        global epoch
+        global data_ts
         print('start streaming reveiving')
-        epoch=0
+        
         while (True):
                 
                 # read stream
@@ -91,12 +93,14 @@ class streamingReceiveThread(threading.Thread):
                 bufptr = producing_ptr
                 threadlock.release()
 
-                flag = IrisUtil.Process_ReadFromRxStream(self.LTE_Receiver,epoch=epoch,bufptr=bufptr)
+                flag = IrisUtil.Process_ReadFromRxStream(self.LTE_Receiver,epoch=None,bufptr=bufptr)
                 if (flag==False):
                     print('(streamingReceiveThread) warning: Thread_ReadFromRxStream() return false')
                     continue
+                ts = IrisUtil.Process_TimestampCal(self.LTE_Receiver,epoch=epoch)
+                data_ts[bufptr] = ts
                 #IrisUtil.Process_HandlePostcode(self)  # postcode is work on received data                
-                print(bufptr,end=' ')
+                #print(bufptr,end=' ')
                 epoch=epoch+1
         # deactive
         IrisUtil.Process_RxDeactive(self.LTE_Receiver)
@@ -189,8 +193,9 @@ class LTE_Receiver:
         global threadlock
         global producing_ptr
         global consuming_flag
+        global data_ts
 
-        epoch=-1
+        step=-1
         while (True):                
             while (True):
                 print('*********************')
@@ -199,15 +204,16 @@ class LTE_Receiver:
                 if (nextstep in ['q','r','n','s']):
                     break
                 else:
-                    print(' q - quit\n r - repeat this epoch\n n - save and next epoch\n s - show receive signal \n other - help')
+                    print()
+                    print(' q - quit\n r - repeat this step\n n - save and next step\n s - show receive signal and timestamp \n other - help')
 
             if (nextstep == 'q'):
                 break    
             if (nextstep == 'n'):
-                epoch=epoch+1
+                step=step+1
 
-            rx_dir = rx_path+'epoch'+str(epoch)
-            if os.path.exists(rx_dir)==False:
+            rx_dir = rx_path+'epoch'+str(step)
+            if step>=0 and os.path.exists(rx_dir)==False:
                 os.makedirs(rx_dir)
             
             # save data
@@ -216,25 +222,24 @@ class LTE_Receiver:
             bufptr=1-producing_ptr
             threadlock.release()
             
+            show_amp = True
+            if show_amp:
+                if bufptr==0:
+                    IrisUtil.Process_CalculateAmp(self,datasrc=self.sampsRecv)
+                else:
+                    IrisUtil.Process_CalculateAmp(self,datasrc=self.sampsRecv_mirror)
+                
+            global epoch
+            IrisUtil.Process_ReadTimeStamp(self,epoch=epoch)
 
             if (nextstep != 's'):
-                filedir = rx_path+"epoch"+str(epoch)+"/"
+                filedir = rx_path+"epoch"+str(step)+"/"
                 if bufptr==0:
-                    IrisUtil.Process_SaveDataNpy(self,dir=filedir,datasrc=self.sampsRecv)
+                    IrisUtil.Process_SaveDataNpy(self,dir=filedir,datasrc=self.sampsRecv,ts=data_ts[bufptr])
                 else:
-                    IrisUtil.Process_SaveDataNpy(self,dir=filedir,datasrc=self.sampsRecv_mirror)
-
-            # show_peak = False
-            # if show_peak:
-            #     maxpeak = 0
-            #     peak_info = {}
-            #     for chan in recvdata:
-            #         chanpeak = np.max(np.abs(recvdata[chan]))
-            #         peak_info[chan] = chanpeak
-            #         if (chanpeak > maxpeak): maxpeak = chanpeak
-            #     for chan in sorted(peak_info.keys()):
-            #         print('AGC: peak of', chan, 'is', peak_info[chan])
-            #     print('AGC: maxpeak is', maxpeak)  
+                    IrisUtil.Process_SaveDataNpy(self,dir=filedir,datasrc=self.sampsRecv_mirror,ts=data_ts[bufptr])
+                print('epoch is',step)
+                print('save data in directory:',filedir)
 
             threadlock.acquire()
             consuming_flag = False
@@ -267,5 +272,7 @@ if __name__ == "__main__":
     producing_ptr = 0
     consuming_flag = 0
     memmap_able = True
+    epoch = 0
+    data_ts = [0,0]
 
     test()

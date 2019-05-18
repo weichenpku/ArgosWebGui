@@ -104,8 +104,8 @@ class LTE_Transmitter:
         # sync trigger and clock
         IrisUtil.Init_SynchronizeTriggerClock(self)
 
-        self.numSamples = 38400 # 1024  # could be changed during runtime
-        self.showSamples = 60928 # 8192  # init max show samples
+        self.numSamples = 609280 # 1024  # could be changed during runtime
+        self.showSamples = 609280 # 8192  # init max show samples
         serial, ant = IrisUtil.Format_SplitSerialAnt(self.tx_serials_ant[0])
         if ant == 2: self.txSelect = "%s-0" % serial  # select one to send, other set 0
         else: self.txSelect = "%s-%d" % (serial, ant)

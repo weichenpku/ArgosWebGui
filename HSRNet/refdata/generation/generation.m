@@ -10,8 +10,8 @@ primary_synch;   %PSS
 % primary_synch0_time: ifft(primary_synch0_mod2)
 
 %% # of resource block
-result_save=true;%false;% 
-nb_rb = 15; 
+result_save=false;%true;% 
+nb_rb = 75; 
 %this can be 6,15,25,50,75 or 100 (150)
 %bandwidth  1.08, 2.7               
 
@@ -26,19 +26,19 @@ switch nb_rb
         num_symbols_frame = 120;
     case 25
         num_carriers = 512; % 384 or 512
-        num_symbols_frame = 60;
+        num_symbols_frame = 120;
     case 50
-        num_carriers = 1024; % 768 or 1024
-        num_symbols_frame = 30;
+        num_carriers = 768; % 768 or 1024
+        num_symbols_frame = 120;
     case 75
-        num_carriers = 1536; % 1024 or 1536
-        num_symbols_frame = 20;
+        num_carriers = 1024; % 1024 or 1536
+        num_symbols_frame = 120;
     case 100
-        num_carriers = 2048; % 1536 or 2048
-        num_symbols_frame = 15;
+        num_carriers = 1536; % 1536 or 2048
+        num_symbols_frame = 120;
     case 150
         num_carriers = 2048;
-        num_symbols_frame = 15;
+        num_symbols_frame = 60;
         
 end
 
