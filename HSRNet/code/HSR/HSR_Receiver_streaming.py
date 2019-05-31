@@ -35,12 +35,6 @@ def test():
     rx_repeat_time = int(conf_dict['rx_repeat_time']) # number of frames
     rx_repeat_duration = float(conf_dict['rx_repeat_duration']) # seconds
     rx_path = conf_dict['rx_path']
-
-    global rx_agc_enable
-    para_key = 'rx_agc'
-    if (para_key in conf_dict) and (eval(conf_dict[para_key])):
-        rx_agc_enable = True
-
     
     main = FakeMain(rx_serial_master,rx_serial_slaves)
     obj = LTE_Receiver(main, conf_dict=conf_dict)
@@ -227,21 +221,16 @@ class LTE_Receiver:
             consuming_flag = True
             bufptr=1-producing_ptr
             threadlock.release()
-
-            show_amp = True
-            if bufptr==0:
-                IrisUtil.Process_CalculateAmp(self,datasrc=self.sampsRecv,logprint=show_amp)
-            else:
-                IrisUtil.Process_CalculateAmp(self,datasrc=self.sampsRecv_mirror,logprint=show_amp)
             
-            # rx agc
-            global rx_agc_enable
-            if (rx_agc_enable):
-                IrisUtil.Process_AgcGainSet(self,gain_step=5,lower_bound=0.1,upper_bound=0.9)
-
-
+            show_amp = True
+            if show_amp:
+                if bufptr==0:
+                    IrisUtil.Process_CalculateAmp(self,datasrc=self.sampsRecv)
+                else:
+                    IrisUtil.Process_CalculateAmp(self,datasrc=self.sampsRecv_mirror)
+                
             global epoch
-            IrisUtil.Process_ReadTimeStamp(self,epoch=epoch)    
+            IrisUtil.Process_ReadTimeStamp(self,epoch=epoch)
 
             if (nextstep != 's'):
                 filedir = rx_path+"epoch"+str(step)+"/"
@@ -285,7 +274,5 @@ if __name__ == "__main__":
     memmap_able = True
     epoch = 0
     data_ts = [0,0]
-
-    rx_agc_enable = False
 
     test()

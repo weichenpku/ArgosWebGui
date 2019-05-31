@@ -49,7 +49,7 @@ for cur_device=1:portnum
     ber_list(fileidx,cur_device)=error_symbol/total_symbol;
 end
 
-h_full_est = fftshift(h_est(:,capture_refidx,:),1);
+h_full_est = h_est(:,capture_refidx,:);
 % CIR and doppler spread
 CIR=ifft(h_full_est,[],1); % CIR time, symbol time
 figure; mesh(abs(fftshift(CIR(:,:,plot_device),1))); title('CIR');

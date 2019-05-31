@@ -1,20 +1,4 @@
 % get rx_all_sig
-% mean_offset = round(mean(mod(offset_list(find(offset_list>0)),frame_len)));
-offset_list2 = reshape(offset_list,[2,device_num]);
-non_zero_idx = find(min(offset_list2)>0);
-offset_range = abs(offset_list2(1,non_zero_idx)-offset_list2(2,non_zero_idx));
-% if abs(max(abs(offset_range))-srate/100)<5
-%     offset_list2 = mod(offset_list2,srate/100);
-%     non_zero_idx = find(min(offset_list2)>0);
-%     offset_range = abs(offset_list2(1,non_zero_idx)-offset_list2(2,non_zero_idx));
-% end
-
-if (min(size(offset_range))>0)
-    assert(max(abs(offset_range))<50);
-end
-mean_offset(1:device_num) = max(offset_list2);
-mean_offset(non_zero_idx) = round(mean(offset_list2(:,non_zero_idx),1));  
-offset_all_list(fileidx,:) = mean_offset;
 
 portnum = size(rx_all_sig,1);
 samplelen = size(rx_all_sig,2);
@@ -29,12 +13,8 @@ for cur_device = 1:portnum
     device_no = floor((cur_device+1)/2);
     if checklist(fileidx,cur_device)~=1 continue; end
     %% cfo correction
-    cfo = cfo_list(fileidx,cur_device);
-    
-    df = -cfo;
-    phase = 2*pi*df*(1:refsig_len)/srate;
-    ch = cos(phase)+1i*sin(phase);
-    rxframe = rx_all_sig(cur_device,mean_offset(device_no):mean_offset(device_no)+refsig_len-1);
+    ch = cfo_sig(cfo_list(fileidx,cur_device),srate,refsig_len,0);
+    rxframe = rx_all_sig(cur_device,offset_list(cur_device):offset_list(cur_device)+refsig_len-1);
     rxframe = ch.*(rxframe-mean(rxframe));
     rx_all_frame(cur_device,:)=rxframe;
 
@@ -56,15 +36,15 @@ for cur_device = 1:portnum
 end
 
 if (checklist(fileidx,plot_device)==1)
-    range=max(max(abs(h_est(:,:,plot_device))));
-    if (range==0) range=1; end
-    figure; plot(h_est(:,2,plot_device)); title('csi vs frequency'); axis([-range range -range range]);
-    figure; plot(h_est(80,2:end,plot_device)); title('csi vs time');  axis([-range range -range range]);
+    plotrange=max(max(abs(h_est(:,:,plot_device))));
+    if (plotrange==0) plotrange=1; end
+    figure; plot(h_est(:,2,plot_device)); title('csi vs frequency'); axis([-plotrange plotrange -plotrange plotrange]);
+    figure; plot(h_est(80,2:end,plot_device)); title('csi vs time');  axis([-plotrange plotrange -plotrange plotrange]);
 end
 
 
 % csi change => rfo
-delta_idx = find(capture_refidx(2:end)-capture_refidx(1:end-1)>1);
+delta_idx = find(capture_refidx(2:end)-capture_refidx(1:end-1)>1); % for brrr
 if (strcmp(sig_type,'br'))
     delta_idx = [];
 end

@@ -1,0 +1,7 @@
+1.read temp
+ssh sklk@<ip_addr>
+sklk_read_zynq_temp
+
+RF3E00021:46~48
+RF3E00006:56~58
+

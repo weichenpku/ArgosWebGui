@@ -7,61 +7,66 @@ pss_t = [pss(end-cp_len+1:end) pss];
 
 portnum = size(rx_all_sig,1);
 samplelen = size(rx_all_sig,2);
-corr_peak_num = 2;
-offset_list = zeros(corr_peak_num,portnum);
-corr_peak_list = zeros(corr_peak_num,portnum);
+offset_list = zeros(1,portnum);
+corr_peak_list = zeros(1,portnum);
 
 
-frame_tone_len = frame_len + 1920*2;
-half_frame_len = frame_len/symbol_num*round(symbol_num/2); % not used now 
+frame_tone_len = frame_len + 1920;
+half_frame_len = frame_len/symbol_num*round(symbol_num/2);
 capture_symbolnum = num_symbols_frame;
 capture_refnum = refnum;
 capture_refidx = refidx;
 capture_blanknum = blanknum;
 capture_blankidx = blankidx;
 
-frame_broken = false; 
+frame_broken = false; % not used now 
 half_frame_flag = false; % not used now
-
 for cur_device = 1:portnum 
     if checklist(fileidx,cur_device)~=1 continue; end
     % check whether a whole frame is captured
     tmp_corr = conv(rx_all_sig(cur_device,:),conj(pss));
-    corr_threshold = max(abs(tmp_corr))/2;
+    corr_threshold = 50*mean(abs(tmp_corr));
     
-    [corrpeak_list,corridx_list]=findpeaks(abs(tmp_corr(cp_symbol_len+1:end-cp_symbol_len)),'MinPeakHeight',corr_threshold);
-    if (size(corridx_list,2)<corr_peak_num)
-        frame_broken = true;
+    [tmp_peak,tmp_idx]=max(abs(tmp_corr(cp_symbol_len+1:end-cp_symbol_len)));
+    
+    % case 1 [42241:6e4] => [1:17760]
+    if (tmp_idx-frame_tone_len>0) 
+        [tmp_peak2,tmp_idx2]=max(abs(tmp_corr(cp_symbol_len+1:tmp_idx-frame_tone_len/2)));
+        if (abs(tmp_idx-frame_tone_len-tmp_idx2)<5)
+            tmp_idx = tmp_idx-frame_tone_len; 
+        else
+            frame_broken = true;
+            break;
+        end
     end
-    offset_list(:,cur_device)=corridx_list(1:corr_peak_num);
-    corr_peak_list(:,cur_device) = corrpeak_list(1:corr_peak_num)/mean(abs(tmp_corr));
+    % case 2 [60001-half_frame_len:42240]
+    if (tmp_idx+half_frame_len-1>size(rx_all_sig,2))
+        frame_broken = true;
+        break;
+    end
+    % case 3 [17761:60000-half_frame_len]
+    if (tmp_idx+frame_tone_len>size(rx_all_sig,2))
+        half_frame_flag = true;
+    end
+    
+    offset_list(cur_device)=tmp_idx;
+    corr_peak_list(cur_device) = tmp_peak/mean(abs(tmp_corr));
 end
 
-checkidx = find(checklist==1);
-delta_offset = offset_list(2,checkidx)-offset_list(1,checkidx);
-assert(abs(max(delta_offset)-frame_tone_len)<10);
-assert(abs(min(delta_offset)-frame_tone_len)<10);
-
-offset_list = offset_list(1,:);
-
-% mean_offset = round(mean(mod(offset_list(find(offset_list>0)),frame_len)));
-% offset_list2 = reshape(offset_list,[2,device_num]);
-% non_zero_idx = find(min(offset_list2)>0);
-% offset_range = abs(offset_list2(1,non_zero_idx)-offset_list2(2,non_zero_idx));
-% if abs(max(abs(offset_range))-srate/100)<5
-%     offset_list2 = mod(offset_list2,srate/100);
-%     non_zero_idx = find(min(offset_list2)>0);
-%     offset_range = abs(offset_list2(1,non_zero_idx)-offset_list2(2,non_zero_idx));
-% end
-% if (min(size(offset_range))>0)
-%     assert(max(abs(offset_range))<50);
-% end
-% mean_offset(1:device_num) = max(offset_list2);
-% mean_offset(non_zero_idx) = round(mean(offset_list2(:,non_zero_idx),1));  
-offset_all_list(fileidx,:) = offset_list;
-
-if (frame_broken == false && min(offset_list)+frame_len>samplelen)
-        frame_broken = true;   
+if (frame_broken == false)
+    if (max(offset_list)-min(offset_list)>100)
+        frame_broken = true;
+    end
+    if (mean(corr_peak_list)<10)
+        frame_broken = true;
+    end
+    if (half_frame_flag)
+        capture_symbolnum = round(capture_symbolnum/2);
+        capture_refnum = round(capture_refnum/2);
+        capture_refidx = capture_refidx(1:capture_refnum);
+        capture_blanknum = round((1+capture_blanknum)/2)-1;
+        capture_blankidx = capture_blankidx(1:capture_blanknum);
+    end
 end
 
 if (frame_broken == true)
@@ -85,7 +90,9 @@ for cur_device = 1:portnum
     corr_list = [];
     maxcorr=0; maxcorr_offset=0; maxcorr_idx=-1;
     for idx = 1:3
-        ch = cfo_sig(15e3*ifo_idx(idx), srate, cp_symbol_len, 0);
+        df = 15e3*ifo_idx(idx);
+        phase = 2*pi*df*(1:cp_symbol_len)/srate;
+        ch = cos(phase)+1i*sin(phase);
         rx_pss_ifo(idx,:)=ch.*rx_pss_t;
         corr_list(idx,:)=conv(rx_pss_ifo(idx,:),conj(pss));
         [tmp_peak, tmp_idx]=max(abs(corr_list(idx,:)));
@@ -101,7 +108,7 @@ for cur_device = 1:portnum
         offset=cp_symbol_len+1;
     end
     assert(offset==cp_symbol_len+1);
-    ifo = ifo_idx(maxcorr_idx)*15e3;
+    ifo = ifo_idx(maxcorr_idx)*15000*-1;
     rx_pss1 = rx_pss_ifo(maxcorr_idx,:);
     %display(['IFO is ',int2str(ifo),'Hz']);
 
@@ -120,9 +127,10 @@ for cur_device = 1:portnum
 
 
     %% second: FFO (ALL CP based)
-    ch = cfo_sig(ifo, srate, cp_symbol_len*capture_symbolnum, 0);
+    df = -ifo;
+    phase = 2*pi*df*(1:cp_symbol_len*capture_symbolnum)/srate;
     rxframe = rx_all_sig(cur_device, offset_list(cur_device):offset_list(cur_device)+cp_symbol_len*capture_symbolnum-1);
-    rxframe = ch.*(rxframe-mean(rxframe));
+    rxframe = exp(1i*phase).*(rxframe-mean(rxframe));
     rx_all_cp = zeros(cp_len,capture_symbolnum,2);
     corr_all_cp = zeros(cp_len,capture_symbolnum);
     angle_all_cp = [];
@@ -141,5 +149,9 @@ for cur_device = 1:portnum
     %display(['FFO2 is ',int2str(ffo2),'Hz']);
 
     % ffo compensation
-    ffo_list(fileidx,cur_device) = ifo+ffo_all_cp(cur_device);
+    cfo=ifo+ffo_all_cp(cur_device);
+    cfo_list(fileidx,cur_device) = cfo;
 end
+
+
+%display(cfo_list);

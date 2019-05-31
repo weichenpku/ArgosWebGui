@@ -35,12 +35,6 @@ def test():
     rx_repeat_time = int(conf_dict['rx_repeat_time']) # number of frames
     rx_repeat_duration = float(conf_dict['rx_repeat_duration']) # seconds
     rx_path = conf_dict['rx_path']
-
-    global rx_agc_enable
-    para_key = 'rx_agc'
-    if (para_key in conf_dict) and (eval(conf_dict[para_key])):
-        rx_agc_enable = True
-
     
     main = FakeMain(rx_serial_master,rx_serial_slaves)
     obj = LTE_Receiver(main, conf_dict=conf_dict)
@@ -76,9 +70,10 @@ def test():
     obj.loop(conf_dict['filesource'], repeat_time=rx_repeat_time, repeat_duration=rx_repeat_duration, rx_path=rx_path, rx_gain=rx_gain)
 
 class streamingReceiveThread(threading.Thread):
-    def __init__(self,LTE_Receiver):
+    def __init__(self,LTE_Receiver,rx_path):
         threading.Thread.__init__(self)
         self.LTE_Receiver = LTE_Receiver
+        self.rx_path = rx_path
     def run(self):
         global threadlock
         global producing_ptr
@@ -108,6 +103,21 @@ class streamingReceiveThread(threading.Thread):
                 #IrisUtil.Process_HandlePostcode(self)  # postcode is work on received data                
                 #print(bufptr,end=' ')
                 epoch=epoch+1
+
+        bufptr = 0
+        rx_path = self.rx_path
+        for step in range(epoch_store_num):
+            rx_dir = rx_path+'epoch'+str(step)
+            if os.path.exists(rx_dir)==False:
+                os.makedirs(rx_dir)
+            filedir = rx_path+"epoch"+str(step)+"/"
+            print('save data in',filedir)
+            flag = IrisUtil.Process_ReadFromRxStream(self.LTE_Receiver,epoch=None,bufptr=bufptr)
+            ts = IrisUtil.Process_TimestampCal(self.LTE_Receiver,epoch=epoch)
+            IrisUtil.Process_SaveDataNpy(self.LTE_Receiver,dir=filedir,datasrc=self.LTE_Receiver.sampsRecv,ts=ts)
+            epoch=epoch+1
+            print(ts)
+
         # deactive
         IrisUtil.Process_RxDeactive(self.LTE_Receiver)
 
@@ -191,7 +201,7 @@ class LTE_Receiver:
         IrisUtil.Process_RxActivate_WriteFlagToRxStream_UseHasTime_Streaming(self, rx_delay = 0)
 
 
-        receiving_thread = streamingReceiveThread(self)
+        receiving_thread = streamingReceiveThread(self, rx_path)
         receiving_thread.start() 
         # sleep to wait
         #IrisUtil.Process_WaitForTime_NoTrigger(self)
@@ -214,43 +224,25 @@ class LTE_Receiver:
                     print(' q - quit\n r - repeat this step\n n - save and next step\n s - show receive signal and timestamp \n other - help')
 
             if (nextstep == 'q'):
-                break    
-            if (nextstep == 'n'):
-                step=step+1
-
-            rx_dir = rx_path+'epoch'+str(step)
-            if step>=0 and os.path.exists(rx_dir)==False:
-                os.makedirs(rx_dir)
+                break
+    
             
             # save data
             threadlock.acquire()
             consuming_flag = True
             bufptr=1-producing_ptr
             threadlock.release()
-
-            show_amp = True
-            if bufptr==0:
-                IrisUtil.Process_CalculateAmp(self,datasrc=self.sampsRecv,logprint=show_amp)
-            else:
-                IrisUtil.Process_CalculateAmp(self,datasrc=self.sampsRecv_mirror,logprint=show_amp)
             
-            # rx agc
-            global rx_agc_enable
-            if (rx_agc_enable):
-                IrisUtil.Process_AgcGainSet(self,gain_step=5,lower_bound=0.1,upper_bound=0.9)
-
-
-            global epoch
-            IrisUtil.Process_ReadTimeStamp(self,epoch=epoch)    
-
-            if (nextstep != 's'):
-                filedir = rx_path+"epoch"+str(step)+"/"
+            show_amp = True
+            if show_amp:
                 if bufptr==0:
-                    IrisUtil.Process_SaveDataNpy(self,dir=filedir,datasrc=self.sampsRecv,ts=data_ts[bufptr])
+                    IrisUtil.Process_CalculateAmp(self,datasrc=self.sampsRecv)
                 else:
-                    IrisUtil.Process_SaveDataNpy(self,dir=filedir,datasrc=self.sampsRecv_mirror,ts=data_ts[bufptr])
-                print('epoch is',step)
-                print('save data in directory:',filedir)
+                    IrisUtil.Process_CalculateAmp(self,datasrc=self.sampsRecv_mirror)
+                
+            global epoch
+            IrisUtil.Process_ReadTimeStamp(self,epoch=epoch)
+
 
             threadlock.acquire()
             consuming_flag = False
@@ -285,7 +277,6 @@ if __name__ == "__main__":
     memmap_able = True
     epoch = 0
     data_ts = [0,0]
-
-    rx_agc_enable = False
+    epoch_store_num = 10
 
     test()

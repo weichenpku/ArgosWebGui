@@ -1,6 +1,19 @@
 ./HSR_Transmitter.py ../../conf/conf_LTE_rb.json
 
 ./HSR_Receiver.py ../../conf/conf_LTE_rb.json
-./HSR_Receiver_agc.py ../../conf/conf_LTE_rb.json
 
 ./datahandle.py ../rxdata/4.25/4.25.3/epoch0/ ../conf/conf_LTE_rb.json
+
+
+# transmitting
+**	./HSR_Transmitter.py		transmit
+	./HSR_Transmitter_freq.py	transmit with frequency shift (but the phases are not continuous)
+
+# burst rx
+	./HSR_Receiver.py		receive burst
+	./HSR_Receiver_agc.py		receive burst with agc
+
+# streaming rx
+**	./HSR_Receiver_streaming.py 	receive streaming and record long time
+	./HSR_Receiver_once.py		receive streaming and record once
+

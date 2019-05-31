@@ -167,7 +167,10 @@ def Format_LoadTimeWaveForm(self, filename, scale=1):
         self.WaveFormData = self.WaveFormData * scale
         #self.WaveFormData = np.real(self.WaveFormData)/1.1+1j*np.imag(self.WaveFormData)
         
-      
+def Format_TimeWaveFrequencyCorrect(self,freq_correct):
+    s_time_vals = np.array(np.arange(0, self.WaveFormData.shape[0])).transpose() * 1 / self.rate  # time of each point
+    delta_sig = np.exp(s_time_vals * 2.j * np.pi * freq_correct).astype(np.complex64)
+    self.WaveFormData = self.WaveFormData * delta_sig
 
 def Format_LoadWaveFormFile(self, filename):
     with open(os.path.join(os.path.dirname(os.path.abspath(__file__)), filename)) as f:
@@ -1198,28 +1201,45 @@ def Process_SaveDataNpy(self,dir,datasrc=None,ts=None):
         tsfile = dir+'ts.npy'
         np.save(tsfile,ts)
 
-def Process_CalculateAmp(self,datasrc=None):
+def Process_CalculateAmp(self,datasrc=None,logprint=False):
     if datasrc is None:
         sampsRecv = self.sampsRecv
     else:
         sampsRecv = datasrc
 
     maxrange = 0
-    peak_info = {}
+    maxabs = 0
+    self.range={}
+    self.abs={}
     for devidx in range(sampsRecv.shape[0]):
         for antidx in range(sampsRecv.shape[1]):
             imax = np.max(np.real(sampsRecv[devidx][antidx]))
             imin = np.min(np.real(sampsRecv[devidx][antidx]))
             qmax = np.max(np.imag(sampsRecv[devidx][antidx]))
             qmin = np.min(np.imag(sampsRecv[devidx][antidx]))           
-            peak_info[self.rx_serials_ant[devidx]+'-'+str(antidx)+'-I'] = (imax-imin)/2
-            peak_info[self.rx_serials_ant[devidx]+'-'+str(antidx)+'-Q'] = (qmax-qmin)/2
-            if ((imax-imin)/2 > maxrange): maxrange = (imax-imin)/2
-            if ((qmax-qmin)/2 > maxrange): maxrange = (qmax-qmin)/2
-    print()
-    for devs in peak_info.keys():
-        print('AGC: peak of', devs, 'is', peak_info[devs])
-    print('AGC: maxpeak is', maxrange)  
+            cur_range = ((imax-imin)+(qmax-qmin))/4
+            cur_abs = np.max([imax,-imin,qmax,-qmin])
+            self.range[self.rx_serials_ant[devidx]+'-'+str(antidx)] = cur_range
+            self.abs[self.rx_serials_ant[devidx]+'-'+str(antidx)] = cur_abs
+            if cur_range>maxrange: maxrange = cur_range
+            if cur_abs>maxabs: maxabs = cur_abs
+
+    if logprint:
+        print()
+        for devs in sorted(self.range.keys()):
+            print('[AGC]',devs,': range is',self.range[devs],';abs is', self.abs[devs])
+        print('[AGC]: maxrange is', maxrange, ';maxabs is', maxabs)  
+
+Process_AgcGainSet(self,gain_step=5,lower_bound=0.1,upper_bound=0.9)
+    for serial_ant in self.rx_serials_ant:
+        serial, ant = Format_SplitSerialAnt(serial_ant)
+        chans = [0, 1] if ant == 2 else [ant]
+        
+        serial_ant, txrx, key = ret
+        gainObj = None
+        if txrx == 'rx': gainObj = self.rx_gains["%s-%s" % (serial_ant, txrx)]
+        else: gainObj = self.tx_gains["%s-%s" % (serial_ant, txrx)]
+        Gains_ChangeBasicGains(self, serial_ant, txrx, gainObj, key, gains[gainKey])
 
 def Analyze_LoadHDF5FileByName(self, filename):
     print("loading %s" % filename)

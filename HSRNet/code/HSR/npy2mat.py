@@ -7,12 +7,16 @@ import scipy.io as sio
 
 def batch_trans():
 	argc = len(sys.argv)
-	if (argc<2):
+	if (argc<3):
 		print('[ERROR] arg is not enough')
-		print('[ERROR] directory of npy files')
+		print('[ERROR] arg2: directory of npy files; arg3: epoch num')
 		return 0
 	path = sys.argv[1]
-	trans_one_file(path=path)
+	num = sys.argv[2]
+	for idx in range(int(num)):
+		subdir = path+'epoch'+str(idx)+'/'
+		print(subdir)
+		trans_one_file(path=subdir)
 
 def trans_one_file(path):
 	datafile = path+'data.npy'

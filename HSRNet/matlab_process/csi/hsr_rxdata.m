@@ -1,4 +1,7 @@
-function [rx_all_sig,device_num,refdir,device_list,sig_type,nb_rb] = hsr_rxdata(filename,fconf)
+function [rx_all_sig,device_num,refdir,device_list,sig_type,nb_rb,ts] = hsr_rxdata(filename,fconf)
+% input:  filename,fconf
+% output:  rx_all_sig,device_num,refdir,device_list,sig_type,nb_rb,ts
+
 %% read configure
 fid = fopen(fconf); 
 raw = fread(fid,inf); 
@@ -33,6 +36,7 @@ end
 
 
 %% load receive signal
+ts = 0; % for default
 load(filename);
 device_num = size(rxdevice,1);
 rx_all_sig=[];

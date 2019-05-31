@@ -4,6 +4,7 @@ sig_sat_threshold = 0.9;
 h_all_est = [];
 checklist = []; % -2, -1, 0 , 1 
 cfo_list = [];
+ffo_list = [];
 ber_list = [];
 snr_list = [];
 bf_snr_list = [];
@@ -25,6 +26,9 @@ capture_blankidx = [];
 
 files = dir([rxdir 'rx*']);
 filenum = size(files,1);
+if (filenum==0)
+    disp('no mat file found');
+end
 plot_device = 2;
 for fileidx=1:filenum
     %filename = [rxdir 'rx' int2str(fileidx) '.mat'];
@@ -49,5 +53,5 @@ display(max_snr_list);
 rfo_list = rfo_list - cfo_list;
 display(rfo_list);
 
-save([rxdir 'csi.mat'],'h_all_est','checklist','cfo_list','ber_list','snr_list',  ...
+save([rxdir 'csi.mat'],'h_all_est','checklist','cfo_list','ber_list','snr_list', 'rfo_list', ...
 'bf_snr_list','max_snr_list','offset_all_list','rss_list','device_list');

@@ -1,27 +1,30 @@
 %% input: filename, fconf, fileidx, plot_device
 addpath('csi');
+addpath('utils');
 check = true;
-rfo_use = true;
+cfo_use = false; % we use cfo_force to compensate
+                % cfo_use will introduce large phase shift between frames
 
 %% rxdata lod
 disp(filename);
-[rx_all_sig, device_num, refdir, device_list, sig_type, nb_rb] = hsr_rxdata(filename,fconf);          
+[rx_all_sig, device_num, refdir, device_list, sig_type, nb_rb, ts] = hsr_rxdata(filename,fconf);    
+rx_all_sig(1,:)=rx_all_sig(2,:);
+rx_ori_sig = rx_all_sig;
+
 load([refdir 'paras.mat']);
 pss = csvread([refdir 'pss.csv']);
 sig_f = csvread([refdir 'sig_f.csv']);
 
 figure; plot(real(rx_all_sig(1,:)));
 if (exist('cfo_force'))
-    df = -cfo_force;
-    phase = 2*pi*df*(1:size(rx_all_sig,2))/srate;
-    ch = ones(size(rx_all_sig,1),1)*(cos(phase)+1i*sin(phase));
+    ch = ones(size(rx_all_sig,1),1) * cfo_sig(cfo_force,srate,size(rx_all_sig,2),ts);
     rxframe = rx_all_sig.*ch;
     rx_all_sig = rxframe;
     hold on; plot(real(rx_all_sig(1,:)));
 end
 figure; plot(rx_all_sig(1,:)); axis([-1 1 -1 1]);
 
-%% ref & blank idx
+%% ref & blank idx 
 [num_symbols_frame,refnum,refidx,blanknum,blankidx] = ref_blank_idx(sig_type,nb_rb);
 
 %% checklist
@@ -57,23 +60,31 @@ if (sum(checklist(fileidx,:))>0)
     % cfo_list
     if (sum(checklist(fileidx,:))<=0) return; end
     
-    hsr_csi             % csi calculate
-    % h_tx,h_rx,h_est
-    if (rfo_use)
+    if (cfo_use)
+        cfo_list(fileidx,:) = ffo_list(fileidx,:);
+        hsr_csi
+        old_h_est = h_est;
         cfo_list(fileidx,:) = rfo_list(fileidx,:);
-        hsr_csi  %  cfo compensation according to csi change
+        hsr_csi  
+        %  cfo compensation according to csi change
+        %  the csi phase change is equal to 2*pi*(rfo-old_csi)*t(0.01)
+    else
+        cfo_list(fileidx,:) = zeros(1,portnum);
+        hsr_csi
     end
-    % cfo_list suppose to be similar; rfo_list suppose to be < 1Hz
+    
+    % sfo calculate and correlated 
+    sfo_cal_and_corr;
     
     hsr_snr             % snr calculate & (ber, cir, pdp, ds)     <= ofdm_judge.m
     % snr_list, ber_list, h_full_est
     % CIR, PDP, DS    
     if (checklist(fileidx,plot_device)==1)
             figure; mesh(angle(h_full_est(:,:,plot_device))); title('csi distribution');
-            range=max(max(abs(h_est(:,:,plot_device))));
-            if (range==0) range=1; end
-            figure; plot(mean(h_full_est(:,:,plot_device),1)); title('mean csi vs time'); axis([-range range -range range]);
-            figure; plot(mean(h_full_est(:,:,plot_device),2)); title('mean csi vs frequency'); axis([-range range -range range]);
+            plotrange=max(max(abs(h_est(:,:,plot_device))));
+            if (plotrange==0) plotrange=1; end
+            figure; plot(mean(h_full_est(:,:,plot_device),1)); title('mean csi vs time'); axis([-plotrange plotrange -plotrange plotrange]);
+            figure; plot(mean(h_full_est(:,:,plot_device),2)); title('mean csi vs frequency'); axis([-plotrange plotrange -plotrange plotrange]);
     end
 
     hsr_rxbf            % rxbf employ
