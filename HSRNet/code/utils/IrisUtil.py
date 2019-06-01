@@ -1219,8 +1219,9 @@ def Process_CalculateAmp(self,datasrc=None,logprint=False):
             qmin = np.min(np.imag(sampsRecv[devidx][antidx]))           
             cur_range = ((imax-imin)+(qmax-qmin))/4
             cur_abs = np.max([imax,-imin,qmax,-qmin])
-            self.range[self.rx_serials_ant[devidx]+'-'+str(antidx)] = cur_range
-            self.abs[self.rx_serials_ant[devidx]+'-'+str(antidx)] = cur_abs
+            serial, ant = Format_SplitSerialAnt(self.rx_serials_ant[devidx])
+            self.range[serial+'-'+str(antidx)] = cur_range
+            self.abs[serial+'-'+str(antidx)] = cur_abs
             if cur_range>maxrange: maxrange = cur_range
             if cur_abs>maxabs: maxabs = cur_abs
 
@@ -1230,16 +1231,30 @@ def Process_CalculateAmp(self,datasrc=None,logprint=False):
             print('[AGC]',devs,': range is',self.range[devs],';abs is', self.abs[devs])
         print('[AGC]: maxrange is', maxrange, ';maxabs is', maxabs)  
 
-Process_AgcGainSet(self,gain_step=5,lower_bound=0.1,upper_bound=0.9)
+def Process_AgcGainSet(self,gain_step=5,lower_bound=0.1,upper_bound=0.9):
+    self.gainchange = {}
     for serial_ant in self.rx_serials_ant:
         serial, ant = Format_SplitSerialAnt(serial_ant)
+        sdr = self.sdrs[serial]
         chans = [0, 1] if ant == 2 else [ant]
-        
-        serial_ant, txrx, key = ret
-        gainObj = None
-        if txrx == 'rx': gainObj = self.rx_gains["%s-%s" % (serial_ant, txrx)]
-        else: gainObj = self.tx_gains["%s-%s" % (serial_ant, txrx)]
-        Gains_ChangeBasicGains(self, serial_ant, txrx, gainObj, key, gains[gainKey])
+        for chan in chans:
+            serial_chan = serial+'-'+str(chan)
+            self.gainchange[serial_chan] = 0
+            if self.range[serial_chan]>=upper_bound:
+                self.gainchange[serial_chan] = -gain_step
+            if self.abs[serial_chan]<=lower_bound:
+                self.gainchange[serial_chan] = gain_step
+
+            retgain = sdr.getGain(SOAPY_SDR_RX, chan)
+            print('[SOAR]',serial_chan,'rx gain is', retgain-12)
+
+            if self.gainchange[serial_chan]!=0:
+                newgain = retgain-12+self.gainchange[serial_chan]
+                if 0<=newgain and newgain<=60:
+                    sdr.setGain(SOAPY_SDR_RX, chan, newgain)
+                    print('[SOAR]', serial_chan,'set rx gain ', newgain) 
+                else:
+                    print('[SOAR]', serial_chan,'set rx gain failed') 
 
 def Analyze_LoadHDF5FileByName(self, filename):
     print("loading %s" % filename)

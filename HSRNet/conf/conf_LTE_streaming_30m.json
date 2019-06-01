@@ -25,14 +25,14 @@
 	}
 	],
 
-	"tx_freq_correct": "-260",
+	"tx_freq_correct": "-260", "_comment": "not used",
 	"tx_repeat_time": "10000000",
 	"rx_repeat_time": "1",
 	"rx_repeat_duration": "0.1",
 	"rx_agc": "True",
 	"numSamples":"384000",
 	"tx_gain": "50",   "_comment0": "max_gain is 50", 	
-	"rx_gain": "60",   "_comment1": "max_gain is 60 = 72-12", 		
+	"rx_gain": "50",   "_comment1": "max_gain is 60 = 72-12", 		
 	"srate": "1.92e6*8",
 	"carrier_freq": "3.5e9",
 	"bandwidth":"50e6",

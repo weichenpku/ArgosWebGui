@@ -239,7 +239,6 @@ class LTE_Receiver:
             if (rx_agc_enable):
                 IrisUtil.Process_AgcGainSet(self,gain_step=5,lower_bound=0.1,upper_bound=0.9)
 
-
             global epoch
             IrisUtil.Process_ReadTimeStamp(self,epoch=epoch)    
 
