@@ -47,6 +47,7 @@ def Format_DataDir(self,nb_rb=25):
 
 def Format_UserInputSerialAnts(self):
     if not hasattr(self, "IrisSerialNums"): self.IrisSerialNums = self.main.IrisSerialNums
+    if not hasattr(self, "IrisSerialFreq"): self.IrisSerialFreq = self.main.IrisSerialFreq
     serials = self.IrisSerialNums
     self.rx_serials_ant = []
     self.tx_serials_ant = []
@@ -295,16 +296,17 @@ def Setting_ChangeOffset(self, txreal=None, tximag=None, rxreal=None, rximag=Non
                 print('[SOAR]', serial,chan, 'set offset :',offset)
                 sdr.setDCOffset(SOAPY_SDR_TX, chan, offset)
 
-def  Get_iqbalance(trx,serial,chan):
+def Get_iqbalance(trx,serial,chan):
     filename = '../../refdata/calibrate/iqbalance.mat'
     iqbalance = sio.loadmat(filename)
     var = trx+'_'+serial+'_'+str(chan)+'_'
     angle = iqbalance[var+'angle'][0][0]
     scale = iqbalance[var+'scale'][0][0]
+
     balance = np.exp(angle*1j)*scale
     return balance
 
-def  Get_dcoffset(trx,serial,chan):
+def Get_dcoffset(trx,serial,chan):
     filename = '../../refdata/calibrate/dcoffset.mat'
     dcoffset = sio.loadmat(filename)
     var = trx+'_'+serial+'_'+str(chan)+'_'
@@ -312,6 +314,15 @@ def  Get_dcoffset(trx,serial,chan):
     imag = dcoffset[var+'imag'][0][0]
     offset = real+1j*imag
     return offset
+
+def Get_freq(freqlist,serial):
+    ret_val = 0;
+    for item in freqlist:
+        idx = item.rfind('-')
+        if (item[0:idx] == serial):
+            ret_val = int(eval(item[idx+1:]))
+            break
+    return ret_val
 
 def Init_CreateBasicGainSettings(self, rate=None, bw=None, freq=None, dcoffset=None, txrate=None, rxrate=None, fcorrect=None):
     self.rx_gains = {}  # if rx_serials_ant contains xxx-3-rx-1 then it has "xxx-0-rx" and "xxx-1-rx", they are separate (without trigger option)
@@ -339,7 +350,10 @@ def Init_CreateBasicGainSettings(self, rate=None, bw=None, freq=None, dcoffset=N
         for chan in chans:
             if hasattr(self, 'rxrate'): sdr.setSampleRate(SOAPY_SDR_RX, chan, self.rxrate)
             if bw is not None: sdr.setBandwidth(SOAPY_SDR_RX, chan, bw)
-            if freq is not None: sdr.setFrequency(SOAPY_SDR_RX, chan, "RF", freq)
+            if self.freq is None:
+                freq = Get_freq(self.IrisSerialFreq,serial) 
+            print ('[SOAR] frequency: rx', serial, chan, '=>', freq)
+            sdr.setFrequency(SOAPY_SDR_RX, chan, "RF", freq)
             sdr.setAntenna(SOAPY_SDR_RX, chan, "TRX")  # TODO: I assume that in base station given, it only has two TRX antenna but no RX antenna wy@180804
             sdr.setFrequency(SOAPY_SDR_RX, chan, "BB", 0) # don't use cordic
             balance = Get_iqbalance('rx',serial[-2:],chan)
@@ -366,7 +380,10 @@ def Init_CreateBasicGainSettings(self, rate=None, bw=None, freq=None, dcoffset=N
         for chan in chans:
             if hasattr(self, 'txrate'): sdr.setSampleRate(SOAPY_SDR_TX, chan, self.txrate)
             if bw is not None: sdr.setBandwidth(SOAPY_SDR_TX, chan, bw)
-            if freq is not None: sdr.setFrequency(SOAPY_SDR_TX, chan, "RF", freq)
+            if self.freq is None:
+                freq = Get_freq(self.IrisSerialFreq,serial) 
+            print ('[SOAR] frequency: tx', serial, chan, '=>', freq)
+            sdr.setFrequency(SOAPY_SDR_TX, chan, "RF", freq)
             sdr.setAntenna(SOAPY_SDR_TX, chan, "TRX")
             sdr.setFrequency(SOAPY_SDR_TX, chan, "BB", 0)  # don't use cordic
             balance = Get_iqbalance('tx',serial[-2:],chan)
@@ -804,6 +821,7 @@ def Process_TxActivate_WriteFlagAndMultiFrameToTxStream_UseHasTime(self,repeat_t
     if frame_len is None:
         frame_len = len(self.tones[0][0])
     print('frame len is',frame_len)
+    print('repeat time is',repeat_time)
     flags = SOAPY_SDR_HAS_TIME
     for r,txStream in enumerate(self.txStreams):
         serial_ant = self.tx_serials_ant[r]
@@ -1220,8 +1238,8 @@ def Process_CalculateAmp(self,datasrc=None,logprint=False):
             cur_range = ((imax-imin)+(qmax-qmin))/4
             cur_abs = np.max([imax,-imin,qmax,-qmin])
             serial, ant = Format_SplitSerialAnt(self.rx_serials_ant[devidx])
-            self.range[serial+'-'+str(antidx)] = cur_range
-            self.abs[serial+'-'+str(antidx)] = cur_abs
+            self.range[serial+'-'+str(ant)] = cur_range
+            self.abs[serial+'-'+str(ant)] = cur_abs
             if cur_range>maxrange: maxrange = cur_range
             if cur_abs>maxabs: maxabs = cur_abs
 

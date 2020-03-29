@@ -14,9 +14,11 @@ import threading
 
 def test():
     class FakeMain:
-        def __init__(self,master,slaves):
+        def __init__(self,master,slaves,master_freq,slaves_freq):
             self.IrisSerialNums = slaves # serial-chan-TX/RX-trigger
             self.IrisSerialNums.append(master)
+            self.IrisSerialFreq = slaves_freq
+            self.IrisSerialFreq.append(master_freq)
             self.userTrig = True
         def changedF(self):
             print('changedF called')
@@ -29,14 +31,24 @@ def test():
     rx_serial_master = conf_dict['receiver_master']['serial'] + "-" + conf_dict['receiver_master']['port'] + "-Rx-1"
     rx_serial_slaves = []
     for idx in range(int(conf_dict['receivernum'])-1):
-        rx_serial_slaves.append(conf_dict['receiver'][idx]['serial'] + "-" + conf_dict['receiver_master']['port'] + "-Rx-0")
+        rx_serial_slaves.append(conf_dict['receiver'][idx]['serial'] + "-" + conf_dict['receiver'][idx]['port'] + "-Rx-0")
+    
+    rx_slaves_freq = []
+    if 'carrier_freq' in conf_dict:
+        rx_master_freq = conf_dict['receiver_master']['serial'] + "-" + conf_dict['carrier_freq']
+        for idx in range(int(conf_dict['receivernum'])-1):
+            rx_serial_freq.append(conf_dict['receiver'][idx]['serial'] + "-" + conf_dict['carrier_freq'])
+    else:
+        rx_master_freq = conf_dict['receiver_master']['serial'] + "-" + conf_dict['receiver_master']['carrier_freq']
+        for idx in range(int(conf_dict['receivernum'])-1):
+            rx_slaves_freq.append(conf_dict['receiver'][idx]['serial'] + "-" + conf_dict['receiver'][idx]['carrier_freq'])
 
     rx_gain = conf_dict['rx_gain']
     rx_repeat_time = int(conf_dict['rx_repeat_time']) # number of frames
     rx_repeat_duration = float(conf_dict['rx_repeat_duration']) # seconds
     rx_path = conf_dict['rx_path']
     
-    main = FakeMain(rx_serial_master,rx_serial_slaves)
+    main = FakeMain(rx_serial_master,rx_serial_slaves,rx_master_freq,rx_slaves_freq)
     obj = LTE_Receiver(main, conf_dict=conf_dict)
     
     numSamples = conf_dict['numSamples']
@@ -125,7 +137,11 @@ class LTE_Receiver:
         IrisUtil.Init_CreateDefaultGain_WithDevFE(self)
         self.rate = eval(conf_dict['srate'])
         self.bw = eval(conf_dict['bandwidth'])
-        IrisUtil.Init_CreateBasicGainSettings(self, bw=self.bw, freq=eval(conf_dict['carrier_freq']), dcoffset=True, txrate=self.rate, rxrate=self.rate)
+        if ('carrier_freq' in conf_dict):
+            IrisUtil.Init_CreateBasicGainSettings(self, bw=self.bw, freq=eval(conf_dict['carrier_freq']), dcoffset=True, txrate=self.rate, rxrate=self.rate)
+        else:
+            IrisUtil.Init_CreateBasicGainSettings(self, bw=self.bw, dcoffset=True, txrate=self.rate, rxrate=self.rate)
+        IrisUtil.Setting_ChangeIQBalance(self,rxangle=0,rxscale=1)
 
         # create streams (but not activate them)
         IrisUtil.Init_CreateRxStreams_RevB(self)
@@ -225,9 +241,9 @@ class LTE_Receiver:
             show_amp = True
             if show_amp:
                 if bufptr==0:
-                    IrisUtil.Process_CalculateAmp(self,datasrc=self.sampsRecv)
+                    IrisUtil.Process_CalculateAmp(self,datasrc=self.sampsRecv,logprint=True)
                 else:
-                    IrisUtil.Process_CalculateAmp(self,datasrc=self.sampsRecv_mirror)
+                    IrisUtil.Process_CalculateAmp(self,datasrc=self.sampsRecv_mirror,logprint=True)
                 
             global epoch
             IrisUtil.Process_ReadTimeStamp(self,epoch=epoch)

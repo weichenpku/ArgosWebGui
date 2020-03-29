@@ -12,9 +12,10 @@ import json
 
 def test():
     class FakeMain:
-        def __init__(self,tx_serial,tx_ant):
+        def __init__(self,tx_serial,tx_ant, tx_freq):
             self.IrisSerialNums = [tx_serial+ "-" + tx_ant + "-Tx-1"] #serial-chan-TX/RX-trigger
             self.userTrig = True
+            self.IrisSerialFreq = [tx_serial+ "-" + tx_freq]
         def changedF(self):
             print('changedF called')
 
@@ -25,11 +26,15 @@ def test():
 
     tx_serial = conf_dict['transmitter']['serial']  #"RF3E000002"
     tx_ant = conf_dict['transmitter']['port']
+    if 'carrier_freq' in conf_dict:
+        tx_freq = conf_dict['carrier_freq']
+    else:
+        tx_freq = conf_dict['transmitter']['carrier_freq']
     tx_gain = conf_dict['tx_gain']
     tx_rb = int(conf_dict['nrb']) 
     tx_repeat_time = int(conf_dict['tx_repeat_time']) # number of frames(10ms)
 
-    main = FakeMain(tx_serial,tx_ant)
+    main = FakeMain(tx_serial,tx_ant,tx_freq)
     obj = LTE_Transmitter(main, nb_rb=tx_rb,  conf_dict=conf_dict)
 
     gain_para = {}
@@ -93,8 +98,11 @@ class LTE_Transmitter:
         tx_freq_correct = eval(conf_dict['tx_freq_correct'])
         fcorrect = tx_freq_correct
         #fcorrect = tx_freq_correct/clockRate*1e6
-        IrisUtil.Init_CreateBasicGainSettings(self, rate=self.rate, bw=self.bw, freq=eval(conf_dict['carrier_freq']), dcoffset=True, fcorrect=fcorrect)
-        #IrisUtil.Setting_ChangeIQBalance(self,txangle=-0.2,txscale=1.2)
+        if ('carrier_freq' in conf_dict):
+            IrisUtil.Init_CreateBasicGainSettings(self, rate=self.rate, bw=self.bw, freq=eval(conf_dict['carrier_freq']), dcoffset=True, fcorrect=fcorrect)
+        else:
+            IrisUtil.Init_CreateBasicGainSettings(self, rate=self.rate, bw=self.bw, dcoffset=True, fcorrect=fcorrect)
+        IrisUtil.Setting_ChangeIQBalance(self,txangle=0,txscale=1)
 
          # create streams (but not activate them)
         IrisUtil.Init_CreateTxStreams_RevB(self)
@@ -104,7 +112,7 @@ class LTE_Transmitter:
         # sync trigger and clock
         IrisUtil.Init_SynchronizeTriggerClock(self)
 
-        self.numSamples = 609280 # 1024  # could be changed during runtime
+        self.numSamples = 609280 # default value of tx frame len
         self.showSamples = 609280 # 8192  # init max show samples
         serial, ant = IrisUtil.Format_SplitSerialAnt(self.tx_serials_ant[0])
         if ant == 2: self.txSelect = "%s-0" % serial  # select one to send, other set 0

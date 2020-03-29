@@ -29,7 +29,7 @@ def test():
     rx_serial_master = conf_dict['receiver_master']['serial'] + "-" + conf_dict['receiver_master']['port'] + "-Rx-1"
     rx_serial_slaves = []
     for idx in range(int(conf_dict['receivernum'])-1):
-        rx_serial_slaves.append(conf_dict['receiver'][idx]['serial'] + "-" + conf_dict['receiver_master']['port'] + "-Rx-0")
+        rx_serial_slaves.append(conf_dict['receiver'][idx]['serial'] + "-" + conf_dict['receiver'][idx]['port'] + "-Rx-0")
 
     rx_gain = conf_dict['rx_gain']
     rx_repeat_time = int(conf_dict['rx_repeat_time']) # number of frames
@@ -142,6 +142,7 @@ class LTE_Receiver:
         self.rate = eval(conf_dict['srate'])
         self.bw = eval(conf_dict['bandwidth'])
         IrisUtil.Init_CreateBasicGainSettings(self, bw=self.bw, freq=eval(conf_dict['carrier_freq']), dcoffset=True, txrate=self.rate, rxrate=self.rate)
+        IrisUtil.Setting_ChangeIQBalance(self,rxangle=0,rxscale=1)
 
         # create streams (but not activate them)
         IrisUtil.Init_CreateRxStreams_RevB(self)
