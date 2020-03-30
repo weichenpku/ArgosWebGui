@@ -349,16 +349,21 @@ def Init_CreateBasicGainSettings(self, rate=None, bw=None, freq=None, dcoffset=N
         chans = [0, 1] if ant == 2 else [ant]  # if ant is 2, it means [0, 1] both
         for chan in chans:
             if hasattr(self, 'rxrate'): sdr.setSampleRate(SOAPY_SDR_RX, chan, self.rxrate)
+            ret_rxrate = sdr.getSampleRate(SOAPY_SDR_RX, chan)
+            print('[SOAR] rx rate: rx', serial, chan, '=>', ret_rxrate)
             if bw is not None: sdr.setBandwidth(SOAPY_SDR_RX, chan, bw)
+            ret_rxbw = sdr.getBandwidth(SOAPY_SDR_RX, chan)
+            print('[SOAR] rx bw: rx', serial, chan, '=>', ret_rxbw)
             if self.freq is None:
                 freq = Get_freq(self.IrisSerialFreq,serial) 
-            print ('[SOAR] frequency: rx', serial, chan, '=>', freq)
             sdr.setFrequency(SOAPY_SDR_RX, chan, "RF", freq)
+            ret_rxfreq = sdr.getFrequency(SOAPY_SDR_RX, chan, "RF")
+            print ('[SOAR] frequency: rx', serial, chan, '=>', ret_rxfreq)
             sdr.setAntenna(SOAPY_SDR_RX, chan, "TRX")  # TODO: I assume that in base station given, it only has two TRX antenna but no RX antenna wy@180804
             sdr.setFrequency(SOAPY_SDR_RX, chan, "BB", 0) # don't use cordic
             balance = Get_iqbalance('rx',serial[-2:],chan)
             sdr.setIQBalance(SOAPY_SDR_RX, chan, balance)
-            print('[SOAR] iqbalance: rx', serial[-2:], chan, '=>', balance)
+            #print('[SOAR] iqbalance: rx', serial[-2:], chan, '=>', balance) # changed later
             if dcoffset is not None: 
                 sdr.setDCOffsetMode(SOAPY_SDR_RX, chan, dcoffset) # dc removal on rx
                 offset = Get_dcoffset('rx',serial[-2:],chan)
@@ -379,16 +384,21 @@ def Init_CreateBasicGainSettings(self, rate=None, bw=None, freq=None, dcoffset=N
         chans = [0, 1] if ant == 2 else [ant]  # if ant is 2, it means [0, 1] both
         for chan in chans:
             if hasattr(self, 'txrate'): sdr.setSampleRate(SOAPY_SDR_TX, chan, self.txrate)
+            ret_txrate = sdr.getSampleRate(SOAPY_SDR_TX, chan)
+            print('[SOAR] tx rate: tx', serial, chan, '=>', ret_txrate)
             if bw is not None: sdr.setBandwidth(SOAPY_SDR_TX, chan, bw)
+            ret_txbw = sdr.getBandwidth(SOAPY_SDR_TX, chan)
+            print('[SOAR] tx bw: tx', serial, chan, '=>', ret_txbw)
             if self.freq is None:
                 freq = Get_freq(self.IrisSerialFreq,serial) 
-            print ('[SOAR] frequency: tx', serial, chan, '=>', freq)
             sdr.setFrequency(SOAPY_SDR_TX, chan, "RF", freq)
+            ret_txfreq = sdr.getFrequency(SOAPY_SDR_TX, chan, "RF")
+            print ('[SOAR] frequency: tx', serial, chan, '=>', ret_txfreq)
             sdr.setAntenna(SOAPY_SDR_TX, chan, "TRX")
             sdr.setFrequency(SOAPY_SDR_TX, chan, "BB", 0)  # don't use cordic
             balance = Get_iqbalance('tx',serial[-2:],chan)
             sdr.setIQBalance(SOAPY_SDR_TX, chan, balance)
-            print('[SOAR] iqbalance: tx', serial[-2:], chan, '=>', balance)
+            #print('[SOAR] iqbalance: tx', serial[-2:], chan, '=>', balance) # changed later
             if fcorrect is not None:
                 sdr.setFrequencyCorrection(SOAPY_SDR_TX, chan, fcorrect)
                 flagcorrect = sdr.hasFrequencyCorrection(SOAPY_SDR_TX, chan)
