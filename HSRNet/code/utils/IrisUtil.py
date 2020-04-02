@@ -47,7 +47,7 @@ def Format_DataDir(self,nb_rb=25):
 
 def Format_UserInputSerialAnts(self):
     if not hasattr(self, "IrisSerialNums"): self.IrisSerialNums = self.main.IrisSerialNums
-    if not hasattr(self, "IrisSerialFreq"): self.IrisSerialFreq = self.main.IrisSerialFreq
+    if not hasattr(self, "IrisSerialFreq") and hasattr(self.main, "IrisSerialFreq"): self.IrisSerialFreq = self.main.IrisSerialFreq
     serials = self.IrisSerialNums
     self.rx_serials_ant = []
     self.tx_serials_ant = []
@@ -313,6 +313,7 @@ def Get_dcoffset(trx,serial,chan):
     real = dcoffset[var+'real'][0][0]
     imag = dcoffset[var+'imag'][0][0]
     offset = real+1j*imag
+    offset = 0 
     return offset
 
 def Get_freq(freqlist,serial):
@@ -1003,6 +1004,7 @@ def Process_TimestampCal(self,epoch):
 def Process_ReadFromRxStream(self,epoch=None,bufptr=None):
     max_len = 65536 # 0xee00 => 0x10000
     read_success = True
+    flags = SOAPY_SDR_HAS_TIME
     #print(self.ts)
     for r,rxStream in enumerate(self.rxStreams):
         serial_ant = self.rx_serials_ant[r]
@@ -1014,6 +1016,7 @@ def Process_ReadFromRxStream(self,epoch=None,bufptr=None):
         else:
             sampsRecv = self.sampsRecv if bufptr==0 else self.sampsRecv_mirror
         while numRecv < len(sampsRecv[r][0]):
+            ts_tmp = 0
             if (epoch is not None and epoch%100==0):
                 ts_tmp=self.sdrs[self.trigger_serial].getHardwareTime()
             sr = sdr.readStream(rxStream, [samps[numRecv:] for samps in sampsRecv[r]], len(sampsRecv[r][0])-numRecv, timeoutUs=int(1e6))
@@ -1214,7 +1217,7 @@ def Process_SaveData(self,datasrc=None):
 
     return data
 
-def Process_SaveDataNpy(self,dir,datasrc=None,ts=None):
+def Process_SaveDataNpy(self,dir,datasrc=None,srate=None,ts=None):
     if datasrc is None:
         sampsRecv = self.sampsRecv
     else:
@@ -1224,6 +1227,10 @@ def Process_SaveDataNpy(self,dir,datasrc=None,ts=None):
     msgfile = dir+'msg.npy'
     np.save(datafile,sampsRecv)
     np.save(msgfile,self.rx_serials_ant)
+
+    if srate is not None:
+        srfile = dir+'srate.npy'
+        np.save(srfile,srate)
 
     if ts is not None:
         tsfile = dir+'ts.npy'

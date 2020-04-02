@@ -11,7 +11,7 @@ import scipy.io as sio
 def test():
     class FakeMain:
         def __init__(self):
-            self.IrisSerialNums = ["RF3E000006-0-Tx-1", "RF3E000022-1-Rx-0"]  # serial-chan-TX/RX-trigger
+            self.IrisSerialNums = ["RF3E000002-0-Tx-1", "RF3E000022-0-Rx-0"]  # serial-chan-TX/RX-trigger
             self.userTrig = True
         def changedF(self):
             print('changedF called')
@@ -20,8 +20,8 @@ def test():
     obj.setGains({
         "parameters-txSamples": "512",
         "parameters-numSamples": "5120",
-        "RF3E000006-0-tx-txGain": "35",
-        "RF3E000022-1-rx-rxGain": "35"
+        "RF3E000002-0-tx-txGain": "35",
+        "RF3E000022-0-rx-rxGain": "35"
     })
     
     print()
@@ -37,7 +37,7 @@ def test():
     for key,value in main.sampleData['data'].items():
         # print(type(main.sampleData['data'][key]))
         # print(key+".mat")
-        sio.savemat("rxdata/"+key+".mat", {"wave" : value})
+        sio.savemat("../../rxdata/"+key+".mat", {"wave" : value})
 
 class Sinusoid_Transceiver_DevFE_RevB_180828:
     def __init__(self, main):

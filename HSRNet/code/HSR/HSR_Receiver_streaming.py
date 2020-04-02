@@ -56,11 +56,11 @@ def test():
         "parameters-showSamples": "65536",
         "parameters-numSamples":numSamples, # recvNum (should be less than 65536)
     }
-    if (conf_dict['receiver_master']['port']!='0'):  gain_dict[conf_dict['receiver_master']['serial']+"-1-rx-rxGain"] = rx_gain
-    if (conf_dict['receiver_master']['port']!='1'):  gain_dict[conf_dict['receiver_master']['serial']+"-0-rx-rxGain"] = rx_gain
+    if (conf_dict['receiver_master']['port']!='0'):  gain_dict[conf_dict['receiver_master']['serial']+"-1-rx-rxGain"] = conf_dict['receiver_master']['gain']
+    if (conf_dict['receiver_master']['port']!='1'):  gain_dict[conf_dict['receiver_master']['serial']+"-0-rx-rxGain"] = conf_dict['receiver_master']['gain']
     for idx in range(int(conf_dict['receivernum'])-1):
-        if (conf_dict['receiver'][idx]['port']!='0'): gain_dict[conf_dict['receiver'][idx]['serial']+"-1-rx-rxGain"] = rx_gain
-        if (conf_dict['receiver'][idx]['port']!='1'): gain_dict[conf_dict['receiver'][idx]['serial']+"-0-rx-rxGain"] = rx_gain
+        if (conf_dict['receiver'][idx]['port']!='0'): gain_dict[conf_dict['receiver'][idx]['serial']+"-1-rx-rxGain"] = conf_dict['receiver'][idx]['gain']
+        if (conf_dict['receiver'][idx]['port']!='1'): gain_dict[conf_dict['receiver'][idx]['serial']+"-0-rx-rxGain"] = conf_dict['receiver'][idx]['gain']
     print(gain_dict)
     obj.setGains(gain_dict)
     
@@ -140,7 +140,7 @@ class LTE_Receiver:
         if ('carrier_freq' in conf_dict):
             IrisUtil.Init_CreateBasicGainSettings(self, bw=self.bw, freq=eval(conf_dict['carrier_freq']), dcoffset=True, txrate=self.rate, rxrate=self.rate)
         else:
-            IrisUtil.Init_CreateBasicGainSettings(self, bw=self.bw, dcoffset=True, txrate=self.rate, rxrate=self.rate)
+            IrisUtil.Init_CreateBasicGainSettings(self, bw=self.bw, dcoffset=False, txrate=self.rate, rxrate=self.rate)
         IrisUtil.Setting_ChangeIQBalance(self,rxangle=0,rxscale=1)
 
         # create streams (but not activate them)
@@ -251,9 +251,9 @@ class LTE_Receiver:
             if (nextstep != 's'):
                 filedir = rx_path+"epoch"+str(step)+"/"
                 if bufptr==0:
-                    IrisUtil.Process_SaveDataNpy(self,dir=filedir,datasrc=self.sampsRecv,ts=data_ts[bufptr])
+                    IrisUtil.Process_SaveDataNpy(self,dir=filedir,datasrc=self.sampsRecv,srate=self.rate,ts=data_ts[bufptr])
                 else:
-                    IrisUtil.Process_SaveDataNpy(self,dir=filedir,datasrc=self.sampsRecv_mirror,ts=data_ts[bufptr])
+                    IrisUtil.Process_SaveDataNpy(self,dir=filedir,datasrc=self.sampsRecv_mirror,srate=self.rate,ts=data_ts[bufptr])
                 print('epoch is',step)
                 print('save data in directory:',filedir)
 

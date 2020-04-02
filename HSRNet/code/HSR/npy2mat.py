@@ -22,9 +22,11 @@ def trans_one_file(path):
 	datafile = path+'data.npy'
 	devfile = path+'msg.npy'
 	tsfile = path+'ts.npy'
+	srfile = path+'srate.npy'
 	rawdata = np.load(datafile)
 	rx_serials_ant = np.load(devfile)
 	ts = np.load(tsfile)
+	srate = np.load(srfile)
 
 	data={}
 	for r,serial_ant in enumerate(rx_serials_ant):
@@ -38,6 +40,7 @@ def trans_one_file(path):
 			data[serial + "_I"] = [float(e.real) for e in cdat[0]]
 			data[serial + "_Q"] = [float(e.imag) for e in cdat[0]]
 	data['ts']=ts
+	data['srate']=srate
 
 	matfile = path+'rx0.mat'
 	sio.savemat(matfile,data)

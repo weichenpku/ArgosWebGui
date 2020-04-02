@@ -1,6 +1,6 @@
 clear; close all;
 
-file = 'test/epoch7/rx0.mat'; 
+file = 'test/epoch3/rx0.mat'; 
 refsig0 = csvread('../../refdata/generation/test_data/dc192000.csv');
 
 % case 3.31
@@ -12,7 +12,7 @@ device2 = 'RF3E000022';
 path = '../../rxdata/'; 
 load([path file]);
 
-refidx = 275800;
+refidx = 258100;
 
 interp_scale = 16;
 snum = 384000; 
@@ -57,11 +57,10 @@ y = filter(b,a,iqdata_cali);
 iqdata_filter = y;
 
 %% filter2
-winsize = 4000;
+winsize = 1000;
 b = (1/winsize)*ones(1,winsize);
 a = 1;
 y = filter(b,a,epc_data);
-epc_data1 = epc_data(1:end-winsize/2) - y(1+winsize/2:end);  % high pass
 
 %% plot figures
 figure; 
@@ -75,7 +74,6 @@ figure; hold on;
 plot(sign(real(sigcarrier(1:interp_scale:end)))*max(abs(epc_data(1:interp_scale:end))));
 plot(abs(iqdata_cali(1:interp_scale:end)));
 plot(abs(epc_data(1:interp_scale:end)));
-plot(epc_data1(1:interp_scale:end));
 title('amplitude of iq signal');
 
 %% preamble detect
@@ -143,8 +141,7 @@ decode_out = sign(abs(rawdata)-0.5);
 data_decode = (decode_out+1)/2;
 display(data_decode);
 
-check_result = [extended_header preamble] == data_decode(1:36);
-error_num = sum(check_result==0);
+error_num = sum(abs(extended_header-data_decode(1:24))) + sum(abs(preamble-data_decode(25:36)));
 if error_num == 0
     display('code detect is CORRECT!');
 else

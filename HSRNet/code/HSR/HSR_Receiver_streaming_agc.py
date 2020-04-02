@@ -245,9 +245,9 @@ class LTE_Receiver:
             if (nextstep != 's'):
                 filedir = rx_path+"epoch"+str(step)+"/"
                 if bufptr==0:
-                    IrisUtil.Process_SaveDataNpy(self,dir=filedir,datasrc=self.sampsRecv,ts=data_ts[bufptr])
+                    IrisUtil.Process_SaveDataNpy(self,dir=filedir,datasrc=self.sampsRecv,srate=self.rate,ts=data_ts[bufptr])
                 else:
-                    IrisUtil.Process_SaveDataNpy(self,dir=filedir,datasrc=self.sampsRecv_mirror,ts=data_ts[bufptr])
+                    IrisUtil.Process_SaveDataNpy(self,dir=filedir,datasrc=self.sampsRecv_mirror,srate=self.rate,ts=data_ts[bufptr])
                 print('epoch is',step)
                 print('save data in directory:',filedir)
 
