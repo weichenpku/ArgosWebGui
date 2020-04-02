@@ -1,18 +1,18 @@
 clear; close all;
 
-file = 'test/epoch9/rx0.mat'; 
+file = 'test/epoch4/rx0.mat'; 
 refsig0 = csvread('../../refdata/generation/test_data/dc192000.csv');
 
 % case 3.31
-% file = '3.31/rfid/epoch6/rx0.mat'; 
-% refsig0 = csvread('../../refdata/generation/test_data/tone192000_20.csv');
+file = '3.31/rfid/epoch6/rx0.mat'; 
+refsig0 = csvread('../../refdata/generation/test_data/tone192000_20.csv');
 
-device1 = 'RF3E000006';
-device2 = 'RF3E000022';
+device1 = 'RF3E000022';
+device2 = 'RF3E000006';
 path = '../../rxdata/'; 
 load([path file]);
 
-refidx = 132900;
+refidx = 377200;
 
 interp_scale = 16;
 snum = 384000; 
@@ -82,6 +82,7 @@ title('amplitude of iq signal');
 refidx = refidx*interp_scale;
 framelen = period_len*preamble_len*7;
 frame_data = iqdata_filter(refidx:refidx+framelen-1);
+frame_rssi = abs(iqdata_filter(refidx:refidx+framelen-1));
 
 dc_part = iqdata_filter(refidx-period_len*5:refidx-1);
 dc_val = mean(dc_part);
@@ -120,6 +121,7 @@ plot(abs(sig_corr)); plot(abs(frame_data));
 plot(sign(imag(edges))*max(abs(sig_corr)));
 title('Detection before blf cali');
 
+
 min_len = period_len*0.9;
 max_len = period_len*1.1;
 if (maxidx+round(max_len/2)*-24<1) || (maxidx+round(min_len/2)*(preamble_len*2*4-1) > size(frame_data,2))
@@ -144,6 +146,12 @@ edges = exp(-1i*2*pi*(1-maxidx:framelen-maxidx)/period_len2);
 plot(abs(sig_corr)); plot(abs(frame_data));
 plot(sign(imag(edges))*max(abs(sig_corr)));
 title('Detection after blf cali');
+
+figure; hold on;
+plot(abs(sig_corr)); plot(frame_rssi-mean(frame_rssi));
+plot(sign(imag(edges))*max(abs(sig_corr)));
+title('Detection after blf cali');
+
 
 
 %% result output
@@ -179,3 +187,13 @@ data_decode2 = (decode_out2+1)/2;
 check_result2 = [extended_header preamble] == data_decode2(1:36);
 error_num2 = sum(check_result2==0);
 display(['(re-decode)error num : ' int2str(error_num2) ' of 36']);
+
+
+%% rssi decode: frame_rssi
+p_rssi = mean(frame_rssi(pos_list(find(extended_header==1))));
+n_rssi = mean(frame_rssi(pos_list(find(extended_header==0))));
+rawdata3 = (frame_rssi(pos_list)-n_rssi)/(p_rssi-n_rssi);
+data_decode3 = (sign(abs(rawdata3)-0.5)+1)/2;
+check_result3 = [extended_header preamble] == data_decode3(1:36);
+error_num3 = sum(check_result3==0);
+display(['(RSSI-decode)error num : ' int2str(error_num3) ' of 36']);
