@@ -1,6 +1,6 @@
 clear; close all;
 
-file = 'test/epoch3/rx0.mat'; 
+file = 'test/epoch9/rx0.mat'; 
 refsig0 = csvread('../../refdata/generation/test_data/dc192000.csv');
 
 % case 3.31
@@ -12,7 +12,7 @@ device2 = 'RF3E000022';
 path = '../../rxdata/'; 
 load([path file]);
 
-refidx = 258100;
+refidx = 34890;
 
 interp_scale = 16;
 snum = 384000; 
@@ -50,17 +50,18 @@ epc_data = abs(idata2+1i*qdata2);
 epc_data = interp(epc_data,interp_scale);
 
 %% filter1
-winsize = period_len/2;
+winsize = period_len/2/2;
 b = (1/winsize)*ones(1,winsize);
 a = 1;
 y = filter(b,a,iqdata_cali);
-iqdata_filter = y;
+iqdata_filter = y(1+period_len/4:end);
 
 %% filter2
-winsize = 1000;
+winsize = 4000;
 b = (1/winsize)*ones(1,winsize);
 a = 1;
 y = filter(b,a,epc_data);
+epc_data1 = epc_data(1:end-winsize/2) - y(1+winsize/2:end);  % high pass
 
 %% plot figures
 figure; 
@@ -74,6 +75,7 @@ figure; hold on;
 plot(sign(real(sigcarrier(1:interp_scale:end)))*max(abs(epc_data(1:interp_scale:end))));
 plot(abs(iqdata_cali(1:interp_scale:end)));
 plot(abs(epc_data(1:interp_scale:end)));
+plot(epc_data1(1:interp_scale:end));
 title('amplitude of iq signal');
 
 %% preamble detect
@@ -94,16 +96,22 @@ title('frame data & dc data (original)');
 figure; hold on;
 plot(abs(frame_data)); 
 plot(abs(dc_part-dc_val));
+%plot(abs(iqdata_cali(refidx:refidx+framelen-1)-dc_val));
 title('frame data & dc data (filtered)');
 
 sig_corr = [];
-for idx = period_len*10+1:framelen-period_len*preamble_len
-    sig0 = frame_data(idx:period_len/2:idx+period_len*preamble_len-1);
+for idx = period_len*10+1:framelen/2
+    right = idx+period_len*(preamble_len)-1;
+    if (right>size(frame_data,2))
+        continue;
+    end
+    sig0 = frame_data(idx:period_len/2:right);
     sig_corr(idx) = sum(sig0.*conj(preamble));
 end
 [vallist,idxlist] = findpeaks(abs(sig_corr),'Threshold',0);
-maxidx = idxlist(find(vallist>max(abs(sig_corr))*0.9));
-maxidx = maxidx(1);
+%maxidx = idxlist(find(vallist>max(abs(sig_corr))*0.9));
+%maxidx = maxidx(1);
+maxidx = idxlist(find(vallist==max(vallist)));
 
 %% duration estimate
 figure; hold on;
@@ -114,6 +122,10 @@ title('Detection before blf cali');
 
 min_len = period_len*0.9;
 max_len = period_len*1.1;
+if (maxidx+round(max_len/2)*-24<1) || (maxidx+round(min_len/2)*(preamble_len*2*4-1) > size(frame_data,2))
+    disp('Peak Detection of xcorr failed');
+end
+
 energy=[];
 for new_halflen = round(min_len/2):1:round(max_len/2)
     idxlist = new_halflen*(-24:preamble_len*2*4-1)+maxidx;
@@ -123,7 +135,9 @@ for new_halflen = round(min_len/2):1:round(max_len/2)
     energy(new_halflen) = sum(abs(frame_data(idxlist)).^2); % eq. 14
 end
 period_len2 = 2*find(energy==max(energy));
-display(['period len change from ' int2str(period_len) ' to ' int2str(period_len2)]);
+if min(size(period_len2))>0
+    display(['Period len change from ' int2str(period_len) ' to ' int2str(period_len2)]);
+end
 
 figure; hold on;
 edges = exp(-1i*2*pi*(1-maxidx:framelen-maxidx)/period_len2);
@@ -141,13 +155,20 @@ decode_out = sign(abs(rawdata)-0.5);
 data_decode = (decode_out+1)/2;
 display(data_decode);
 
-error_num = sum(abs(extended_header-data_decode(1:24))) + sum(abs(preamble-data_decode(25:36)));
+check_result = [extended_header preamble] == data_decode(1:36);
+error_num = sum(check_result==0);
 if error_num == 0
     display('code detect is CORRECT!');
 else
     display('code detect is ERROR!');
     display(['error num: ' int2str(error_num) ' of 36']);
+    disp(find(check_result==0));
 end
 
 phase_detect = angle(h_est)/pi*180;
 display(phase_detect);
+
+%% recheck 
+extended_preamble = [extended_header preamble];
+pos_list 
+h_est2 = 

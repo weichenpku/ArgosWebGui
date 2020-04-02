@@ -2,7 +2,7 @@
 	"transmitter": {
 		"serial": "RF3E000002",
 		"port": "0",
-		"carrier_freq": "0.99e9"
+		"carrier_freq": "0.995e9"
 	},
 	
 
@@ -17,8 +17,8 @@
 	{	
 		"serial": "RF3E000006",
 		"port": "0",
-		"carrier_freq": "0.99e9",
-		"gain": "30"
+		"carrier_freq": "0.995e9",
+		"gain": "20"
 	}
 	],
 
@@ -30,7 +30,7 @@
 	"tx_gain": "50",	"_comment0": "max_gain is 60",
 	"rx_gain": "0",    "_comment1": "max_gain is 50",	
 	"srate": "1.92e6",
-	"bandwidth":"30e6",
+	"bandwidth":"1e6",
 		
 	"scale":"0.9",
 	"filesource": "selfdefine",  		"_comment2": "LTE or selfdefine", 

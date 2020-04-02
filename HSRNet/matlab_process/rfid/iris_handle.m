@@ -1,6 +1,6 @@
 clear; close all;
 
-file = 'test/epoch7/rx0.mat'; 
+file = 'test/epoch9/rx0.mat'; 
 refsig0 = csvread('../../refdata/generation/test_data/dc192000.csv');
 
 % case 3.31
@@ -12,7 +12,7 @@ device2 = 'RF3E000022';
 path = '../../rxdata/'; 
 load([path file]);
 
-refidx = 275800;
+refidx = 132900;
 
 interp_scale = 16;
 snum = 384000; 
@@ -54,7 +54,7 @@ winsize = period_len/2;
 b = (1/winsize)*ones(1,winsize);
 a = 1;
 y = filter(b,a,iqdata_cali);
-iqdata_filter = y;
+iqdata_filter = y(1+period_len/4:end);
 
 %% filter2
 winsize = 4000;
@@ -96,16 +96,22 @@ title('frame data & dc data (original)');
 figure; hold on;
 plot(abs(frame_data)); 
 plot(abs(dc_part-dc_val));
+%plot(abs(iqdata_cali(refidx:refidx+framelen-1)-dc_val));
 title('frame data & dc data (filtered)');
 
 sig_corr = [];
-for idx = period_len*10+1:framelen-period_len*preamble_len
-    sig0 = frame_data(idx:period_len/2:idx+period_len*preamble_len-1);
+for idx = period_len*10+1:framelen/2
+    right = idx+period_len*(preamble_len)-1;
+    if (right>size(frame_data,2))
+        continue;
+    end
+    sig0 = frame_data(idx:period_len/2:right);
     sig_corr(idx) = sum(sig0.*conj(preamble));
 end
 [vallist,idxlist] = findpeaks(abs(sig_corr),'Threshold',0);
-maxidx = idxlist(find(vallist>max(abs(sig_corr))*0.9));
-maxidx = maxidx(1);
+%maxidx = idxlist(find(vallist>max(abs(sig_corr))*0.9));
+%maxidx = maxidx(1);
+maxidx = idxlist(find(vallist==max(vallist)));
 
 %% duration estimate
 figure; hold on;
@@ -116,6 +122,10 @@ title('Detection before blf cali');
 
 min_len = period_len*0.9;
 max_len = period_len*1.1;
+if (maxidx+round(max_len/2)*-24<1) || (maxidx+round(min_len/2)*(preamble_len*2*4-1) > size(frame_data,2))
+    disp('Peak Detection of xcorr failed');
+end
+
 energy=[];
 for new_halflen = round(min_len/2):1:round(max_len/2)
     idxlist = new_halflen*(-24:preamble_len*2*4-1)+maxidx;
@@ -125,7 +135,9 @@ for new_halflen = round(min_len/2):1:round(max_len/2)
     energy(new_halflen) = sum(abs(frame_data(idxlist)).^2); % eq. 14
 end
 period_len2 = 2*find(energy==max(energy));
-display(['period len change from ' int2str(period_len) ' to ' int2str(period_len2)]);
+if min(size(period_len2))>0
+    display(['Period len change from ' int2str(period_len) ' to ' int2str(period_len2)]);
+end
 
 figure; hold on;
 edges = exp(-1i*2*pi*(1-maxidx:framelen-maxidx)/period_len2);
@@ -150,7 +162,20 @@ if error_num == 0
 else
     display('code detect is ERROR!');
     display(['error num: ' int2str(error_num) ' of 36']);
+    disp(find(check_result==0));
 end
 
 phase_detect = angle(h_est)/pi*180;
 display(phase_detect);
+
+%% re-decheck 
+extended_preamble = [extended_header preamble];
+p_pos = find(extended_preamble==1 & check_result==1); p_est = mean(frame_data(pos_list(p_pos)));
+n_pos = find(extended_preamble==0 & check_result==1); n_est = mean(frame_data(pos_list(n_pos)));
+h_est2 = p_est - n_est;
+rawdata2 = (frame_data(pos_list)-n_est)/(p_est-n_est);
+decode_out2 = sign(abs(rawdata2)-0.5);
+data_decode2 = (decode_out2+1)/2;
+check_result2 = [extended_header preamble] == data_decode2(1:36);
+error_num2 = sum(check_result2==0);
+display(['(re-decode)error num : ' int2str(error_num2) ' of 36']);
