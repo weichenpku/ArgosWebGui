@@ -1,13 +1,13 @@
 {
 	"transmitter": {
-		"serial": "RF3E000006",
+		"serial": "RF3E000002",
 		"port": "0"
 	},
 	
 
 	"receivernum": "1",
 	"receiver_master": {
-		"serial": "RF3E000006",
+		"serial": "RF3E000002",
 		"port": "1"
 	},
 	"receiver": [

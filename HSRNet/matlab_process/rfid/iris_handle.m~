@@ -222,13 +222,6 @@ plot(sign(imag(edges))*max(abs(sig_corr)));
 title('Detection after blf cali');
 
 figure; hold on;
-edges = exp(-1i*2*pi*(1-maxidx:framelen-maxidx)/period_len2);
-plot(abs(sig_corr)); plot(abs(iqdata_filter(refidx:refidx+framelen-1)-dc_data));
-plot(sign(imag(edges))*max(abs(sig_corr)));
-title('Detection after blf cali');
-
-
-figure; hold on;
 plot(abs(sig_corr)); plot(frame_rssi-mean(frame_rssi));
 plot(sign(imag(edges))*max(abs(sig_corr)));
 title('Detection after blf cali');

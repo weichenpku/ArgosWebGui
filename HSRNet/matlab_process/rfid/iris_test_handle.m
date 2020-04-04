@@ -3,7 +3,7 @@ device1 = 'RF3E000022';
 device2 = 'RF3E000006';
 freq1 = 0.91e9;
 freq2 = 0.905e9;
-file = 'test/epoch2/rx0.mat';
+file = 'test/epoch7/rx0.mat';
 path = '../../rxdata/';     
 load([path file]);
 

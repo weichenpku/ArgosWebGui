@@ -11,7 +11,7 @@ import scipy.io as sio
 def test():
     class FakeMain:
         def __init__(self):
-            self.IrisSerialNums = ["RF3E000021-0-Tx-1", "RF3E000187-0-Rx-0"]  # serial-chan-TX/RX-trigger
+            self.IrisSerialNums = ["RF3E000002-0-Tx-1", "RF3E000002-0-Rx-0"]  # serial-chan-TX/RX-trigger
             self.userTrig = True
         def changedF(self):
             print('changedF called')
@@ -20,8 +20,8 @@ def test():
     obj.setGains({
         "parameters-txSamples": "512",
         "parameters-numSamples": "51200",
-        "RF3E000021-0-tx-txGain": "40",
-        "RF3E000187-0-rx-rxGain": "40"
+        "RF3E000002-0-tx-txGain": "40",
+        "RF3E000002-0-rx-rxGain": "40"
     })
     
     print()
@@ -51,7 +51,8 @@ class Sinusoid_Transceiver_DevFE_RevB_180828:
         # create gains and set them
         IrisUtil.Init_CreateDefaultGain_WithDevFE(self)
         self.rate = 1.92e6  # save this for later build tx tone
-        IrisUtil.Init_CreateBasicGainSettings(self, rate=self.rate, bw=30e6, freq=3.5e9, dcoffset=True)
+        IrisUtil.Init_CreateBasicGainSettings(self, rate=self.rate, bw=30e6, freq=0.99e9, dcoffset=False)
+        IrisUtil.Setting_ChangeIQBalance(self,txangle=0,txscale=1,rxangle=0,rxscale=1)
 
         # create streams (but not activate them)
         IrisUtil.Init_CreateTxRxStreams_RevB(self)
