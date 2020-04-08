@@ -1,9 +1,10 @@
 clear; close all;
-device1 = 'RF3E000022'; 
-device2 = 'RF3E000006';
+device1 = 'RF3E000006'; 
+device2 = 'RF3E000022';
 freq1 = 0.91e9;
 freq2 = 0.905e9;
-file = 'test/epoch7/rx0.mat';
+file = 'test/epoch0/rx0.mat';
+%file = '3.31/singletone/epoch7/rx0.mat';
 path = '../../rxdata/';     
 load([path file]);
 

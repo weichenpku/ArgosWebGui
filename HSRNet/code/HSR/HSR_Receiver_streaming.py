@@ -47,7 +47,7 @@ def test():
     rx_repeat_time = int(conf_dict['rx_repeat_time']) # number of frames
     rx_repeat_duration = float(conf_dict['rx_repeat_duration']) # seconds
     rx_path = conf_dict['rx_path']
-    
+
     main = FakeMain(rx_serial_master,rx_serial_slaves,rx_master_freq,rx_slaves_freq)
     obj = LTE_Receiver(main, conf_dict=conf_dict)
     
@@ -135,12 +135,23 @@ class LTE_Receiver:
 
         # create gains and set them
         IrisUtil.Init_CreateDefaultGain_WithDevFE(self)
+
         self.rate = eval(conf_dict['srate'])
         self.bw = eval(conf_dict['bandwidth'])
-        if ('carrier_freq' in conf_dict):
-            IrisUtil.Init_CreateBasicGainSettings(self, bw=self.bw, freq=eval(conf_dict['carrier_freq']), dcoffset=True, txrate=self.rate, rxrate=self.rate)
+        if ('dc_offset' in conf_dict) and conf_dict['dc_offset']=="True":
+            self.dcoffset = True
         else:
-            IrisUtil.Init_CreateBasicGainSettings(self, bw=self.bw, dcoffset=False, txrate=self.rate, rxrate=self.rate)
+            self.dcoffset = False 
+
+        if 'rx_format' in conf_dict:
+            self.rx_format = conf_dict['rx_format']
+        else:
+            self.rx_format = "CF32"
+
+        if ('carrier_freq' in conf_dict):
+            IrisUtil.Init_CreateBasicGainSettings(self, bw=self.bw, freq=eval(conf_dict['carrier_freq']), dcoffset=self.dcoffset, txrate=self.rate, rxrate=self.rate)
+        else:
+            IrisUtil.Init_CreateBasicGainSettings(self, bw=self.bw, dcoffset=self.dcoffset, txrate=self.rate, rxrate=self.rate)
         IrisUtil.Setting_ChangeIQBalance(self,rxangle=0,rxscale=1)
 
         # create streams (but not activate them)

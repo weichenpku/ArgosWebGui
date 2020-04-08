@@ -446,6 +446,12 @@ def Init_CreateTxStreams_RevB(self):
         self.txStreams.append(stream)
 
 def Init_CreateRxStreams_RevB(self):
+    if self.rx_format == "CF32": 
+        formats = SOAPY_SDR_CF32
+    elif self.rx_format == "CS16": 
+        formats = SOAPY_SDR_CS16
+    else:
+        formats = SOAPY_SDR_CF32
     self.rxStreams = []  # index just matched to rx_serials_ant
     for r, serial_ant in enumerate(self.rx_serials_ant):
         serial, ant = Format_SplitSerialAnt(serial_ant)
@@ -454,7 +460,8 @@ def Init_CreateRxStreams_RevB(self):
         #for ant in chans:
         #    sdr.writeSetting(SOAPY_SDR_RX, ant, 'CALIBRATE', 'SKLK')  # this is from sklk-demos/python/SISO.py wy@180823
         #stream = sdr.setupStream(SOAPY_SDR_RX, SOAPY_SDR_CF32, chans, {"remote:prot": "tcp", "remote:mtu": "1024"})
-        stream = sdr.setupStream(SOAPY_SDR_RX, SOAPY_SDR_CF32, chans,{})
+         
+        stream = sdr.setupStream(SOAPY_SDR_RX, formats, chans,{})
         self.rxStreams.append(stream) 
 
 def Init_CreateTxRxStreams_RevB(self):
@@ -785,8 +792,14 @@ def Process_CreateReceiveBufferFromFile(self):
     filename1 = os.path.join(mkdtemp(),'temp1.bin')
     filename2 = os.path.join(mkdtemp(),'temp2.bin')
     antnum = 2 if ant == 2 else 1
-    self.sampsRecv = np.memmap(filename1, dtype=np.complex64, mode='w+', shape=(r+1,antnum,self.numSamples))
-    self.sampsRecv_mirror = np.memmap(filename2, dtype=np.complex64, mode='w+', shape=(r+1,antnum,self.numSamples))
+    if self.rx_format == "CF32":
+        sample_type = np.complex64
+    elif self.rx_format == "CS16":
+        sample_type = np.int32
+    else:
+        sample_type = np.complex64
+    self.sampsRecv = np.memmap(filename1, dtype=sample_type, mode='w+', shape=(r+1,antnum,self.numSamples))
+    self.sampsRecv_mirror = np.memmap(filename2, dtype=sample_type, mode='w+', shape=(r+1,antnum,self.numSamples))
 
 def Process_DeleteReceiveBufferFromFile(self):
     del self.sampsRecv
@@ -1033,7 +1046,7 @@ def Process_ReadFromRxStream(self,epoch=None,bufptr=None):
                 break  # always break because it cannot recover for most of time
             else: 
                 numRecv += sr.ret
-                #print('[SOAR] SUCCESS: read',numRecv,'samples')
+        #print('[SOAR] SUCCESS: read',numRecv,'samples')
         #print('[SOAR] FINISH reading')
     return read_success
 
@@ -1223,6 +1236,12 @@ def Process_SaveDataNpy(self,dir,datasrc=None,srate=None,ts=None):
     else:
         sampsRecv = datasrc
 
+    datasize = np.shape(sampsRecv)
+    if self.rx_format == "CS16": # change INT32 => (INT16,INT16)
+        idata = np.array(sampsRecv >> 16,dtype=np.int16)
+        qdata = np.array(sampsRecv & 0xFFFF,dtype=np.int16)
+        sampsRecv = idata+1j*qdata
+
     datafile = dir+'data.npy'
     msgfile = dir+'msg.npy'
     np.save(datafile,sampsRecv)
@@ -1241,6 +1260,11 @@ def Process_CalculateAmp(self,datasrc=None,logprint=False):
         sampsRecv = self.sampsRecv
     else:
         sampsRecv = datasrc
+
+    if self.rx_format == "CS16": # change INT32 => (INT16,INT16)
+        idata = np.array(sampsRecv >> 16,dtype=np.int16)
+        qdata = np.array(sampsRecv & 0xFFFF,dtype=np.int16)
+        sampsRecv = idata+1j*qdata
 
     maxrange = 0
     maxabs = 0

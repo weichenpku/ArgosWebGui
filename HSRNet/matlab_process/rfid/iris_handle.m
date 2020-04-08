@@ -1,22 +1,21 @@
 clear; close all;
 
-path = '4.3/pos1_1.5m/830/';
-%path = 'test/';
-file = [path 'epoch5/rx0.mat']; 
+path = '4.3/pos1_1.5m/980/';
+path = 'test/';
+file = [path 'epoch0/rx0.mat']; 
 refsig0 = csvread('../../refdata/generation/test_data/dc192000.csv');
 
-% case 3.31
 % file = '3.31/rfid/epoch7/rx0.mat'; 
 % refsig0 = csvread('../../refdata/generation/test_data/tone192000_20.csv');
 
+device1 = 'RF3E000022';
 device2 = 'RF3E000006';
-device1 = 'RF3E000002';
-path = '../../rxdata/'; 
-load([path file]);
+rootpath = '../../rxdata/'; 
+load([rootpath file]);
 
-refidx = 224100;
+refidx = 359800;
 
-interp_scale = 16;
+interp_scale = 1;
 snum = 384000; 
 srate = 1.92e6;
 snum = snum*interp_scale;
@@ -56,7 +55,7 @@ winsize = period_len/2;
 b = (1/winsize)*ones(1,winsize);
 a = 1;
 y = filter(b,a,iqdata_cali);
-iqdata_filter = y(1+period_len/4:end);
+iqdata_filter = y(1+winsize/2:end);
 
 %% filter2
 winsize = 4000;
@@ -144,16 +143,12 @@ if min(size(period_len2))>0
     display(['Period len change from ' int2str(period_len) ' to ' int2str(period_len2)]);
 end
 
-
-
-
-
 %% result output
 pos_list = period_len2/2*(-24:preamble_len*2*4-1)+maxidx;
 h_est = mean(frame_data(pos_list([extended_idx 24+preamble_idx]))); 
 rawdata = frame_data(pos_list)/h_est;
 
-decode_out = sign(abs(rawdata)-0.5);
+decode_out = sign(real(rawdata)-0.5);
 data_decode = (decode_out+1)/2;
 display(data_decode);
 
@@ -170,17 +165,25 @@ end
 phase_detect = angle(h_est)/pi*180;
 display(phase_detect);
 
+
 %% re-decheck 
 extended_preamble = [extended_header preamble];
-p_pos = find(extended_preamble==1 & check_result==1); p_est = mean(frame_data(pos_list(p_pos)));
-n_pos = find(extended_preamble==0 & check_result==1); n_est = mean(frame_data(pos_list(n_pos)));
+p_pos = find(extended_preamble==1); p_est = mean(frame_data(pos_list(p_pos)));
+n_pos = find(extended_preamble==0); n_est = mean(frame_data(pos_list(n_pos)));
 h_est2 = p_est - n_est;
 rawdata2 = (frame_data(pos_list)-n_est)/(p_est-n_est);
-decode_out2 = sign(abs(rawdata2)-0.5);
+decode_out2 = sign(real(rawdata2)-0.5);
 data_decode2 = (decode_out2+1)/2;
 check_result2 = [extended_header preamble] == data_decode2(1:36);
 error_num2 = sum(check_result2==0);
 display(['(re-decode)error num : ' int2str(error_num2) ' of 36']);
+phase_detect2 = angle(h_est2)/pi*180;
+display(phase_detect2);
+
+figure; hold on;
+plot(frame_data(pos_list(find(extended_preamble==1))),'.','MarkerSize',10);  
+plot(frame_data(pos_list(find(extended_preamble==0))),'.','MarkerSize',10);
+axis([-1 1 -1 1]);
 
 
 %% rssi decode: frame_rssi
@@ -192,20 +195,14 @@ check_result3 = [extended_header preamble] == data_decode3(1:36);
 error_num3 = sum(check_result3==0);
 display(['(RSSI-decode)error num : ' int2str(error_num3) ' of 36']);
 
+figure; hold on;
+plot((1+1i)*frame_rssi(pos_list(find(extended_header==1))),'.','MarkerSize',10);  
+plot((1+1i)*frame_rssi(pos_list(find(extended_header==0))),'.','MarkerSize',10);
+
 minval1 = min(abs(abs(rawdata(find(check_result==1)))-0.5));
 minval2 = min(abs(abs(rawdata2(find(check_result2==1)))-0.5));
 minval3 = min(abs(abs(rawdata3(find(check_result3==1)))-0.5));
 disp([minval1 minval2 minval3]');
-
-%% new dc 
-dc_data = zeros(1,framelen);
-dc_size = period_len;
-for idx = 1:framelen
-    left_idx = refidx+idx-period_len;
-    neighbor_sig = iqdata_filter(left_idx+1:left_idx+period_len*2);
-    [~, neighbor_min_idx] = min(abs(neighbor_sig-dc_val));
-    dc_data(idx) = mean(iqdata_cali(left_idx+neighbor_min_idx-period_len/4:left_idx+neighbor_min_idx+period_len/4));
-end
 
 
 %% plot figures
@@ -222,13 +219,7 @@ plot(sign(imag(edges))*max(abs(sig_corr)));
 title('Detection after blf cali');
 
 figure; hold on;
-edges = exp(-1i*2*pi*(1-maxidx:framelen-maxidx)/period_len2);
-plot(abs(sig_corr)); plot(abs(iqdata_filter(refidx:refidx+framelen-1)-dc_data));
-plot(sign(imag(edges))*max(abs(sig_corr)));
-title('Detection after blf cali');
-
-
-figure; hold on;
 plot(abs(sig_corr)); plot(frame_rssi-mean(frame_rssi));
 plot(sign(imag(edges))*max(abs(sig_corr)));
 title('Detection after blf cali');
+
